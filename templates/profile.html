@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Profil - NovaTrade</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        /* BASE - Style NovaTrade Dashboard */
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
+        
+        body {
+            background: #e1e9ff;
+            background-image: radial-gradient(at 0% 0%, rgba(197, 202, 255, 0.5) 0px, transparent 50%),
+                              radial-gradient(at 100% 100%, rgba(225, 200, 255, 0.4) 0px, transparent 50%);
+            min-height: 100vh;
+            color: #444;
+        }
+
+        /* TOPBAR & SIDEBAR (Garder le même style que le Dashboard) */
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .topbar .menu-toggle { font-size: 24px; cursor: pointer; color: #5a57e3; }
+        .topbar .user { font-weight: 700; font-size: 16px; color: #333; }
+
+        .main { padding: 20px; max-width: 600px; margin: 0 auto; }
+
+        /* PROFILE HEADER CARD */
+        .profile-card {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            padding: 30px 20px;
+            border-radius: 30px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            margin-bottom: 25px;
+        }
+
+        .profile-image-container {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 15px;
+        }
+
+        .profile-image-container img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #fff;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .profile-card h2 { font-size: 22px; color: #1e293b; font-weight: 700; }
+        .profile-card p.badge { 
+            display: inline-block;
+            background: linear-gradient(135deg, #8e54e9, #4776e6);
+            color: white;
+            padding: 4px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+
+        /* FORMULAIRE UPLOAD DISCRET */
+        .upload-form { margin-top: 15px; }
+        .btn-upload {
+            background: #5a57e3;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 4px 12px rgba(90, 87, 227, 0.2);
+        }
+        input[type="file"] { font-size: 11px; margin-bottom: 10px; color: #666; }
+
+        /* INFO GRID (Style Stats Dashboard) */
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .info-item {
+            background: white;
+            padding: 15px;
+            border-radius: 20px;
+            border: 1px solid #f0f0f0;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+        }
+        .info-item h4 { font-size: 11px; font-weight: 600; color: #94a3b8; text-transform: uppercase; margin-bottom: 5px; }
+        .info-item p { font-size: 13px; font-weight: 700; color: #334155; word-wrap: break-word; }
+
+        /* FOOTER */
+        footer { text-align: center; margin-top: 40px; padding-bottom: 20px; font-size: 12px; color: #94a3b8; }
+    </style>
+</head>
+<body>
+
+    <div class="topbar">
+        <div class="menu-toggle" id="menuToggle"><i class="fa fa-bars"></i></div>
+        <div class="user"><span style="color:#8e54e9;">Nova</span>Trade</div>
+    </div>
+
+    <div class="main">
+        <div class="profile-card">
+            <div class="profile-image-container">
+                <img src="{{ user.profile_photo_url or '/static/images/default-avatar.png' }}" alt="Avatar">
+            </div>
+            <h2>{{ user.username }}</h2>
+            <p class="badge">{{ user.membership or 'Membre Standard' }}</p>
+
+            <form method="POST" enctype="multipart/form-data" class="upload-form">
+                <input type="file" name="profile_photo" accept="image/*" id="fileInput">
+                <button type="submit" class="btn-upload"><i class="fa fa-camera"></i> Changer la photo</button>
+            </form>
+        </div>
+
+        <div class="info-grid">
+            <div class="info-item">
+                <h4>Solde Actuel</h4>
+                <p>XOF 4000</p>
+            </div>
+            <div class="info-item">
+                <h4>Filleuls (Team)</h4>
+                <p>{{ team_total or 0 }} membre(s)</p>
+            </div>
+            <div class="info-item">
+                <h4>Numéro Tel</h4>
+                <p>{{ user.phone }}</p>
+            </div>
+            <div class="info-item">
+                <h4>Identifiant</h4>
+                <p>@{{ user.username }}</p>
+            </div>
+            <div class="info-item" style="grid-column: span 2;">
+                <h4>E-mail</h4>
+                <p>{{ user.email }}</p>
+            </div>
+            <div class="info-item">
+                <h4>Pays</h4>
+                <p>{{ user.country or 'N/A' }}</p>
+            </div>
+            <div class="info-item">
+                <h4>Parrain</h4>
+                <p>{{ user.parrain or 'Aucun' }}</p>
+            </div>
+            <div class="info-item" style="grid-column: span 2;">
+                <h4>Membre depuis le</h4>
+                <p>{{ user.date_creation.strftime('%d %B %Y') }}</p>
+            </div>
+        </div>
+
+        <footer>
+            2026 © NovaTrade • Propulsion par l'excellence
+        </footer>
+    </div>
+
+</body>
+</html>
+

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formation Forex - NovaTrade</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <style>
+        /* BASE - Style Dashboard NovaTrade */
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
+        
+        body {
+            background: #e1e9ff;
+            background-image: radial-gradient(at 0% 0%, rgba(197, 202, 255, 0.5) 0px, transparent 50%),
+                              radial-gradient(at 100% 100%, rgba(225, 200, 255, 0.4) 0px, transparent 50%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #444;
+        }
+
+        .container { max-width: 600px; margin: 0 auto; }
+
+        /* TITRE DE PAGE */
+        .page-header { text-align: center; margin-bottom: 25px; }
+        .page-header h1 { font-size: 22px; color: #5a57e3; font-weight: 700; }
+        .page-header p { font-size: 13px; color: #666; }
+
+        /* INTRO CARD (Glass) */
+        .info-box {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            padding: 20px;
+            border-radius: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        }
+        .info-box h2 { font-size: 18px; color: #1e293b; margin-bottom: 8px; }
+        .info-box p { font-size: 13px; color: #64748b; line-height: 1.5; }
+
+        /* LESSON STATS (Comme les widgets du Dashboard) */
+        .lesson-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+        .lesson-box {
+            background: white;
+            padding: 15px 10px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            border: 1px solid #f0f0f0;
+        }
+        .lesson-box i { 
+            font-size: 18px; 
+            margin-bottom: 8px; 
+            background: linear-gradient(135deg, #8e54e9, #4776e6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .lesson-box h4 { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+        .lesson-box p { font-size: 13px; font-weight: 700; color: #334155; }
+
+        /* COURSE CARDS (Glassmorphism) */
+        .course-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 25px;
+            border: 1px solid white;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.03);
+        }
+        .course-card h3 { font-size: 16px; color: #1e293b; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+        .course-card p { font-size: 13px; color: #64748b; margin-bottom: 15px; }
+
+        /* VIDEO CONTAINER */
+        .video-wrapper {
+            border-radius: 18px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            border: 3px solid white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+
+        /* DOWNLOAD BUTTON (Style Dashboard) */
+        .btn-download {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px;
+            background: #5a57e3;
+            color: white;
+            border-radius: 12px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            transition: 0.3s;
+            box-shadow: 0 5px 15px rgba(90, 87, 227, 0.2);
+        }
+        .btn-download:hover { transform: translateY(-2px); filter: brightness(1.1); }
+
+        /* MODULES LIST */
+        .module-item {
+            background: linear-gradient(135deg, #8e54e9 0%, #4776e6 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 10px;
+        }
+        .module-item h4 { font-size: 14px; margin-bottom: 4px; }
+        .module-item p { font-size: 11px; opacity: 0.85; margin: 0; }
+
+        footer { text-align: center; font-size: 12px; color: #94a3b8; margin: 40px 0; }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    <div class="page-header">
+        <h1>Formation Forex</h1>
+        <p>Propulsez vos compétences de trading</p>
+    </div>
+
+    <div class="info-box">
+        <h2>Académie NovaTrade</h2>
+        <p>Maîtrisez les marchés financiers avec nos ressources exclusives. Apprenez à votre rythme et devenez un trader rentable.</p>
+    </div>
+
+    <div class="lesson-stats">
+        <div class="lesson-box">
+            <i class="fa fa-play-circle"></i>
+            <h4>Vidéos</h4>
+            <p>3 Leçons</p>
+        </div>
+        <div class="lesson-box">
+            <i class="fa fa-book-open"></i>
+            <h4>Théorie</h4>
+            <p>PDF Inclus</p>
+        </div>
+        <div class="lesson-box">
+            <i class="fa fa-check-double"></i>
+            <h4>Niveau</h4>
+            <p>Débutant</p>
+        </div>
+    </div>
+
+    <div class="course-card">
+        <h3><i class="fa fa-globe" style="color:#4776e6;"></i> Fondamentaux du Forex</h3>
+        <p>Ce cours couvre les bases essentielles : paires de devises, lecture des graphiques et gestion émotionnelle.</p>
+        <div style="font-size: 11px; font-weight: 600; color: #8e54e9; background: rgba(142, 84, 233, 0.1); padding: 5px 12px; border-radius: 20px; display: inline-block;">
+            12 Modules • 6 Heures de contenu
+        </div>
+    </div>
+
+    <div class="course-card">
+        <h3><i class="fa fa-video" style="color:#8e54e9;"></i> Tutoriels vidéo</h3>
+        
+        <div class="video-wrapper">
+            <iframe width="100%" height="200" src="https://www.youtube.com/embed/PhvbhqOdh0c" frameborder="0" allowfullscreen></iframe>
+        </div>
+
+        <div class="video-wrapper">
+            <iframe width="100%" height="200" src="https://www.youtube.com/embed/RWrHimN3Ius" frameborder="0" allowfullscreen></iframe>
+        </div>
+
+        <div class="video-wrapper">
+            <iframe width="100%" height="200" src="https://www.youtube.com/embed/WDvPVVG_nM8" frameborder="0" allowfullscreen></iframe>
+        </div>
+    </div>
+
+    <div class="course-card">
+        <h3><i class="fa fa-file-pdf" style="color:#e74c3c;"></i> E-books & Guides</h3>
+        <p>Téléchargez notre guide complet pour réviser les stratégies hors-ligne.</p>
+        <a class="btn-download" href="{{ url_for('static', filename='pdfs/tr.pdf') }}" download>
+            <i class="fa fa-download"></i> Télécharger le manuel (PDF)
+        </a>
+    </div>
+
+    <div style="margin-bottom: 15px; margin-left: 5px;">
+        <h3 style="font-size: 16px; font-weight: 700;">Modules du programme</h3>
+    </div>
+
+    <div class="module-item">
+        <h4>01. Introduction au Forex</h4>
+        <p>Comprendre le fonctionnement des marchés des changes mondiaux.</p>
+    </div>
+
+    <div class="module-item">
+        <h4>02. Analyse Technique</h4>
+        <p>Maîtrisez les chandeliers japonais et les indicateurs clés.</p>
+    </div>
+
+    <div class="module-item">
+        <h4>03. Gestion des Risques</h4>
+        <p>La règle d'or pour protéger votre capital sur le long terme.</p>
+    </div>
+
+    <footer>
+        2026 © NovaTrade • Propulsion par l'excellence
+    </footer>
+</div>
+
+</body>
+</html>
+

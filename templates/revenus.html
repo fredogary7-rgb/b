@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mes Revenus - NovaTrade</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        /* BASE & BACKGROUND (Identique au Dashboard) */
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
+        
+        body {
+            background: #e1e9ff;
+            background-image: radial-gradient(at 0% 0%, rgba(197, 202, 255, 0.5) 0px, transparent 50%),
+                              radial-gradient(at 100% 100%, rgba(225, 200, 255, 0.4) 0px, transparent 50%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #444;
+        }
+
+        .container { max-width: 500px; margin: 0 auto; }
+
+        /* HEADER DE PAGE */
+        .page-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .page-header h1 { font-size: 22px; color: #5a57e3; font-weight: 700; }
+        .page-header p { font-size: 13px; color: #666; }
+
+        /* CARTE PRINCIPALE (SOLDE TOTAL) */
+        .main-balance-card {
+            background: linear-gradient(135deg, #8e54e9 0%, #4776e6 100%);
+            border-radius: 25px;
+            padding: 25px;
+            color: white;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 20px rgba(90, 87, 227, 0.2);
+        }
+        .main-balance-card h3 { font-size: 14px; opacity: 0.9; font-weight: 400; }
+        .main-balance-card .amount { font-size: 28px; font-weight: 700; margin: 5px 0; }
+
+        /* GRILLE DE REVENUS PAR TÂCHES (2 COLONNES) */
+        .income-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        /* CARTE GLASSMORPHISM PETITE */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 20px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .glass-card i {
+            font-size: 20px;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #8e54e9, #4776e6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .glass-card span.label { font-size: 11px; color: #777; font-weight: 500; }
+        .glass-card span.value { font-size: 15px; color: #333; font-weight: 700; }
+
+        /* SECTION ÉQUIPE */
+        .team-card {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 20px;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            border: 1px solid white;
+        }
+        .team-info h4 { font-size: 14px; color: #444; }
+        .team-info p { font-size: 12px; color: #888; }
+        .team-value { font-size: 18px; font-weight: 700; color: #5a57e3; }
+
+        /* BOUTON RETRAIT RAPIDE */
+        .btn-withdraw {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background: #5a57e3;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 15px;
+            font-weight: 600;
+            margin-top: 25px;
+            box-shadow: 0 6px 15px rgba(90, 87, 227, 0.3);
+            transition: 0.3s;
+        }
+        .btn-withdraw:hover { transform: translateY(-2px); filter: brightness(1.1); }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>Mes Revenus</h1>
+            <p>Suivi détaillé de vos gains NovaTrade</p>
+        </div>
+
+        <div class="main-balance-card">
+            <h3>Total Commissions</h3>
+            <div class="amount">XOF {{ "{:,.1f}".format(total_commission) }}</div>
+            <p style="font-size: 11px; opacity: 0.8;">Prêt à être retiré</p>
+        </div>
+
+        <div class="income-grid">
+            <div class="glass-card">
+                <i class="fab fa-youtube"></i>
+                <span class="label">YouTube</span>
+                <span class="value">{{ points_youtube or 0 }} pts</span>
+            </div>
+            <div class="glass-card">
+                <i class="fab fa-tiktok"></i>
+                <span class="label">TikTok</span>
+                <span class="value">{{ points_tiktok or 0 }} pts</span>
+            </div>
+            <div class="glass-card">
+                <i class="fab fa-instagram"></i>
+                <span class="label">Instagram</span>
+                <span class="value">{{ points_instagram or 0 }} pts</span>
+            </div>
+            <div class="glass-card">
+                <i class="fab fa-google"></i>
+                <span class="label">Publicités</span>
+                <span class="value">{{ points_ads or 0 }} pts</span>
+            </div>
+            <div class="glass-card">
+                <i class="fa fa-dharmachakra"></i>
+                <span class="label">Roue Fortune</span>
+                <span class="value">{{ points_spin or 0 }} pts</span>
+            </div>
+            <div class="glass-card">
+                <i class="fa fa-gamepad"></i>
+                <span class="label">Jeux</span>
+                <span class="value">{{ points_games or 0 }} pts</span>
+            </div>
+        </div>
+
+        <div class="team-card">
+            <div class="team-info">
+                <h4>Revenus d'équipe</h4>
+                <p>Cumul de vos affiliations</p>
+            </div>
+            <div class="team-value">XOF {{ "{:,.1f}".format(total_commission) }}</div>
+        </div>
+
+        <a href="/retrait" class="btn-withdraw">Effectuer un retrait</a>
+    </div>
+
+</body>
+</html>
+

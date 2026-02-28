@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mes retraits - NovaTrade</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <style>
+        /* BASE STYLE NOVATRADE */
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
+        
+        body {
+            background: #e1e9ff;
+            background-image: radial-gradient(at 0% 0%, rgba(197, 202, 255, 0.5) 0px, transparent 50%),
+                              radial-gradient(at 100% 100%, rgba(225, 200, 255, 0.4) 0px, transparent 50%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #444;
+        }
+
+        .container { max-width: 700px; margin: 0 auto; }
+
+        /* HEADER */
+        .page-header { text-align: center; margin-bottom: 30px; }
+        .page-header h2 { font-size: 24px; color: #5a57e3; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .page-header p { font-size: 13px; color: #64748b; margin-top: 5px; }
+
+        /* TABLE BOX (Glassmorphism) */
+        .table-box {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-radius: 25px;
+            padding: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        .table-responsive { width: 100%; overflow-x: auto; }
+
+        table { width: 100%; border-collapse: collapse; min-width: 500px; }
+
+        th {
+            background: rgba(255, 255, 255, 0.3);
+            text-align: left;
+            padding: 15px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #94a3b8;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 15px;
+            font-size: 14px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+            color: #475569;
+        }
+
+        tr:last-child td { border-bottom: none; }
+
+        /* STATUS BADGES - Style Premium */
+        .status {
+            padding: 6px 12px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 700;
+            text-align: center;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .status.wait { background: rgba(245, 158, 11, 0.15); color: #d97706; } /* Orange/Ambre */
+        .status.ok { background: rgba(34, 197, 94, 0.15); color: #16a34a; }   /* Vert */
+        .status.no { background: rgba(239, 68, 68, 0.15); color: #dc2626; }   /* Rouge */
+
+        .status i { font-size: 10px; }
+
+        /* MONTANT STYLE */
+        .amount { font-weight: 700; color: #1e293b; }
+
+        /* FOOTER */
+        footer { text-align: center; margin-top: 40px; font-size: 12px; color: #94a3b8; padding-bottom: 20px; }
+
+        /* VIDE */
+        .empty-state { text-align: center; padding: 40px 20px; color: #94a3b8; }
+        .empty-state i { font-size: 40px; margin-bottom: 15px; opacity: 0.3; }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    <div class="page-header">
+        <h2><i class="fa fa-history"></i> Historique des retraits</h2>
+        <p>Suivez l'état de vos demandes de fonds NovaTrade</p>
+    </div>
+
+    <div class="table-box">
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Montant</th>
+                        <th>Méthode</th>
+                        <th>Date</th>
+                        <th>Statut</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in retraits %}
+                    <tr>
+                        <td class="amount">{{ r.montant }} XOF</td>
+                        <td>
+                            <i class="fa fa-wallet" style="font-size: 12px; margin-right: 5px; opacity: 0.5;"></i>
+                            {{ r.payment_method }}
+                        </td>
+                        <td style="font-size: 12px;">{{ r.date.strftime('%d/%m/%Y') }}<br><span style="opacity: 0.6;">{{ r.date.strftime('%H:%M') }}</span></td>
+
+                        <td>
+                            {% if r.statut == "validé" %}
+                                <span class="status ok"><i class="fa fa-check-circle"></i> Validé</span>
+                            {% elif r.statut == "refusé" %}
+                                <span class="status no"><i class="fa fa-times-circle"></i> Refusé</span>
+                            {% else %}
+                                <span class="status wait"><i class="fa fa-clock"></i> En attente</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+
+                    {% if retraits|length == 0 %}
+                    <tr>
+                        <td colspan="4" class="empty-state">
+                            <i class="fa fa-folder-open"></i><br>
+                            Aucun retrait effectué pour le moment.
+                        </td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <footer>2026 © NovaTrade • Propulsion par l'excellence</footer>
+</div>
+
+</body>
+</html>
+

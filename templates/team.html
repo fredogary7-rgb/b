@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parrainage - NovaTrade</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <style>
+        /* BASE STYLE NOVATRADE */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        
+        body {
+            background: #e1e9ff;
+            background-image: radial-gradient(at 0% 0%, rgba(197, 202, 255, 0.5) 0px, transparent 50%),
+                              radial-gradient(at 100% 100%, rgba(225, 200, 255, 0.4) 0px, transparent 50%);
+            min-height: 100vh;
+            color: #444;
+        }
+
+        /* TOPBAR */
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .topbar .menu-toggle { font-size: 24px; cursor: pointer; color: #5a57e3; }
+        .topbar h2 { font-size: 16px; font-weight: 700; color: #333; }
+
+        /* SIDEBAR (Identique au Dashboard) */
+        .sidebar {
+            position: fixed;
+            left: -260px;
+            top: 0;
+            height: 100%;
+            width: 260px;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(15px);
+            transition: 0.4s;
+            padding-top: 80px;
+            z-index: 999;
+            border-right: 1px solid white;
+        }
+        .sidebar.active { left: 0; }
+        .sidebar a { display: block; padding: 15px 25px; color: #555; text-decoration: none; font-size: 14px; transition: 0.3s; }
+        .sidebar a:hover { background: #5a57e3; color: white; }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); visibility: hidden; opacity: 0; z-index: 998; transition: 0.3s; }
+        .overlay.active { visibility: visible; opacity: 1; }
+
+        .main { padding: 20px; max-width: 800px; margin: 0 auto; }
+
+        /* WIDGETS DE STATS (Style Dashboard) */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+            border: 1px solid #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .stat-card i { font-size: 20px; color: #5a57e3; margin-bottom: 5px; }
+        .stat-card .stat-title { font-size: 11px; color: #94a3b8; text-transform: uppercase; font-weight: 600; }
+        .stat-card .stat-value { font-size: 18px; font-weight: 700; color: #1e293b; }
+
+        /* REFERRAL BOX (Glassmorphism) */
+        .ref-box {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(15px);
+            padding: 25px;
+            border-radius: 25px;
+            border: 1px solid white;
+            text-align: center;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+        }
+
+        .ref-box p { font-size: 13px; color: #64748b; margin-bottom: 15px; font-weight: 500; }
+
+        .ref-link-container {
+            display: flex;
+            background: white;
+            padding: 8px;
+            border-radius: 15px;
+            border: 1px solid #e2e8f0;
+            gap: 10px;
+        }
+
+        .ref-link {
+            flex: 1;
+            background: transparent;
+            border: none;
+            padding: 10px;
+            font-size: 13px;
+            color: #334155;
+            font-weight: 600;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .copy-btn {
+            background: #5a57e3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .copy-btn:hover { filter: brightness(1.1); }
+
+        /* TEAM TABLE SECTION */
+        .team-box {
+            background: white;
+            border-radius: 25px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.02);
+            border: 1px solid #f0f0f0;
+        }
+
+        .team-box h3 { font-size: 16px; margin-bottom: 15px; color: #1e293b; }
+
+        .team-search { position: relative; margin-bottom: 15px; }
+        .team-search input {
+            width: 100%;
+            padding: 12px 40px 12px 15px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            font-size: 13px;
+            outline: none;
+        }
+        .team-search i { position: absolute; right: 15px; top: 13px; color: #94a3b8; }
+
+        .team-table-wrapper {
+            max-height: 400px;
+            overflow-y: auto;
+            border-radius: 15px;
+        }
+
+        .team-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 600px; }
+        .team-table th { background: #f8fafc; padding: 12px; text-align: left; color: #94a3b8; font-weight: 600; position: sticky; top: 0; }
+        .team-table td { padding: 12px; border-bottom: 1px solid #f1f5f9; color: #475569; }
+
+        .level-separator td { background: #f1f5f9; font-weight: 700; font-size: 11px; color: #5a57e3; text-transform: uppercase; }
+
+        .status { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+        .status.active { background: rgba(34, 197, 94, 0.1); color: #22c55e; }
+        .status.inactive { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+
+        footer { text-align: center; margin-top: 40px; padding-bottom: 20px; font-size: 12px; color: #94a3b8; }
+    </style>
+</head>
+
+<body>
+
+<div class="overlay" id="overlay"></div>
+
+<div class="sidebar" id="sidebar">
+    <a href="/dashboard"><i class="fa fa-home"></i> Tableau de bord</a>
+    <a href="/logout"><i class="fa fa-sign-out"></i> Déconnexion</a>
+</div>
+
+<div class="topbar">
+    <div class="menu-toggle"><i class="fa fa-bars"></i></div>
+    <h2>NovaTrade Affiliation</h2>
+</div>
+
+<div class="main">
+
+    <div class="ref-box">
+        <p><i class="fa fa-link"></i> Votre lien de parrainage exclusif</p>
+        <div class="ref-link-container">
+            <div class="ref-link" id="refLink">{{ referral_link }}</div>
+            <button class="copy-btn" onclick="copyReferral()">Copier</button>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <i class="fa fa-users"></i>
+            <span class="stat-title">Niveau 1</span>
+            <span class="stat-value">{{ stats.level1 }}</span>
+        </div>
+        <div class="stat-card">
+            <i class="fa fa-user-plus"></i>
+            <span class="stat-title">Niveau 2</span>
+            <span class="stat-value">{{ stats.level2 }}</span>
+        </div>
+        <div class="stat-card">
+            <i class="fa fa-user-group"></i>
+            <span class="stat-title">Niveau 3</span>
+            <span class="stat-value">{{ stats.level3 }}</span>
+        </div>
+        <div class="stat-card" style="border-left: 4px solid #5a57e3;">
+            <i class="fa fa-wallet" style="color:#22c55e;"></i>
+            <span class="stat-title">Commissions</span>
+            <span class="stat-value">{{ stats.commissions_total }} XOF</span>
+        </div>
+    </div>
+
+    <div class="team-box">
+        <h3>👥 Détails de l'équipe</h3>
+
+        <div class="team-search">
+            <input type="text" id="teamSearch" placeholder="Rechercher un membre ou un pays...">
+            <i class="fa fa-search"></i>
+        </div>
+
+        <div class="team-table-wrapper">
+            <table class="team-table" id="teamTable">
+                <thead>
+                    <tr>
+                        <th>Membre</th>
+                        <th>Pays</th>
+                        <th>Niveau</th>
+                        <th>Statut</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="level-separator"><td colspan="4">Directs (Niveau 1)</td></tr>
+                    {% for user in level1_users %}
+                    <tr>
+                        <td><strong>{{ user.username }}</strong><br><small>{{ user.date_creation.strftime('%d/%m/%Y') }}</small></td>
+                        <td>{{ user.country or "—" }}</td>
+                        <td>N1</td>
+                        <td>
+                            {% if user.premier_depot %}
+                                <span class="status active">Actif</span>
+                            {% else %}
+                                <span class="status inactive">Inactif</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+
+                    <tr class="level-separator"><td colspan="4">Indirects (Niveau 2)</td></tr>
+                    {% for user in level2_users %}
+                    <tr>
+                        <td><strong>{{ user.username }}</strong><br><small>{{ user.date_creation.strftime('%d/%m/%Y') }}</small></td>
+                        <td>{{ user.country or "—" }}</td>
+                        <td>N2</td>
+                        <td>
+                            {% if user.premier_depot %}
+                                <span class="status active">Actif</span>
+                            {% else %}
+                                <span class="status inactive">Inactif</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+
+                    <tr class="level-separator"><td colspan="4">Niveau 3</td></tr>
+                    {% for user in level3_users %}
+                    <tr>
+                        <td><strong>{{ user.username }}</strong><br><small>{{ user.date_creation.strftime('%d/%m/%Y') }}</small></td>
+                        <td>{{ user.country or "—" }}</td>
+                        <td>N3</td>
+                        <td>
+                            {% if user.premier_depot %}
+                                <span class="status active">Actif</span>
+                            {% else %}
+                                <span class="status inactive">Inactif</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <footer>2026 © NovaTrade • Propulsion par l'excellence</footer>
+</div>
+
+<script>
+// COPIER LE LIEN
+function copyReferral() {
+    const refLink = document.getElementById("refLink").textContent;
+    navigator.clipboard.writeText(refLink).then(() => {
+        alert("Succès : Lien copié dans le presse-papier !");
+    });
+}
+
+// SIDEBAR TOGGLE
+const sidebar = document.getElementById("sidebar");
+const overlay = document.getElementById("overlay");
+const menuToggle = document.querySelector(".menu-toggle");
+
+menuToggle.onclick = () => {
+    sidebar.classList.add("active");
+    overlay.classList.add("active");
+};
+
+overlay.onclick = () => {
+    sidebar.classList.remove("active");
+    overlay.classList.remove("active");
+};
+
+// RECHERCHE DYNAMIQUE
+document.getElementById("teamSearch").addEventListener("keyup", function() {
+    let value = this.value.toLowerCase();
+    let rows = document.querySelectorAll("#teamTable tbody tr:not(.level-separator)");
+    rows.forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(value) ? "" : "none";
+    });
+});
+</script>
+
+</body>
+</html>
+

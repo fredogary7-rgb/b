@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retrait - NovaTrade</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        /* STYLE BASE NOVATRADE */
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
+        
+        body {
+            background: #e1e9ff;
+            background-image: radial-gradient(at 0% 0%, rgba(197, 202, 255, 0.5) 0px, transparent 50%),
+                              radial-gradient(at 100% 100%, rgba(225, 200, 255, 0.4) 0px, transparent 50%);
+            min-height: 100vh;
+            color: #444;
+        }
+
+        /* TOPBAR & SIDEBAR (Identique à ton dashboard) */
+        .topbar {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px 20px; background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(15px); border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            position: sticky; top: 0; z-index: 1000;
+        }
+        .topbar .menu-toggle { font-size: 24px; cursor: pointer; color: #5a57e3; }
+        .topbar .user { font-weight: 700; font-size: 14px; background: #5a57e3; color: white; padding: 5px 12px; border-radius: 20px; }
+
+        .sidebar {
+            position: fixed; left: -260px; top: 0; height: 100%; width: 260px;
+            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(15px);
+            transition: 0.4s; padding-top: 80px; z-index: 999; border-right: 1px solid white;
+        }
+        .sidebar.active { left: 0; }
+        .sidebar a { display: block; padding: 14px 25px; font-size: 14px; color: #444; text-decoration: none; transition: 0.3s; }
+        .sidebar a i { margin-right: 12px; width: 20px; text-align: center; }
+        .sidebar a:hover { background: #f1f0ff; color: #5a57e3; }
+
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); visibility: hidden; opacity: 0; z-index: 998; transition: 0.3s; }
+        .overlay.active { visibility: visible; opacity: 1; }
+
+        .main { padding: 20px; max-width: 600px; margin: 0 auto; }
+
+        /* BLOCKS STYLE NOVATRADE */
+        .block {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(15px);
+            border-radius: 25px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 1px solid white;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        }
+
+        .block h2 { font-size: 18px; font-weight: 700; margin-bottom: 15px; color: #1e293b; display: flex; align-items: center; gap: 10px; }
+        
+        /* POINTS DISPLAY */
+        .points-card {
+            background: linear-gradient(135deg, #5a57e3, #8e54e9);
+            color: white; padding: 20px; border-radius: 20px; text-align: center; margin-bottom: 20px;
+        }
+        .points-card .amount { font-size: 28px; font-weight: 800; display: block; }
+        .points-card .label-points { font-size: 12px; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* FORM ELEMENTS */
+        .label { font-size: 12px; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 8px; margin-top: 15px; display: block; }
+        select {
+            width: 100%; padding: 12px 15px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.05);
+            background: white; font-size: 15px; font-weight: 600; color: #334155; outline: none;
+        }
+        .btn-pay {
+            margin-top: 20px; width: 100%; background: linear-gradient(135deg, #1dd75f, #15b34c);
+            color: #fff; padding: 16px; font-weight: 700; border-radius: 15px; border: none; cursor: pointer; transition: 0.3s;
+        }
+
+        /* SCHEDULE STYLE (Glassmorphism) */
+        .schedule-item { 
+            display: flex; align-items: center; justify-content: space-between; 
+            background: rgba(255, 255, 255, 0.4); border-radius: 15px; 
+            padding: 12px; margin-bottom: 10px; border: 1px solid white;
+        }
+        .schedule-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; }
+        
+        /* FLASH MESSAGES */
+        .flash { padding: 12px; border-radius: 12px; margin-bottom: 15px; font-size: 13px; font-weight: 600; }
+        .flash.success { background: #dcfce7; color: #16a34a; }
+        .flash.danger { background: #fee2e2; color: #dc2626; }
+    </style>
+</head>
+<body>
+
+<div class="overlay" id="overlay"></div>
+
+<div class="sidebar" id="sidebar">
+    <a href="/dashboard"><i class="fa fa-home"></i> Tableau de bord</a>
+    <a href="/retrait" style="background:#5a57e3; color:white;"><i class="fa fa-wallet"></i> Retrait</a>
+    <a href="/logout"><i class="fa fa-sign-out-alt"></i> Déconnexion</a>
+</div>
+
+<div class="topbar">
+    <div class="menu-toggle" id="menuToggle"><i class="fa fa-bars"></i></div>
+    <div class="user"><i class="fa fa-user-circle"></i> {{ user.username }}</div>
+</div>
+
+<div class="main">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="block">
+        <h2><i class="fa fa-coins" style="color:#5a57e3;"></i> Vos gains</h2>
+        
+        <div class="points-card">
+            <span class="label-points">Montant convertible</span>
+            <span class="amount">{{ montant_xof }} XOF</span>
+            <span style="font-size: 13px; opacity: 0.9;">({{ points_utilisables }} points)</span>
+        </div>
+
+        <p style="font-size: 13px; color: #64748b; text-align: center;">
+            Seuil minimum de retrait : <strong>{{ retrait_min }} XOF</strong>
+        </p>
+
+        {% if montant_xof >= retrait_min %}
+        <form method="POST">
+            <label class="label">Mode de paiement</label>
+            <select name="payment_method" required>
+                <option value="" disabled selected>Choisir un opérateur</option>
+                <option value="mtn">MTN Mobile Money</option>
+                <option value="moov">Moov Money</option>
+                <option value="TMoney">TMoney</option>
+                <option value="Orange Money">Orange Money</option>
+                <option value="Momo CI">Momo Côte d’Ivoire</option>
+            </select>
+            <button type="submit" class="btn-pay">Confirmer le retrait</button>
+        </form>
+        {% else %}
+        <div style="margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.03); border-radius: 12px; text-align: center; font-size: 13px;">
+            <i class="fa fa-info-circle"></i> Solde insuffisant pour le retrait.
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="block">
+        <h2><i class="fa fa-calendar-check" style="color:#5a57e3;"></i> Horaire NovaTrade</h2>
+
+        <div class="schedule-item">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <div class="schedule-icon" style="background:#94a3b8;"><i class="fa fa-brain"></i></div>
+                <div><b style="font-size:14px;">Culture Générale</b><br><small>08h00</small></div>
+            </div>
+            <span style="font-size:12px; font-weight:700; color:#64748b;">LUNDI</span>
+        </div>
+
+        <div class="schedule-item">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <div class="schedule-icon" style="background:#ff2d55;"><i class="fab fa-tiktok"></i></div>
+                <div><b style="font-size:14px;">Vidéos TikTok</b><br><small>08h00</small></div>
+            </div>
+            <span style="font-size:12px; font-weight:700; color:#ff2d55;">MARDI</span>
+        </div>
+
+        <div class="schedule-item">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <div class="schedule-icon" style="background:#ff0000;"><i class="fab fa-youtube"></i></div>
+                <div><b style="font-size:14px;">Vidéos YouTube</b><br><small>08h00</small></div>
+            </div>
+            <span style="font-size:12px; font-weight:700; color:#ff0000;">MERCREDI</span>
+        </div>
+
+        <div class="schedule-item">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <div class="schedule-icon" style="background:#ffb300;"><i class="fa fa-mouse-pointer"></i></div>
+                <div><b style="font-size:14px;">Clics Publicitaires</b><br><small>08h00</small></div>
+            </div>
+            <span style="font-size:12px; font-weight:700; color:#ffb300;">JEUDI</span>
+        </div>
+    </div>
+
+    <footer style="text-align: center; padding: 20px; font-size: 12px; color: #94a3b8;">
+        2026 © NovaTrade • Nina Academy
+    </footer>
+</div>
+
+<script>
+    const sidebar = document.getElementById("sidebar");
+    const overlay = document.getElementById("overlay");
+    const menuToggle = document.getElementById("menuToggle");
+
+    menuToggle.onclick = () => { sidebar.classList.add("active"); overlay.classList.add("active"); };
+    overlay.onclick = () => { sidebar.classList.remove("active"); overlay.classList.remove("active"); };
+</script>
+
+</body>
+</html>
+

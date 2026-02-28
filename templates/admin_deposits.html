@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Terminal | NovaTrade</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <style>
+        /* BASE STYLE ADMIN NOVATRADE */
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
+        
+        body {
+            background: #0f172a; /* Bleu nuit très pro */
+            background-image: radial-gradient(at 0% 0%, rgba(30, 64, 175, 0.3) 0px, transparent 50%),
+                              radial-gradient(at 100% 100%, rgba(88, 28, 135, 0.3) 0px, transparent 50%);
+            color: #f8fafc;
+            min-height: 100vh;
+        }
+
+        /* ===== Topbar & Sidebar ===== */
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 25px;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .topbar .menu-toggle { font-size: 24px; cursor: pointer; color: #38bdf8; }
+        .topbar .user { font-weight: 600; font-size: 14px; color: #94a3b8; }
+
+        .sidebar {
+            position: fixed;
+            left: -260px;
+            top: 0;
+            height: 100%;
+            width: 260px;
+            background: #1e293b;
+            transition: 0.4s;
+            padding-top: 80px;
+            z-index: 999;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+        }
+        .sidebar.active { left: 0; }
+        .sidebar a { display: block; padding: 14px 25px; font-size: 14px; color: #cbd5e1; text-decoration: none; transition: 0.3s; }
+        .sidebar a:hover { background: #334155; color: #38bdf8; }
+        .sidebar a i { margin-right: 12px; width: 20px; text-align: center; }
+
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); opacity: 0; visibility: hidden; transition: 0.3s; z-index: 998; }
+        .overlay.active { opacity: 1; visibility: visible; }
+
+        .main { padding: 30px; max-width: 1400px; margin: 0 auto; }
+
+        h2 { font-size: 24px; font-weight: 700; margin-bottom: 25px; color: #fff; letter-spacing: -0.5px; }
+
+        /* ===== Tabs ===== */
+        .tabs { display: flex; gap: 8px; margin-bottom: 25px; overflow-x: auto; padding-bottom: 10px; }
+        .tab-btn {
+            padding: 10px 18px;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            background: rgba(30, 41, 59, 0.5);
+            color: #94a3b8;
+            white-space: nowrap;
+            transition: 0.3s;
+        }
+        .tab-btn.active { background: #38bdf8; color: #0f172a; border-color: #38bdf8; }
+        .tab-btn:hover:not(.active) { background: rgba(255,255,255,0.1); color: #fff; }
+
+        /* ===== Search Box ===== */
+        .search-box { margin-bottom: 20px; }
+        .search-box input {
+            width: 100%;
+            padding: 14px 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: #1e293b;
+            color: #fff;
+            outline: none;
+            font-size: 14px;
+        }
+        .search-box input:focus { border-color: #38bdf8; box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2); }
+
+        /* ===== Table Container ===== */
+        .table-container {
+            background: #1e293b;
+            padding: 20px;
+            border-radius: 20px;
+            overflow-x: auto;
+            border: 1px solid rgba(255,255,255,0.05);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        h3 { font-size: 16px; margin-bottom: 15px; color: #38bdf8; }
+
+        table { width: 100%; border-collapse: collapse; min-width: 900px; }
+        table th { 
+            background: rgba(15, 23, 42, 0.5); 
+            color: #94a3b8; 
+            font-size: 12px; 
+            text-transform: uppercase; 
+            letter-spacing: 1px;
+            padding: 15px 12px;
+            text-align: left;
+        }
+        table td { padding: 15px 12px; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #cbd5e1; }
+        table tr:hover { background: rgba(255,255,255,0.02); }
+
+        /* ===== Badges & Status ===== */
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; color: #fff; }
+        .level1 { background: #f59e0b; } /* Orange */
+        .level2 { background: #3b82f6; } /* Blue */
+        .level3 { background: #10b981; } /* Green */
+        .badge.inactif { background: #64748b; }
+
+        /* ===== Action Buttons ===== */
+        .action-buttons { display: flex; gap: 8px; }
+        button {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+        .valider { background: #10b981; color: #fff; }
+        .refuser { background: #ef4444; color: #fff; }
+        .activer { background: #38bdf8; color: #0f172a; }
+        button:hover { opacity: 0.8; transform: translateY(-1px); }
+
+        /* ===== Pagination ===== */
+        .pagination { margin-top: 25px; display: flex; gap: 10px; justify-content: center; }
+        .pagination a { 
+            text-decoration: none; color: #cbd5e1; background: #334155; 
+            padding: 8px 16px; border-radius: 10px; font-size: 13px; transition: 0.3s;
+        }
+        .pagination a:hover { background: #38bdf8; color: #0f172a; }
+
+        .tab-content { display: none; animation: fadeIn 0.4s ease; }
+        .tab-content.active { display: block; }
+
+        @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+
+        /* Flash Messages */
+        .flash { padding: 12px 20px; border-radius: 12px; margin-bottom: 20px; font-size: 14px; font-weight: 500; }
+        .flash.success { background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid #10b981; }
+        .flash.danger { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid #ef4444; }
+
+    </style>
+</head>
+
+<body>
+<div class="overlay" id="overlay"></div>
+
+<div class="sidebar" id="sidebar">
+    <a href="/admin/deposits"><i class="fa fa-tachometer-alt"></i> Dashboard</a>
+    <a href="/logout"><i class="fa fa-power-off"></i> Déconnexion</a>
+</div>
+
+<div class="topbar">
+    <div class="menu-toggle" id="menuToggle"><i class="fa fa-bars"></i></div>
+    <div class="user"><i class="fa fa-shield-alt"></i> Terminal Admin: <strong>{{ user.username }}</strong></div>
+</div>
+
+<div class="main">
+    <h2>Management Terminal</h2>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="showTab(event,'usersTab')">👥 Utilisateurs</button>
+        <button class="tab-btn" onclick="showTab(event,'depotsTab')">💰 Dépôts</button>
+        <button class="tab-btn" onclick="showTab(event,'retraitsTab')">💸 Retraits</button>
+        <button class="tab-btn" onclick="showTab(event,'actifsTab')">✅ Actifs</button>
+        <button class="tab-btn" onclick="showTab(event,'inactifsTab')">❌ Inactifs</button>
+    </div>
+
+    <div class="search-box">
+        <input type="text" id="userSearch" placeholder="Recherche globale (Nom, email, parrain)...">
+    </div>
+
+    <div id="usersTab" class="tab-content active">
+        <div class="table-container">
+            <table id="usersTable">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Email / Phone</th>
+                        <th>Parrain</th>
+                        <th>Niv. 1</th>
+                        <th>Niv. 2</th>
+                        <th>Niv. 3</th>
+                        <th>Statut</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr>
+                        <td style="font-weight: 700;">{{ u.username }}</td>
+                        <td>{{ u.email }}<br><small style="color: #64748b;">{{ u.phone }}</small></td>
+                        <td>{{ u.parrain or '-' }}</td>
+                        <td><span class="badge level1">{{ u.niveau1 }}</span></td>
+                        <td><span class="badge level2">{{ u.niveau2 }}</span></td>
+                        <td><span class="badge level3">{{ u.niveau3 }}</span></td>
+                        <td>
+                            {% if u.premier_depot %}
+                                <span class="badge level3">ACTIF</span>
+                            {% else %}
+                                <span class="badge inactif">INACTIF</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if not u.premier_depot %}
+                                <a href="{{ url_for('admin_activer_user', username=u.username) }}">
+                                    <button class="activer">Forcer Activation</button>
+                                </a>
+                            {% else %}
+                                <i class="fa fa-check-double" style="color: #10b981;"></i>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="depotsTab" class="tab-content">
+        <div class="table-container">
+            <table id="depotsTabTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>User</th>
+                        <th>Opérateur</th>
+                        <th>Pays</th>
+                        <th>Montant</th>
+                        <th>Statut</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in depots %}
+                    <tr>
+                        <td>#{{ d.id }}</td>
+                        <td><strong>{{ d.user_name }}</strong><br>{{ d.phone }}</td>
+                        <td>{{ d.operator }}</td>
+                        <td>{{ d.country }}</td>
+                        <td style="color: #38bdf8; font-weight: 700;">{{ d.montant }}</td>
+                        <td><span class="badge" style="background: #334155;">{{ d.statut }}</span></td>
+                        <td>{{ d.date.strftime('%d/%m/%Y') }}</td>
+                        <td>
+                            {% if d.statut == 'en_attente' %}
+                                <div class="action-buttons">
+                                    <a href="{{ url_for('valider_depot', depot_id=d.id) }}"><button class="valider">Valider</button></a>
+                                    <a href="{{ url_for('rejeter_depot', depot_id=d.id) }}"><button class="refuser">Refuser</button></a>
+                                </div>
+                            {% else %}
+                                <small>{{ d.statut|capitalize }}</small>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="retraitsTab" class="tab-content">
+        <div class="table-container">
+            <table id="retraitsTabTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Utilisateur</th>
+                        <th>Montant Net</th>
+                        <th>Moyen / Numéro</th>
+                        <th>Pays</th>
+                        <th>Statut</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in retraits %}
+                    <tr>
+                        <td>#{{ r.id }}</td>
+                        <td>{{ r.username_display }}</td>
+                        <td style="color: #ef4444; font-weight: 700;">{{ r.montant - r.frais }} XOF</td>
+                        <td><strong>{{ r.payment_method }}</strong><br>{{ r.phone }}</td>
+                        <td>{{ r.pays }}</td>
+                        <td>{{ r.statut }}</td>
+                        <td>
+                            <div class="action-buttons">
+                                <a href="/admin/retraits/valider/{{ r.id }}"><button class="valider">Payer</button></a>
+                                <a href="/admin/retraits/refuser/{{ r.id }}"><button class="refuser">Refuser</button></a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+            <div class="pagination">
+                {% if retraits_paginated.has_prev %}
+                    <a href="{{ url_for('admin_deposits', page=retraits_paginated.prev_num) }}">« Precedent</a>
+                {% endif %}
+                <span style="padding: 8px;">{{ retraits_paginated.page }} / {{ retraits_paginated.pages }}</span>
+                {% if retraits_paginated.has_next %}
+                    <a href="{{ url_for('admin_deposits', page=retraits_paginated.next_num) }}">Suivant »</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div id="actifsTab" class="tab-content">
+        <div class="table-container">
+            <h3>👥 Total Actifs: {{ total_actifs }}</h3>
+            <table>
+                <thead>
+                    <tr><th>User</th><th>Email</th><th>Phone</th><th>Date</th></tr>
+                </thead>
+                <tbody>
+                    {% for u in actifs %}
+                    <tr><td>{{ u.username }}</td><td>{{ u.email }}</td><td>{{ u.phone }}</td><td>{{ u.date_creation.strftime('%d/%m/%Y') }}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="inactifsTab" class="tab-content">
+        <div class="table-container">
+            <h3>🚫 Total Inactifs: {{ total_inactifs }}</h3>
+            <table>
+                <thead>
+                    <tr><th>User</th><th>Email</th><th>Phone</th><th>Date</th></tr>
+                </thead>
+                <tbody>
+                    {% for u in inactifs %}
+                    <tr><td>{{ u.username }}</td><td>{{ u.email }}</td><td>{{ u.phone }}</td><td>{{ u.date_creation.strftime('%d/%m/%Y') }}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+const sidebar = document.getElementById("sidebar");
+const overlay = document.getElementById("overlay");
+const menuToggle = document.getElementById("menuToggle");
+
+menuToggle.onclick = () => { sidebar.classList.add("active"); overlay.classList.add("active"); };
+overlay.onclick = () => { sidebar.classList.remove("active"); overlay.classList.remove("active"); };
+
+function showTab(e, tabId){
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    e.currentTarget.classList.add('active');
+}
+
+// Search Filter
+document.getElementById("userSearch").addEventListener("keyup", function() {
+    let value = this.value.toLowerCase();
+    document.querySelectorAll(".tab-content.active tbody tr").forEach(row => {
+        row.style.display = (row.innerText.toLowerCase().indexOf(value) > -1) ? "" : "none";
+    });
+});
+</script>
+</body>
+</html>
+

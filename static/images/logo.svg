@@ -1,0 +1,5 @@
+<svg width="220" height="60" xmlns="http://www.w3.org/2000/svg">
+  <text x="10" y="40" font-size="36" font-family="Arial" fill="#111">
+    my-<tspan fill="#6366f1">mett</tspan>
+  </text>
+</svg>

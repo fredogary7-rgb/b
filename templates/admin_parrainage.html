@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Admin - NovaTrade</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        /* STYLE GLOBAL NOVATRADE */
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
+        
+        body {
+            background: #0f172a;
+            background-image: radial-gradient(at 0% 0%, rgba(30, 64, 175, 0.2) 0px, transparent 50%),
+                              radial-gradient(at 100% 100%, rgba(88, 28, 135, 0.2) 0px, transparent 50%);
+            color: #f8fafc;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .header-section { max-width: 1000px; margin: 0 auto 30px; }
+        h2 { font-size: 24px; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 12px; }
+        h2 i { font-size: 20px; }
+
+        /* BARRE DE RECHERCHE */
+        .search-container {
+            margin-top: 20px;
+            position: relative;
+            max-width: 400px;
+        }
+        .search-container i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748b;
+        }
+        #searchBox {
+            width: 100%;
+            padding: 12px 15px 12px 45px;
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: #1e293b;
+            color: #fff;
+            outline: none;
+            transition: 0.3s;
+        }
+        #searchBox:focus { border-color: #38bdf8; box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2); }
+
+        /* TABLEAU / LISTE */
+        .table-wrapper {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        table { width: 100%; border-collapse: collapse; }
+        th { 
+            background: rgba(15, 23, 42, 0.5); 
+            padding: 15px; 
+            text-align: left; 
+            font-size: 12px; 
+            text-transform: uppercase; 
+            color: #94a3b8; 
+            letter-spacing: 1px;
+        }
+        td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: middle; }
+
+        /* INPUTS DANS TABLEAU */
+        input[type="text"] {
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            width: 100%;
+        }
+        input[type="text"]:focus { border-color: #38bdf8; outline: none; }
+
+        .current-parrain {
+            font-size: 13px;
+            color: #38bdf8;
+            font-weight: 600;
+        }
+
+        button {
+            background: #38bdf8;
+            color: #0f172a;
+            padding: 8px 15px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 700;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.3s;
+            white-space: nowrap;
+        }
+        button:hover { background: #7dd3fc; transform: translateY(-1px); }
+
+        .no-parrain { color: #64748b; font-style: italic; }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            th { display: none; }
+            td { display: block; width: 100%; border: none; padding: 10px 20px; }
+            tr { display: block; border-bottom: 2px solid rgba(255,255,255,0.05); padding: 10px 0; }
+            .action-cell { text-align: right; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header-section">
+    <h2><i class="fa fa-sitemap"></i> Admin Network Parrainage</h2>
+    <div class="search-container">
+        <i class="fa fa-search"></i>
+        <input type="text" id="searchBox" placeholder="Rechercher utilisateur ou parrain...">
+    </div>
+</div>
+
+<div class="table-wrapper">
+    <table id="usersTable">
+        <thead>
+            <tr>
+                <th>Utilisateur</th>
+                <th>Numéro / Phone</th>
+                <th>Parrain Actuel</th>
+                <th>Modification Réseau</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <form method="POST">
+                    <td>
+                        <input type="text" name="username" value="{{ user.username }}" required>
+                    </td>
+
+                    <td>
+                        <input type="text" name="phone" value="{{ user.phone }}" required>
+                    </td>
+
+                    <td class="current-parrain">
+                        {% if user.parrain %}
+                            <i class="fa fa-link"></i> {{ user.parrain }}
+                        {% else %}
+                            <span class="no-parrain">Aucun</span>
+                        {% endif %}
+                    </td>
+
+                    <td class="action-cell">
+                        <div style="display: flex; gap: 8px;">
+                            <input type="hidden" name="user_id" value="{{ user.id }}">
+                            <input type="text" name="parrain" placeholder="ID nouveau parrain">
+                            <button type="submit">Update</button>
+                        </div>
+                    </td>
+                </form>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+// Filtrage dynamique côté client (Optimisé pour inclure le numéro de tel)
+const searchBox = document.getElementById('searchBox');
+const table = document.getElementById('usersTable');
+
+searchBox.addEventListener('input', function() {
+    const filter = this.value.toLowerCase();
+    const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+
+    for (let i = 0; i < rows.length; i++) {
+        // On récupère les valeurs des inputs et du texte
+        const username = rows[i].getElementsByTagName('input')[0].value.toLowerCase();
+        const phone = rows[i].getElementsByTagName('input')[1].value.toLowerCase();
+        const currentParrain = rows[i].cells[2].innerText.toLowerCase();
+        
+        if (username.includes(filter) || phone.includes(filter) || currentParrain.includes(filter)) {
+            rows[i].style.display = '';
+        } else {
+            rows[i].style.display = 'none';
+        }
+    }
+});
+</script>
+
+</body>
+</html>
+

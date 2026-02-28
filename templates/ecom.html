@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formation E-commerce - NovaTrade</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <style>
+        /* BASE - Style Dashboard NovaTrade */
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
+        
+        body {
+            background: #e1e9ff;
+            background-image: radial-gradient(at 0% 0%, rgba(197, 202, 255, 0.5) 0px, transparent 50%),
+                              radial-gradient(at 100% 100%, rgba(225, 200, 255, 0.4) 0px, transparent 50%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #444;
+        }
+
+        .container { max-width: 600px; margin: 0 auto; }
+
+        /* TITRE DE PAGE */
+        .page-header { text-align: center; margin-bottom: 25px; }
+        .page-header h1 { font-size: 22px; color: #5a57e3; font-weight: 700; }
+        .page-header p { font-size: 13px; color: #666; }
+
+        /* INTRO CARD (Glassmorphism) */
+        .info-box {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            padding: 20px;
+            border-radius: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        }
+        .info-box h2 { font-size: 18px; color: #1e293b; margin-bottom: 8px; }
+        .info-box p { font-size: 13px; color: #64748b; line-height: 1.5; }
+
+        /* WIDGETS DE STATS */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+        .stat-card {
+            background: white;
+            padding: 15px 5px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+            border: 1px solid #f0f0f0;
+        }
+        .stat-card i { 
+            font-size: 20px; 
+            margin-bottom: 8px; 
+            background: linear-gradient(135deg, #8e54e9, #4776e6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .stat-card span { display: block; font-size: 10px; color: #94a3b8; text-transform: uppercase; font-weight: 600; }
+        .stat-card strong { font-size: 13px; color: #334155; }
+
+        /* APP/COURSE CARDS */
+        .app-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 25px;
+            border: 1px solid white;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.03);
+        }
+        .app-card h3 { font-size: 16px; color: #1e293b; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
+        .app-card p { font-size: 13px; color: #64748b; margin-bottom: 15px; }
+
+        /* VIDEO WRAPPER */
+        .video-wrapper {
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            border: 4px solid white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+
+        /* BUTTON DOWNLOAD (Style Dashboard) */
+        .btn-download {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 14px;
+            background: #5a57e3;
+            color: white;
+            border-radius: 15px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            transition: 0.3s;
+            box-shadow: 0 6px 15px rgba(90, 87, 227, 0.2);
+        }
+        .btn-download:hover { transform: translateY(-2px); filter: brightness(1.1); }
+
+        /* FOOTER */
+        footer { text-align: center; font-size: 12px; color: #94a3b8; margin: 40px 0; }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    <div class="page-header">
+        <h1>Formation E-commerce</h1>
+        <p>Vendez avec succès sur NovaTrade</p>
+    </div>
+
+    <div class="info-box">
+        <h2>Expertise Digital Sales</h2>
+        <p>Maîtrisez les stratégies de vente en ligne, du dropshipping à la gestion de stock, grâce à nos experts NovaTrade.</p>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <i class="fa fa-video"></i>
+            <span>Vidéos</span>
+            <strong>3 Cours</strong>
+        </div>
+        <div class="stat-card">
+            <i class="fa fa-file-invoice"></i>
+            <span>Ressources</span>
+            <strong>PDF Inclus</strong>
+        </div>
+        <div class="stat-card">
+            <i class="fa fa-trophy"></i>
+            <span>Niveau</span>
+            <strong>Expert</strong>
+        </div>
+    </div>
+
+    <div class="app-card">
+        <h3><i class="fa fa-play-circle" style="color:#8e54e9;"></i> Tutoriels Vidéo</h3>
+        <p>Apprenez à monter votre boutique et à générer vos premières ventes.</p>
+
+        <div class="video-wrapper">
+            <iframe width="100%" height="220" src="https://www.youtube.com/embed/cCQrItxUzyk" frameborder="0" allowfullscreen></iframe>
+        </div>
+
+        <div class="video-wrapper">
+            <iframe width="100%" height="220" src="https://www.youtube.com/embed/8OHlCvw69kM" frameborder="0" allowfullscreen></iframe>
+        </div>
+
+        <div class="video-wrapper">
+            <iframe width="100%" height="220" src="https://www.youtube.com/embed/rWJXJCXz_W8" frameborder="0" allowfullscreen></iframe>
+        </div>
+        
+        <p style="text-align: center; font-style: italic; font-size: 11px;">De nouveaux tutoriels sont ajoutés chaque mois.</p>
+    </div>
+
+    <div class="app-card">
+        <h3><i class="fa fa-layer-group" style="color:#4776e6;"></i> Guide Stratégique PDF</h3>
+        <p>Consultez notre livre numérique sur les secrets de l'e-commerce en Afrique.</p>
+        <a class="btn-download" href="{{ url_for('static', filename='pdfs/ecom.pdf') }}" download>
+            <i class="fa fa-cloud-download-alt"></i> Télécharger le PDF complet
+        </a>
+    </div>
+
+    <div class="app-card" style="text-align: center; background: linear-gradient(135deg, rgba(71, 118, 230, 0.1), rgba(142, 84, 233, 0.1));">
+        <i class="fa fa-check-circle" style="font-size: 30px; color: #22c55e; margin-bottom: 10px;"></i>
+        <h3>Leçons terminées</h3>
+        <p>Félicitations ! Continuez à apprendre pour maximiser vos revenus sur NovaTrade.</p>
+    </div>
+
+    <footer>
+        2026 © NovaTrade • Propulsion par l'excellence
+    </footer>
+</div>
+
+</body>
+</html>
+

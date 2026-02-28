@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lucky Wheel - NovaTrade</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <style>
+        /* BASE STYLE NOVATRADE */
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
+        
+        body {
+            background: #e1e9ff;
+            background-image: radial-gradient(at 0% 0%, rgba(197, 202, 255, 0.5) 0px, transparent 50%),
+                              radial-gradient(at 100% 100%, rgba(225, 200, 255, 0.4) 0px, transparent 50%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #444;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .wheel-card {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(15px);
+            border-radius: 25px;
+            padding: 20px;
+            max-width: 400px;
+            width: 100%;
+            margin-bottom: 30px;
+            border: 1px solid white;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            text-align: center;
+        }
+
+        .wheel-card h2 { color: #5a57e3; font-size: 22px; margin-bottom: 5px; }
+        .wheel-card p { font-size: 13px; color: #64748b; }
+
+        /* POINTER */
+        .pointer {
+            width: 0; 
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-top: 35px solid #5a57e3; /* Pointeur vers le bas */
+            margin-bottom: -15px;
+            z-index: 10;
+            filter: drop-shadow(0 4px 4px rgba(0,0,0,0.1));
+        }
+
+        .wheel-container {
+            position: relative;
+            width: 340px;
+            height: 340px;
+            margin: 0 auto;
+        }
+
+        #wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 10px solid #ffffff;
+            position: relative;
+            transition: transform 5s cubic-bezier(0.1, 0.8, 0.3, 1);
+            box-shadow: 0 0 50px rgba(90, 87, 227, 0.2), inset 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        .labels {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+        }
+
+        .label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform-origin: 0 0;
+            font-weight: 700;
+            font-size: 13px;
+            color: #1e293b; /* Couleur des chiffres */
+        }
+
+        /* SPIN BUTTON - CENTRE */
+        #spinBtn {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #5a57e3, #8e54e9);
+            border: 5px solid white;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            z-index: 5;
+            box-shadow: 0 4px 15px rgba(90, 87, 227, 0.4);
+            text-transform: uppercase;
+            transition: 0.2s;
+        }
+
+        #spinBtn:active { transform: translate(-50%, -50%) scale(0.9); }
+
+        #spinBtn.disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        footer { margin-top: 40px; opacity: 0.6; font-size: 12px; }
+    </style>
+</head>
+
+<body>
+
+<div class="wheel-card">
+    <h2><i class="fa fa-dharmachakra"></i> Lucky Wheel</h2>
+    <p>Tentez de gagner un bonus NovaTrade !</p>
+</div>
+
+<div class="pointer"></div>
+
+<div class="wheel-container">
+    <div id="wheel"></div>
+    <div class="labels" id="labels"></div>
+    <div id="spinBtn">SPIN</div>
+</div>
+
+<footer>2026 © NovaTrade • Propulsion par l'excellence</footer>
+
+<script>
+const values = [0, 50, 80, 130, 150, 180, 200, 220, 250, 300, 340, 460];
+const segments = values.length;
+const angle = 360 / segments;
+
+const wheel = document.getElementById("wheel");
+const labels = document.getElementById("labels");
+const btn = document.getElementById("spinBtn");
+
+/* ===== COULEURS NOVATRADE (Violet & Blanc cassé) ===== */
+let gradient = [];
+for(let i=0; i<segments; i++){
+    // Alternance entre violet léger et blanc pur
+    const color = i % 2 === 0 ? "#ffffff" : "#f1f0ff";
+    gradient.push(`${color} ${i*angle}deg ${(i+1)*angle}deg`);
+}
+wheel.style.background = `conic-gradient(${gradient.join(",")})`;
+
+/* ===== TEXTE (Conservation de ta logique de positionnement) ===== */
+values.forEach((val, i) => {
+    const label = document.createElement("div");
+    label.className = "label";
+    const rotation = i * angle + angle / 2;
+    // On ajuste un peu le translate pour le nouveau diamètre
+    label.style.transform = `rotate(${rotation}deg) translate(110px) rotate(90deg)`;
+    label.innerText = val;
+    labels.appendChild(label);
+});
+
+/* ===== LOGIQUE SPIN (Identique à ton original) ===== */
+let alreadyPlayed = false; 
+
+if(alreadyPlayed){
+    btn.classList.add("disabled");
+    btn.textContent = "FINI";
+}
+
+btn.addEventListener("click", () => {
+    if(btn.classList.contains("disabled")) return;
+
+    btn.classList.add("disabled");
+    btn.textContent = "...";
+
+    fetch("/wheel/spin", {method: "POST"})
+    .then(res => res.json())
+    .then(data => {
+        if(data.status === "error"){
+            alert(data.message);
+            btn.textContent = "SPIN";
+            btn.classList.remove("disabled");
+            return;
+        }
+
+        const reward = data.reward;
+        const index = values.indexOf(reward);
+
+        // Calcul de l'angle (Ton algorithme exact)
+        const spinAngle = 360 * 5 + (360 - index * angle - angle / 2);
+
+        wheel.style.transform = `rotate(${spinAngle}deg)`;
+
+        setTimeout(() => {
+            alert("🎉 NovaTrade Félicitations ! Vous avez gagné : " + reward + " XOF !");
+            btn.textContent = "GAGNÉ";
+        }, 5200);
+    })
+    .catch(err => {
+        console.error(err);
+        btn.classList.remove("disabled");
+        btn.textContent = "SPIN";
+    });
+});
+</script>
+
+</body>
+</html>
+

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>À propos – NovaTrade</title>
+    <meta name="description" content="Découvrez NovaTrade, la plateforme de marketing d'affiliation leader en Afrique. Trading, E-commerce et revenus passifs.">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <style>
+        /* RESET & BASE - Style Dashboard NovaTrade */
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
+
+        body {
+            background: #e1e9ff;
+            background-image: radial-gradient(at 0% 0%, rgba(197, 202, 255, 0.5) 0px, transparent 50%),
+                              radial-gradient(at 100% 100%, rgba(225, 200, 255, 0.4) 0px, transparent 50%);
+            color: #444;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* HEADER AVEC EFFET GLASS */
+        header {
+            background: linear-gradient(135deg, #8e54e9 0%, #4776e6 100%);
+            text-align: center;
+            padding: 40px 20px;
+            border-radius: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 20px rgba(90, 87, 227, 0.15);
+            color: white;
+        }
+
+        header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-top: 10px;
+        }
+
+        header i {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+
+        /* SECTION PRINCIPALE GLASSMORPHISM */
+        main {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-radius: 25px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        }
+
+        h2 {
+            color: #5a57e3;
+            font-size: 20px;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        h2 i { font-size: 18px; }
+
+        p, ul {
+            font-size: 14px;
+            margin-bottom: 15px;
+            color: #555;
+        }
+
+        ul { 
+            list-style: none; 
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-left: 0;
+        }
+
+        li {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 8px 12px;
+            border-radius: 10px;
+            font-size: 13px;
+            border: 1px solid white;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        li::before {
+            content: "\f058"; /* FontAwesome check circle */
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            color: #4776e6;
+        }
+
+        /* LIEN RETOUR (Style Bouton Dashboard) */
+        .back-link {
+            display: inline-block;
+            margin-top: 25px;
+            padding: 12px 25px;
+            background: #5a57e3;
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            transition: 0.3s;
+            box-shadow: 0 6px 15px rgba(90, 87, 227, 0.2);
+        }
+
+        .back-link:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.1);
+        }
+
+        footer {
+            text-align: center;
+            font-size: 12px;
+            color: #94a3b8;
+            margin: 40px 0;
+        }
+
+        strong { color: #333; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <i class="fa fa-rocket"></i>
+            <h1>À propos de NovaTrade</h1>
+        </header>
+
+        <main>
+            <h2><i class="fa fa-lightbulb"></i> Qu'est-ce que NovaTrade ?</h2>
+            <p><strong>NovaTrade</strong> est une plateforme innovante de <strong>marketing d'affiliation</strong> conçue pour propulser l'indépendance financière en Afrique. Nous sommes présents dans plus de 11 pays :</p>
+            
+            <ul>
+                <li>Bénin</li>
+                <li>Gabon</li>
+                <li>Sénégal</li>
+                <li>Togo</li>
+                <li>Côte d'Ivoire</li>
+                <li>Cameroun</li>
+                <li>Niger</li>
+                <li>Burkina Faso</li>
+                <li>Congo</li>
+                <li>Mali</li>
+            </ul>
+
+            <h2><i class="fa fa-chart-line"></i> Nos opportunités de revenus</h2>
+            <p>Sur NovaTrade, chaque action compte. Voici comment vous générez des profits :</p>
+            <div style="display: flex; flex-direction: column; gap: 10px; font-size: 14px;">
+                <p><i class="fa fa-check" style="color:#5a57e3; margin-right:8px;"></i> <strong>Tâches quotidiennes :</strong> Gagnez en un clic (Pubs, Vidéos, Questions).</p>
+                <p><i class="fa fa-check" style="color:#5a57e3; margin-right:8px;"></i> <strong>Affiliation :</strong> Un système de parrainage puissant et transparent.</p>
+                <p><i class="fa fa-check" style="color:#5a57e3; margin-right:8px;"></i> <strong>Éducation :</strong> Formations expertes en <strong>Trading</strong> et <strong>E-commerce</strong>.</p>
+                <p><i class="fa fa-check" style="color:#5a57e3; margin-right:8px;"></i> <strong>Outils Premium :</strong> Accès exclusif à des applications indispensables.</p>
+            </div>
+
+            <h2><i class="fa fa-shield-halved"></i> Notre mission</h2>
+            <p>NovaTrade s'engage à <strong>démocratiser l’accès aux revenus numériques</strong>. Notre mission est d'offrir un environnement sécurisé, fiable et éducatif où chaque Africain peut transformer son temps de connexion en capital réel.</p>
+
+            <div style="text-align: center;">
+                <a href="/dashboard" class="back-link"><i class="fa fa-arrow-left"></i> Retour au Dashboard</a>
+            </div>
+        </main>
+
+        <footer>
+            &copy; 2026 NovaTrade • Propulsion par l'excellence
+        </footer>
+    </div>
+</body>
+</html>
+

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NovaBridge Elite - 3 Chances</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        /* STYLE NOVATRADE CLAIR */
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
+        body {
+            background: #e1e9ff;
+            background-image: radial-gradient(at 0% 0%, rgba(197, 202, 255, 0.5) 0px, transparent 50%),
+                              radial-gradient(at 100% 100%, rgba(225, 200, 255, 0.4) 0px, transparent 50%);
+            height: 100vh; overflow: hidden; color: #444;
+        }
+
+        /* TOPBAR */
+        .topbar {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px 20px; background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(15px); border-bottom: 1px solid white;
+            z-index: 1000; position: relative;
+        }
+
+        /* ZONE DE JEU */
+        .game-area {
+            height: calc(100vh - 70px);
+            perspective: 1500px;
+            display: flex; justify-content: center; align-items: flex-end;
+            padding-bottom: 120px; position: relative;
+        }
+
+        .bridge {
+            position: relative; width: 300px;
+            transform-style: preserve-3d;
+            transform: rotateX(40deg);
+            transition: transform 0.6s ease;
+        }
+
+        .row {
+            display: flex; gap: 40px; justify-content: center;
+            margin-bottom: 50px; transform-style: preserve-3d;
+        }
+
+        .glass-tile {
+            width: 110px; height: 140px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid #5a57e3;
+            border-radius: 20px;
+            box-shadow: 0 8px 20px rgba(90, 87, 227, 0.1);
+            cursor: pointer;
+        }
+
+        /* LA BALLE */
+        #player {
+            position: absolute;
+            width: 55px; height: 55px;
+            background: linear-gradient(135deg, #5a57e3, #8e54e9);
+            border-radius: 50%;
+            bottom: -90px; left: 122px;
+            z-index: 999;
+            box-shadow: 0 10px 25px rgba(90, 87, 227, 0.5);
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* MESSAGE D'ATTENTE / RESTRICTION */
+        #lock-screen {
+            position: fixed; inset: 0; background: #e1e9ff;
+            display: none; flex-direction: column; align-items: center;
+            justify-content: center; z-index: 9999; text-align: center; padding: 20px;
+        }
+
+        .chances-ui {
+            background: #5a57e3; color: white; padding: 5px 15px; border-radius: 20px; font-size: 13px; font-weight: 600;
+        }
+
+        .btn-help { width: 35px; height: 35px; border: 1px solid #5a57e3; color: #5a57e3; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .broken { animation: break 0.4s forwards; }
+        @keyframes break { 0% { transform: scale(1); } 100% { transform: scale(0) translateY(200px); opacity: 0; } }
+    </style>
+</head>
+<body>
+
+<div id="lock-screen">
+    <i class="fa fa-lock" style="font-size: 50px; color: #5a57e3; margin-bottom: 20px;"></i>
+    <h2 id="lock-title">Accès restreint</h2>
+    <p id="lock-msg" style="margin-top: 10px; color: #666;"></p>
+    <a href="/dashboard" style="margin-top: 20px; color: #5a57e3; text-decoration: none; font-weight: bold;">Retour au Dashboard</a>
+</div>
+
+<div class="topbar">
+    <div class="chances-ui">CHANCES : <span id="chances-count">3</span>/3</div>
+    <div style="color:#5a57e3; font-weight:700; border:1px solid; padding:5px 15px; border-radius:20px; font-size:13px;" id="step-ui">
+        ÉTAPE 1 / 6
+    </div>
+    <div style="background:#5a57e3; color:white; padding:5px 12px; border-radius:20px; font-size:12px;">
+        <i class="fa fa-user-circle"></i> {{ user.username }}
+    </div>
+</div>
+
+<div class="game-area">
+    <div class="bridge" id="bridge"></div>
+    <div id="player"></div>
+</div>
+
+<script>
+    const lockScreen = document.getElementById('lock-screen');
+    const lockTitle = document.getElementById('lock-title');
+    const lockMsg = document.getElementById('lock-msg');
+    const chancesDisplay = document.getElementById('chances-count');
+
+    let chances = 3;
+    const totalSteps = 6;
+    let currentStep = 0;
+    let moving = false;
+    let path = [];
+
+    // --- VÉRIFICATION DES RESTRICTIONS ---
+    function checkAccess() {
+        const now = new Date();
+        const day = now.getDay(); // 4 = Jeudi
+        const hour = now.getHours();
+        const dateKey = "bridge_date_" + now.toDateString();
+        const chancesKey = "bridge_chances_" + now.toDateString();
+
+        // 1. Vérification du jour et de l'heure (Jeudi dès 8h)
+        if (day !== 4 || hour < 8) {
+            lockScreen.style.display = 'flex';
+            lockMsg.innerText = "Le jeu est ouvert uniquement le jeudi à partir de 08:00.";
+            return false;
+        }
+
+        // 2. Gestion des 3 chances par jour
+        let storedChances = localStorage.getItem(chancesKey);
+        if (storedChances === null) {
+            localStorage.setItem(chancesKey, "3");
+            chances = 3;
+        } else {
+            chances = parseInt(storedChances);
+        }
+
+        chancesDisplay.innerText = chances;
+
+        if (chances <= 0) {
+            lockScreen.style.display = 'flex';
+            lockTitle.innerText = "Plus de chances";
+            lockMsg.innerText = "Vous avez épuisé vos 3 tentatives pour aujourd'hui. Revenez jeudi prochain !";
+            return false;
+        }
+        return true;
+    }
+
+    function generatePath() {
+        path = Array.from({length: totalSteps}, () => Math.floor(Math.random() * 2));
+    }
+
+    function initGame() {
+        if (!checkAccess()) return;
+        generatePath();
+
+        const bridge = document.getElementById('bridge');
+        bridge.innerHTML = ""; // Clear
+        for (let i = totalSteps - 1; i >= 0; i--) {
+            const row = document.createElement('div');
+            row.className = 'row';
+            row.innerHTML = `
+                <div class="glass-tile" onclick="jump(0, ${i})"></div>
+                <div class="glass-tile" onclick="jump(1, ${i})"></div>
+            `;
+            bridge.appendChild(row);
+        }
+    }
+
+    async function jump(side, idx) {
+        if (idx !== currentStep || moving) return;
+        moving = true;
+
+        const player = document.getElementById('player');
+        const bridge = document.getElementById('bridge');
+
+        const xPos = (side === 0) ? 28 : 208; 
+        const yPos = (currentStep + 1) * 190;
+        
+        player.style.left = xPos + 'px';
+        player.style.bottom = (yPos - 90) + 'px';
+        bridge.style.transform = `rotateX(40deg) translateY(${currentStep * 150}px)`;
+
+        setTimeout(async () => {
+            if (side === path[currentStep]) {
+                // SUCCÈS
+                currentStep++;
+                document.getElementById('step-ui').innerText = `ÉTAPE ${currentStep + 1} / 6`;
+                
+                if (currentStep === totalSteps) {
+                    alert("🏆 VICTOIRE ! Gain : 1000 XOF");
+                    // On peut bloquer ici ou laisser rejouer s'il reste des chances
+                    localStorage.setItem("bridge_chances_" + new Date().toDateString(), "0");
+                    setTimeout(() => location.href = "/dashboard", 1500);
+                }
+                moving = false;
+            } else {
+                // ÉCHEC
+                const rows = document.querySelectorAll('.row');
+                rows[totalSteps - 1 - idx].querySelectorAll('.glass-tile')[side].classList.add('broken');
+                
+                // Animation chute
+                player.style.transform = 'scale(0) translateY(400px)';
+                
+                // Déduire une chance
+                chances--;
+                localStorage.setItem("bridge_chances_" + new Date().toDateString(), chances.toString());
+                chancesDisplay.innerText = chances;
+
+                setTimeout(() => {
+                    if (chances > 0) {
+                        alert("Oups ! Il vous reste " + chances + " chance(s).");
+                        resetPlayer();
+                    } else {
+                        alert("Dommage ! Plus de chances aujourd'hui.");
+                        location.href = "/dashboard";
+                    }
+                }, 600);
+            }
+        }, 500);
+    }
+
+    function resetPlayer() {
+        currentStep = 0;
+        moving = false;
+        generatePath(); // Nouveau chemin pour la nouvelle chance
+        
+        const player = document.getElementById('player');
+        const bridge = document.getElementById('bridge');
+        
+        player.style.transition = "none";
+        player.style.transform = "scale(1)";
+        player.style.left = "122px";
+        player.style.bottom = "-90px";
+        bridge.style.transform = "rotateX(40deg) translateY(0px)";
+        
+        // Retirer les carreaux cassés visuellement
+        document.querySelectorAll('.glass-tile').forEach(t => t.classList.remove('broken'));
+        document.getElementById('step-ui').innerText = `ÉTAPE 1 / 6`;
+        
+        setTimeout(() => {
+            player.style.transition = "all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)";
+        }, 50);
+    }
+
+    initGame();
+</script>
+</body>
+</html>
+

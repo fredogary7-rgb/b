@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Applications Premium - NovaTrade</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <style>
+        /* RESET & BASE - Fond identique au Dashboard NovaTrade */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        
+        body { 
+            background: #e1e9ff;
+            background-image: radial-gradient(at 0% 0%, rgba(197, 202, 255, 0.5) 0px, transparent 50%),
+                              radial-gradient(at 100% 100%, rgba(225, 200, 255, 0.4) 0px, transparent 50%);
+            min-height: 100vh; 
+            padding: 20px; 
+            color: #444; 
+        }
+
+        .container { max-width: 500px; margin: 0 auto; }
+
+        /* TITRE DE PAGE */
+        .page-header { text-align: center; margin-bottom: 25px; }
+        .page-header h1 { font-size: 22px; color: #5a57e3; font-weight: 700; }
+        .page-header p { font-size: 13px; color: #666; }
+
+        /* CARTE INFO (Style Banner du haut) */
+        .info-box { 
+            background: rgba(255, 255, 255, 0.6); 
+            backdrop-filter: blur(15px); 
+            -webkit-backdrop-filter: blur(15px);
+            padding: 20px; 
+            border-radius: 25px; 
+            margin-bottom: 25px; 
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        }
+        .info-box h2 { font-size: 18px; font-weight: 700; margin-bottom: 10px; color: #1e293b; }
+        .info-box p { font-size: 13px; color: #64748b; line-height: 1.6; }
+
+        /* APP CARD (Style Stats Box du Dashboard) */
+        .app-card { 
+            background: rgba(255, 255, 255, 0.8); 
+            border-radius: 20px; 
+            padding: 20px; 
+            margin-bottom: 15px; 
+            border: 1px solid white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .app-card h3 { 
+            font-size: 16px; 
+            color: #334155; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+        }
+        .app-card h3 i { color: #8e54e9; }
+        .app-card p { font-size: 12px; color: #64748b; }
+
+        /* BOUTON TELECHARGER (Style Bouton Copier) */
+        .btn-download { 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            gap: 8px;
+            padding: 12px; 
+            background: #5a57e3; /* Couleur bouton Copier du dashboard */
+            color: #fff; 
+            border-radius: 12px; 
+            text-decoration: none; 
+            font-size: 14px; 
+            font-weight: 600; 
+            box-shadow: 0 4px 12px rgba(90, 87, 227, 0.2);
+            transition: 0.3s ease;
+        }
+        .btn-download:hover { transform: translateY(-2px); filter: brightness(1.1); }
+
+        /* SOURCES OFFICIELLES CARDS (Style Dégradé Profit/Dépenses) */
+        .source-card {
+            background: linear-gradient(135deg, #8e54e9 0%, #4776e6 100%);
+            border-radius: 20px;
+            padding: 18px;
+            color: white;
+            margin-bottom: 15px;
+            box-shadow: 0 8px 20px rgba(71, 118, 230, 0.15);
+        }
+        .source-card h3 { font-size: 16px; margin-bottom: 5px; }
+        .source-card p { font-size: 11px; opacity: 0.85; margin-bottom: 12px; }
+
+        .link-row { display: flex; gap: 10px; }
+        .link-row a { 
+            font-size: 12px; 
+            font-weight: 600; 
+            color: #fff; 
+            text-decoration: none; 
+            background: rgba(255,255,255,0.2);
+            padding: 5px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        .link-row a:hover { background: rgba(255,255,255,0.3); }
+
+        /* FOOTER */
+        footer { margin-top: 40px; text-align: center; font-size: 12px; color: #94a3b8; padding-bottom: 20px; }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    <div class="page-header">
+        <h1>Apk Premium</h1>
+        <p>Espace de téléchargement NovaTrade</p>
+    </div>
+
+    <div class="info-box">
+        <h2>Applications & Moyens Officiels</h2>
+        <p>
+            Accédez à une sélection d'outils performants pour booster vos activités numériques. 
+            Toutes nos sources sont vérifiées pour garantir votre sécurité.
+        </p>
+    </div>
+
+    {% for file in apk_files %}
+    <div class="app-card">
+        <h3><i class="fa fa-robot"></i> {{ file.name }}</h3>
+        <p>Fichier : {{ file.filename }} (Disponible sur NovaTrade)</p>
+
+        <a class="btn-download" href="{{ file.link }}" download="{{ file.filename }}">
+            <i class="fa fa-download"></i> Télécharger l'APK
+        </a>
+    </div>
+    {% endfor %}
+
+    <div style="margin: 30px 0 15px 5px;">
+        <h2 style="font-size: 16px; color: #1e293b; font-weight: 700;">Sources Officielles</h2>
+    </div>
+
+    <div class="source-card">
+        <h3>🎬 CapCut Premium</h3>
+        <p>L'éditeur vidéo indispensable pour vos contenus TikTok et Reels.</p>
+        <div class="link-row">
+            <a href="https://play.google.com" target="_blank"><i class="fab fa-google-play"></i> PlayStore</a>
+            <a href="https://apps.apple.com" target="_blank"><i class="fab fa-apple"></i> AppStore</a>
+        </div>
+    </div>
+
+    <div class="source-card">
+        <h3>💬 Telegram Premium</h3>
+        <p>Profitez de fonctionnalités exclusives et d'une vitesse de téléchargement accrue.</p>
+        <div class="link-row">
+            <a href="https://telegram.org" target="_blank"><i class="fa fa-globe"></i> Site Officiel</a>
+        </div>
+    </div>
+
+    <div class="source-card">
+        <h3>🎥 Netflix</h3>
+        <p>Accès aux catalogues mondiaux via les abonnements officiels uniquement.</p>
+        <div class="link-row">
+            <a href="https://netflix.com" target="_blank"><i class="fa fa-tv"></i> Site Officiel</a>
+        </div>
+    </div>
+
+    <footer>
+        2026 © NovaTrade • Propulsion par l'excellence
+    </footer>
+</div>
+
+</body>
+</html>
+

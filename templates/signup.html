@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscription | My Meeting</title>
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --accent-color: #00d2ff;
+            --glass-bg: rgba(255, 255, 255, 0.12);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --text-color: #ffffff;
+        }
+
+        body, html {
+            height: 100%;
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: url('https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&q=80&w=1920') no-repeat center center fixed;
+            background-size: cover;
+            overflow-x: hidden;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(circle, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.6) 100%);
+            z-index: 1;
+        }
+
+        .container {
+            position: relative;
+            z-index: 2;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 50px 40px;
+            width: 90%;
+            max-width: 550px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+            color: var(--text-color);
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 2.8rem;
+            font-weight: 800;
+            margin-bottom: 5px;
+            letter-spacing: -1px;
+            text-transform: uppercase;
+        }
+
+        .logo span {
+            color: var(--accent-color);
+            font-weight: 300;
+            font-style: italic;
+        }
+
+        .tagline {
+            font-size: 1rem;
+            margin-bottom: 20px;
+            font-weight: 300;
+            letter-spacing: 1px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .flash-message {
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            text-align: left;
+        }
+
+        .form-group { display: flex; flex-direction: column; }
+        .full-width { grid-column: span 2; }
+
+        label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            margin-left: 5px;
+            font-weight: 600;
+            color: var(--accent-color);
+        }
+
+        input, select {
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.3);
+            background: rgba(255, 255, 255, 0.08);
+            color: white;
+            font-size: 15px;
+            transition: all 0.3s ease;
+        }
+
+        input::placeholder { color: rgba(255,255,255,0.5); }
+
+        input:focus, select:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.15);
+            border-color: var(--accent-color);
+            box-shadow: 0 0 10px rgba(0, 210, 255, 0.2);
+        }
+
+        select option { background: #2c3e50; color: white; }
+
+        .checkbox-group {
+            grid-column: span 2;
+            display: flex;
+            align-items: center;
+            font-size: 0.8rem;
+            margin-top: 10px;
+        }
+
+        .checkbox-group input { margin-right: 12px; width: 18px; height: 18px; cursor: pointer; }
+
+        .btn-submit {
+            grid-column: span 2;
+            padding: 16px;
+            margin-top: 15px;
+            border: none;
+            border-radius: 12px;
+            background: var(--primary-gradient);
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 4px 15px rgba(118, 75, 162, 0.4);
+        }
+
+        .btn-submit:hover {
+            transform: scale(1.02);
+            filter: brightness(1.1);
+            box-shadow: 0 6px 20px rgba(118, 75, 162, 0.6);
+        }
+
+        .footer-link {
+            margin-top: 25px;
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.7);
+        }
+
+        .footer-link a {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .footer-link a:hover { text-decoration: underline; }
+
+        @media (max-width: 500px) {
+            .form-grid { grid-template-columns: 1fr; }
+            .full-width { grid-column: span 1; }
+            .btn-submit { grid-column: span 1; }
+            .container { padding: 30px 20px; }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div class="overlay"></div>
+
+    <div class="container">
+        <div class="logo">My <span>Meeting</span></div>
+        <p class="tagline">L'endroit où les belles histoires commencent.</p>
+
+        <!-- Affichage des messages flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-message">
+              {% for category, message in messages %}
+                <p style="color: {% if category=='danger' %}#ff6b6b{% elif category=='warning' %}#feca57{% else %}#1dd1a1{% endif %};">
+                  {{ message }}
+                </p>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <form action="{{ url_for('signup') }}" method="POST">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Prénom</label>
+                    <input type="text" name="firstname" placeholder="Ex: Thomas" required>
+                </div>
+                <div class="form-group">
+                    <label>Naissance</label>
+                    <input type="date" name="birthdate" required>
+                </div>
+                <div class="form-group full-width">
+                    <label>Email professionnel ou perso</label>
+                    <input type="email" name="email" placeholder="nom@exemple.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Mot de passe</label>
+                    <input type="password" name="password" placeholder="••••••••" required>
+                </div>
+                <div class="form-group">
+                    <label>Confirmation</label>
+                    <input type="password" name="confirm_password" placeholder="••••••••" required>
+                </div>
+                <div class="form-group">
+                    <label>Je suis</label>
+                    <select name="gender">
+                        <option value="homme">Un homme</option>
+                        <option value="femme">Une femme</option>
+                        <option value="autre">Autre</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Je cherche</label>
+                    <select name="looking_for">
+                        <option value="femmes">Des femmes</option>
+                        <option value="hommes">Des hommes</option>
+                        <option value="tous">Tout le monde</option>
+                    </select>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" name="terms" id="terms" required>
+                    <label for="terms">Je certifie avoir plus de 18 ans et j'accepte les CGU.</label>
+                </div>
+
+                <button type="submit" class="btn-submit">Créer mon profil</button>
+            </div>
+        </form>
+
+        <div class="footer-link">
+            Déjà inscrit sur My Meeting ? <a href="/login">Connexion</a>
+        </div>
+    </div>
+
+</body>
+</html>
