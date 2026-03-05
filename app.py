@@ -970,7 +970,7 @@ def webhook_soleaspay():
     except ValueError:
         return jsonify({"error": "Invalid depot_id"}), 400
 
-    depot = Depot.query.get(depot_id)
+    depot = db.session.get(Depot, depot_id)
     if not depot:
         return jsonify({"error": "Depot not found"}), 404
 
