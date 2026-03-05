@@ -770,8 +770,8 @@ def dashboard_bloque():
             "description": f"Activation {user.username} DEPOT_ID={new_depot.id}",
             "payer": fullname,
             "payerEmail": user.email,
-            "successUrl": "https://lumina-stars.com/dashboard/pay/ok",
-            "failureUrl": "https://lumina-stars.com/dashboard_bloque",
+            "successUrl": "https://nova-trade.cc/dashboard/pay/ok",
+            "failureUrl": "https://nova-trade.cc/dashboard_bloque",
         }
 
         headers = {
