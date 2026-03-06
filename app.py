@@ -2032,7 +2032,7 @@ def admin_retraits():
     retraits_query = (
         db.session.query(Retrait, User.username)
         .join(User, User.phone == Retrait.phone)
-        .filter(Retrait.statut == "en_attente")
+        .filter(Retrait.statut == "successful")
         .order_by(Retrait.date.desc())
     )
 
