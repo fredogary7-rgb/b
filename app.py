@@ -880,109 +880,19 @@ def dashboard_bloque():
         country_code=country_code
     )
 
-@app.route("/verify", methods=["GET"])
-@login_required
-def verify_payment():
 
+@app.route("/verify", methods=["GET"])
+def verify_payment():
     order_id = request.args.get("orderId")
     pay_id = request.args.get("payId")
-
-    if not order_id or not pay_id:
-        return jsonify({"error": "Paramètres manquants"}), 400
-
     headers = {
         "x-api-key": API_KEY
     }
+    url = f"https://soleaspay.com/api/agent/verif-pay?orderId={order_id}&payId={pay_id}"
+    response = requests.get(url, headers=headers)
+    return jsonify(response.json())
 
-    url = "https://soleaspay.com/api/agent/verif-pay"
 
-    try:
-        response = requests.get(
-            url,
-            headers=headers,
-            params={
-                "orderId": order_id,
-                "payId": pay_id
-            },
-            timeout=15
-        )
-
-        data = response.json()
-
-    except Exception as e:
-        print("Erreur vérification paiement:", e)
-        return jsonify({"error": "Erreur serveur"}), 500
-
-    # -----------------------------
-    # TRAITEMENT DU RESULTAT
-    # -----------------------------
-
-    success = data.get("success")
-    status = data.get("status")
-    details = data.get("data", {})
-
-    external_reference = details.get("external_reference")
-    reference = details.get("reference")
-
-    if not external_reference or not external_reference.startswith("ORD-"):
-        return jsonify(data), 200
-
-    try:
-        depot_id = int(external_reference.replace("ORD-", ""))
-    except:
-        return jsonify(data), 200
-
-    depot = Depot.query.get(depot_id)
-
-    if not depot:
-        return jsonify(data), 200
-
-    # 🔒 Si déjà validé → on ne touche pas
-    if depot.statut == "valide":
-        return jsonify({"message": "Déjà validé"}), 200
-
-    # =========================
-    # ✅ SI SUCCESS
-    # =========================
-    if success is True and status == "SUCCESS":
-
-        user = User.query.filter_by(username=depot.user_name).first()
-        if not user:
-            return jsonify({"error": "Utilisateur introuvable"}), 404
-
-        try:
-            depot.statut = "valide"
-            depot.reference = reference
-
-            user.solde_depot += depot.montant
-            user.solde_total += depot.montant
-
-            # 🎯 Commission seulement si premier dépôt
-            if not user.premier_depot:
-                user.premier_depot = True
-                if user.parrain:
-                    donner_commission(user.parrain, depot.montant)
-
-            user.has_seen_pay_ok = True
-
-            db.session.commit()
-
-        except Exception as e:
-            db.session.rollback()
-            print("Erreur validation verify:", e)
-            return jsonify({"error": "Erreur serveur"}), 500
-
-        return jsonify({"message": "Paiement validé"}), 200
-
-    # =========================
-    # ❌ SI ECHEC
-    # =========================
-    elif success is False:
-        depot.statut = "echoue"
-        db.session.commit()
-        return jsonify({"message": "Paiement échoué"}), 200
-
-    return jsonify({"message": "En attente"}), 200
 
 @app.route("/logout")
 def logout_page():
@@ -1404,10 +1314,26 @@ from flask import Flask, render_template
 def about():
     return render_template("about.html")
 
+def get_service_name(service_id):
+    """
+    Cherche le nom du service dans tous les pays pour un ID donné.
+    """
+    for country_services in SERVICES.values():
+        for s in country_services:
+            if s["id"] == service_id:
+                return s["name"]
+    return f"Service {service_id}"  # fallback si ID inconnu
+
 @app.route("/mes-retraits")
 def mes_retraits():
     user = get_logged_in_user()
+    
+    # Récupérer tous les retraits de l'utilisateur
     retraits = Retrait.query.filter_by(phone=user.phone).order_by(Retrait.date.desc()).all()
+
+    # Ajouter le nom lisible pour chaque retrait
+    for r in retraits:
+        r.service_name = get_service_name(r.payment_method)
 
     return render_template("mes_retraits.html", retraits=retraits, user=user)
 
