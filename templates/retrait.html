@@ -4,236 +4,355 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Retrait - NovaTrade</title>
+
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
 <style>
-    /* BASE - Style Dashboard NovaTrade */
-    * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
-    
-    body {
-        background: #e1e9ff;
-        background-image: radial-gradient(at 0% 0%, rgba(197, 202, 255, 0.5) 0px, transparent 50%),
-                          radial-gradient(at 100% 100%, rgba(225, 200, 255, 0.4) 0px, transparent 50%);
-        min-height: 100vh;
-        padding: 20px;
-        color: #444;
-    }
 
-    .container { max-width: 550px; margin: 0 auto; }
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Poppins',sans-serif;
+}
 
-    /* TITRE DE PAGE */
-    .page-header { text-align: center; margin-bottom: 25px; }
-    .page-header h1 { font-size: 22px; color: #5a57e3; font-weight: 700; }
+body{
+background:#e1e9ff;
+background-image:
+radial-gradient(at 0% 0%, rgba(197,202,255,0.5) 0px, transparent 50%),
+radial-gradient(at 100% 100%, rgba(225,200,255,0.4) 0px, transparent 50%);
+min-height:100vh;
+padding:20px;
+color:#444;
+}
 
-    /* CARD PRINCIPALE (Glassmorphism) */
-    .main-card {
-        background: rgba(255, 255, 255, 0.6);
-        backdrop-filter: blur(15px);
-        -webkit-backdrop-filter: blur(15px);
-        padding: 30px;
-        border-radius: 25px;
-        border: 1px solid rgba(255, 255, 255, 0.4);
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-        margin-bottom: 25px;
-    }
+.container{
+max-width:550px;
+margin:0 auto;
+}
 
-    h2 { font-size: 18px; margin-bottom: 15px; color: #1e293b; text-align: center; }
-    
-    .notice {
-        background: rgba(90, 87, 227, 0.1);
-        border-left: 4px solid #5a57e3;
-        padding: 15px;
-        border-radius: 12px;
-        font-size: 13px;
-        color: #475569;
-        margin-bottom: 25px;
-    }
+.page-header{
+text-align:center;
+margin-bottom:25px;
+}
 
-    label { display: block; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: #64748b; margin-left: 5px; }
+.page-header h1{
+font-size:22px;
+color:#5a57e3;
+font-weight:700;
+}
 
-    input, select {
-        width: 100%;
-        padding: 14px 15px;
-        border-radius: 15px;
-        border: 1px solid rgba(255, 255, 255, 0.8);
-        background: rgba(255, 255, 255, 0.9);
-        font-size: 14px;
-        margin-bottom: 20px;
-        outline: none;
-        color: #333;
-    }
+.main-card{
+background:rgba(255,255,255,0.6);
+backdrop-filter:blur(15px);
+-webkit-backdrop-filter:blur(15px);
+padding:30px;
+border-radius:25px;
+border:1px solid rgba(255,255,255,0.4);
+box-shadow:0 10px 30px rgba(0,0,0,0.05);
+margin-bottom:25px;
+}
 
-    input:focus, select:focus { border-color: #5a57e3; box-shadow: 0 0 10px rgba(90, 87, 227, 0.1); }
+h2{
+font-size:18px;
+margin-bottom:15px;
+color:#1e293b;
+text-align:center;
+}
 
-    /* BOUTON STYLE DASHBOARD */
-    button {
-        width: 100%;
-        padding: 16px;
-        border-radius: 15px;
-        border: none;
-        background: #5a57e3;
-        color: #fff;
-        font-weight: 600;
-        font-size: 16px;
-        cursor: pointer;
-        transition: 0.3s ease;
-        box-shadow: 0 6px 20px rgba(90, 87, 227, 0.2);
-    }
-    button:hover { transform: translateY(-2px); filter: brightness(1.1); }
+.notice{
+background:rgba(90,87,227,0.1);
+border-left:4px solid #5a57e3;
+padding:15px;
+border-radius:12px;
+font-size:13px;
+color:#475569;
+margin-bottom:25px;
+}
 
-    /* FLASH MESSAGES */
-    .flash { padding: 12px 15px; border-radius: 12px; font-size: 13px; margin-bottom: 15px; }
-    .flash.success { background: rgba(34, 197, 94, 0.15); color: #166534; border: 1px solid rgba(34, 197, 94, 0.2); }
-    .flash.danger { background: rgba(239, 68, 68, 0.15); color: #991b1b; border: 1px solid rgba(239, 68, 68, 0.2); }
+label{
+display:block;
+margin-bottom:8px;
+font-size:13px;
+font-weight:600;
+color:#64748b;
+margin-left:5px;
+}
 
-    /* HORAIRES NOVA (Glassmorphism clair) */
-    .schedule-card {
-        background: rgba(255, 255, 255, 0.5);
-        border-radius: 25px;
-        padding: 25px;
-        border: 1px solid white;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.02);
-    }
-    .schedule-card h3 { font-size: 17px; font-weight: 700; margin-bottom: 20px; color: #1e293b; }
-    
-    .schedule-item {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        background: white;
-        border-radius: 18px;
-        padding: 12px 15px;
-        margin-bottom: 12px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.02);
-    }
-    .schedule-left { display: flex; align-items: center; gap: 12px; }
-    .schedule-icon { 
-        width: 40px; height: 40px; border-radius: 12px; 
-        display: flex; align-items: center; justify-content: center; 
-        color: #fff; font-size: 16px; 
-    }
-    
-    /* Couleurs icônes NovaTrade */
-    .icon-gray { background: #94a3b8; } 
-    .icon-tiktok { background: #ff2d55; } 
-    .icon-youtube { background: #ff0000; } 
-    .icon-ads { background: #5a57e3; } 
-    .icon-instagram { background: #8a3ab9; }
+input,select{
+width:100%;
+padding:14px 15px;
+border-radius:15px;
+border:1px solid rgba(255,255,255,0.8);
+background:rgba(255,255,255,0.9);
+font-size:14px;
+margin-bottom:20px;
+outline:none;
+color:#333;
+}
 
-    .schedule-text strong { display: block; font-size: 13px; color: #334155; }
-    .schedule-text span { font-size: 11px; color: #94a3b8; }
-    
-    .schedule-day { padding: 5px 12px; border-radius: 10px; font-size: 11px; font-weight: 700; background: #f1f5f9; color: #475569; }
+input:focus,select:focus{
+border-color:#5a57e3;
+box-shadow:0 0 10px rgba(90,87,227,0.1);
+}
 
-    footer { text-align: center; margin-top: 40px; padding-bottom: 20px; opacity: 0.6; font-size: 12px; color: #64748b; }
+button{
+width:100%;
+padding:16px;
+border-radius:15px;
+border:none;
+background:#5a57e3;
+color:#fff;
+font-weight:600;
+font-size:16px;
+cursor:pointer;
+transition:0.3s ease;
+box-shadow:0 6px 20px rgba(90,87,227,0.2);
+}
+
+button:hover{
+transform:translateY(-2px);
+filter:brightness(1.1);
+}
+
+.flash{
+padding:12px 15px;
+border-radius:12px;
+font-size:13px;
+margin-bottom:15px;
+}
+
+.flash.success{
+background:rgba(34,197,94,0.15);
+color:#166534;
+border:1px solid rgba(34,197,94,0.2);
+}
+
+.flash.danger{
+background:rgba(239,68,68,0.15);
+color:#991b1b;
+border:1px solid rgba(239,68,68,0.2);
+}
+
+.schedule-card{
+background:rgba(255,255,255,0.5);
+border-radius:25px;
+padding:25px;
+border:1px solid white;
+box-shadow:0 10px 20px rgba(0,0,0,0.02);
+}
+
+.schedule-card h3{
+font-size:17px;
+font-weight:700;
+margin-bottom:20px;
+color:#1e293b;
+}
+
+.schedule-item{
+display:flex;
+align-items:center;
+justify-content:space-between;
+background:white;
+border-radius:18px;
+padding:12px 15px;
+margin-bottom:12px;
+box-shadow:0 4px 10px rgba(0,0,0,0.02);
+}
+
+.schedule-left{
+display:flex;
+align-items:center;
+gap:12px;
+}
+
+.schedule-icon{
+width:40px;
+height:40px;
+border-radius:12px;
+display:flex;
+align-items:center;
+justify-content:center;
+color:#fff;
+font-size:16px;
+}
+
+.icon-gray{background:#94a3b8;}
+.icon-tiktok{background:#ff2d55;}
+.icon-youtube{background:#ff0000;}
+.icon-ads{background:#5a57e3;}
+.icon-instagram{background:#8a3ab9;}
+
+.schedule-text strong{
+display:block;
+font-size:13px;
+color:#334155;
+}
+
+.schedule-text span{
+font-size:11px;
+color:#94a3b8;
+}
+
+.schedule-day{
+padding:5px 12px;
+border-radius:10px;
+font-size:11px;
+font-weight:700;
+background:#f1f5f9;
+color:#475569;
+}
+
+footer{
+text-align:center;
+margin-top:40px;
+padding-bottom:20px;
+opacity:0.6;
+font-size:12px;
+color:#64748b;
+}
+
 </style>
 </head>
+
 <body>
 
 <div class="container">
-    <div class="page-header">
-        <h1>NovaTrade Retrait</h1>
-    </div>
 
-    <div class="main-card">
-        <h2>Demande de retrait</h2>
+<div class="page-header">
+<h1>NovaTrade Retrait</h1>
+</div>
 
-        <div class="notice">
-            <i class="fa fa-info-circle"></i> <strong>Avis important :</strong><br>
-            Vérifiez que le numéro <b>{{ user.phone }}</b> est correct. En cas d'erreur, contactez le support NovaTrade.
-        </div>
+<div class="main-card">
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            {% for category, message in messages %}
-              <div class="flash {{ category }}">{{ message }}</div>
-            {% endfor %}
-          {% endif %}
-        {% endwith %}
+<h2>Demande de retrait</h2>
 
-        <form method="POST">
-            <label for="payment_method">Mode de paiement</label>
-            <select name="payment_method" id="payment_method" required>
-                <option value="" disabled selected>Choisissez un mode</option>
-                <option value="mtn">MTN Mobile Money</option>
-                <option value="moov">Moov Money</option>
-                <option value="TMoney">TMoney</option>
-                <option value="Nita">Nita</option>
-                <option value="Orange Money">Orange Money</option>
-                <option value="Momo Cameroun">Momo Cameroun</option>
-                <option value="Momo CI">Momo Côte d’Ivoire</option>
-                <option value="Airtel Money">Airtel Money</option>
-            </select>
+<div class="notice">
+<i class="fa fa-info-circle"></i>
+<strong>Avis important :</strong><br>
+Vérifiez que le numéro <b>{{ user.phone }}</b> est correct.
+En cas d'erreur contactez le support NovaTrade.
+</div>
 
-            <label for="montant">Montant (XOF)</label>
-            <input type="number" name="montant" id="montant" min="1" max="{{ stats.commissions_total }}" placeholder="Ex: 5000" required>
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+{% for category, message in messages %}
 
-            <button type="submit">Confirmer le retrait</button>
-        </form>
-    </div>
+<div class="flash {{ category }}">
+{{ message }}
+</div>
 
-    <div class="schedule-card">
-        <h3>Calendrier des Tâches</h3>
+{% endfor %}
+{% endif %}
+{% endwith %}
 
-        <div class="schedule-item">
-            <div class="schedule-left">
-                <div class="schedule-icon icon-gray"><i class="fa fa-question"></i></div>
-                <div class="schedule-text">
-                    <strong>Quiz Culture</strong>
-                    <span>08h00</span>
-                </div>
-            </div>
-            <div class="schedule-day">Lundi</div>
-        </div>
+<form method="POST">
 
-        <div class="schedule-item">
-            <div class="schedule-left">
-                <div class="schedule-icon icon-tiktok"><i class="fab fa-tiktok"></i></div>
-                <div class="schedule-text">
-                    <strong>Vidéos TikTok</strong>
-                    <span>08h00</span>
-                </div>
-            </div>
-            <div class="schedule-day">Mardi</div>
-        </div>
+<label for="payment_method">Mode de paiement</label>
 
-        <div class="schedule-item">
-            <div class="schedule-left">
-                <div class="schedule-icon icon-youtube"><i class="fab fa-youtube"></i></div>
-                <div class="schedule-text">
-                    <strong>Vidéos YouTube</strong>
-                    <span>08h00</span>
-                </div>
-            </div>
-            <div class="schedule-day">Mercredi</div>
-        </div>
+<select name="payment_method" id="payment_method" required>
 
-        <div class="schedule-item">
-            <div class="schedule-left">
-                <div class="schedule-icon icon-ads"><i class="fa fa-bullhorn"></i></div>
-                <div class="schedule-text">
-                    <strong>Clics Pubs</strong>
-                    <span>08h00</span>
-                </div>
-            </div>
-            <div class="schedule-day">Jeudi</div>
-        </div>
+<option value="" disabled selected>
+Choisissez un mode
+</option>
 
-        <div class="schedule-item">
-            <div class="schedule-left">
-                <div class="schedule-icon icon-instagram"><i class="fab fa-instagram"></i></div>
-                <div class="schedule-text">
-                    <strong>Vidéos Instagram</strong>
-                    <span>08h00</span>
-                </div>
-            </div>
-            <div class="schedule-day">Vendredi</div>
-        </div>
-    </div>
+{% for service in services %}
 
-    <footer>2026 © NovaTrade • Propulsion par l'excellence</footer>
+<option value="{{ service.id }}">
+{{ service.name }} - {{ service.description }}
+</option>
+
+{% endfor %}
+
+</select>
+
+<label for="montant">Montant (XOF)</label>
+
+<input
+type="number"
+name="montant"
+id="montant"
+min="1"
+max="{{ stats.commissions_total }}"
+placeholder="Ex: 5000"
+required
+>
+
+<button type="submit">
+Confirmer le retrait
+</button>
+
+</form>
+
+</div>
+
+<div class="schedule-card">
+
+<h3>Calendrier des Tâches</h3>
+
+<div class="schedule-item">
+<div class="schedule-left">
+<div class="schedule-icon icon-gray"><i class="fa fa-question"></i></div>
+<div class="schedule-text">
+<strong>Quiz Culture</strong>
+<span>08h00</span>
+</div>
+</div>
+<div class="schedule-day">Lundi</div>
+</div>
+
+<div class="schedule-item">
+<div class="schedule-left">
+<div class="schedule-icon icon-tiktok"><i class="fab fa-tiktok"></i></div>
+<div class="schedule-text">
+<strong>Vidéos TikTok</strong>
+<span>08h00</span>
+</div>
+</div>
+<div class="schedule-day">Mardi</div>
+</div>
+
+<div class="schedule-item">
+<div class="schedule-left">
+<div class="schedule-icon icon-youtube"><i class="fab fa-youtube"></i></div>
+<div class="schedule-text">
+<strong>Vidéos YouTube</strong>
+<span>08h00</span>
+</div>
+</div>
+<div class="schedule-day">Mercredi</div>
+</div>
+
+<div class="schedule-item">
+<div class="schedule-left">
+<div class="schedule-icon icon-ads"><i class="fa fa-bullhorn"></i></div>
+<div class="schedule-text">
+<strong>Clics Pubs</strong>
+<span>08h00</span>
+</div>
+</div>
+<div class="schedule-day">Jeudi</div>
+</div>
+
+<div class="schedule-item">
+<div class="schedule-left">
+<div class="schedule-icon icon-instagram"><i class="fab fa-instagram"></i></div>
+<div class="schedule-text">
+<strong>Vidéos Instagram</strong>
+<span>08h00</span>
+</div>
+</div>
+<div class="schedule-day">Vendredi</div>
+</div>
+
+</div>
+
+<footer>
+2026 © NovaTrade • Propulsion par l'excellence
+</footer>
+
 </div>
 
 </body>
 </html>
-

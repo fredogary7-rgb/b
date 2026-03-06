@@ -373,13 +373,51 @@ def calculer_montant_points(user):
         (user.points_games or 0)
     )
     tranches = total_points // 100
-    montant_xof = tranches * 500
+    montant_xof = tranches * 200
     points_utilisables = tranches * 100  # points qui peuvent être retirés
     return montant_xof, points_utilisables
-# -----------------------
-# Vérification des investissements
-# -----------------------
 
+
+import requests
+
+import requests
+
+def envoyer_retrait_soleaspay(service_id, wallet, montant):
+
+    token, err = obtenir_token()
+
+    if err:
+        return {"success": False, "message": "Erreur token SoleasPay"}
+
+    url = "https://soleaspay.com/api/action/account/withdraw"
+
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "operation": "4",
+        "service": str(service_id),
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "wallet": wallet,
+        "amount": montant,
+        "currency": "XOF"
+    }
+
+    try:
+        response = requests.post(url, headers=headers, json=payload)
+
+        if response.status_code != 200:
+            return {
+                "success": False,
+                "message": f"Erreur HTTP {response.status_code}",
+                "content": response.text
+            }
+
+        return response.json()
+
+    except Exception as e:
+        return {"success": False, "message": str(e)}
 
 
 @app.cli.command("init-db")
@@ -476,6 +514,38 @@ def inscription_page():
 
     return render_template("inscription.html", code_ref=ref_code)
 
+
+PUBLIC_API_KEY = "SP_y7QKkaamPsVTlw8GDDGyzlJ7bmPUvdLorOQqWUXfRLI_AP"
+PRIVATE_SECRET_KEY = "SP_-YQFuI5M9B1H2bNSNycwI_YQBc_kXkGACp-mLoBdWqI"
+
+def obtenir_token():
+    url = "https://soleaspay.com/api/action/auth"
+
+    payload = {
+        "public_apikey": PUBLIC_API_KEY,
+        "private_secretkey": PRIVATE_SECRET_KEY
+    }
+
+    headers = {
+        "Content-Type": "application/json"
+    }
+
+    try:
+        response = requests.post(url, json=payload, headers=headers, timeout=10)
+        data = response.json()
+
+        token = data.get("access_token")   # ✅ CORRECTION ICI
+
+        if not token:
+            return None, data
+
+        return token, None
+
+    except Exception as e:
+        return None, str(e)
+
+
+
 @app.route('/game/apple-of-fortune')
 def apple_game_page():
     user = get_logged_in_user()
@@ -527,7 +597,6 @@ def glass_reward():
 
 
 
-from flask import render_template
 
 @app.route("/admin/fix_parrain")
 def fix_parrain():
@@ -1494,23 +1563,32 @@ def profile_page():
         team_total=team_total
     )
 
+
+PUBLIC_API_KEY = "SP_y7QKkaamPsVTlw8GDDGyzlJ7bmPUvdLorOQqWUXfRLI_AP"
+PRIVATE_SECRET_KEY = "SP_-YQFuI5M9B1H2bNSNycwI_YQBc_kXkGACp-mLoBdWqI"
+
+
 @app.route("/retrait", methods=["GET", "POST"])
 def retrait_page():
+
     user = get_logged_in_user()
 
     MIN_RETRAIT = 4000
     FRAIS = 500
 
-    # Stats pour le template : afficher le solde parrainage
     stats = {
         "commissions_total": float(user.solde_parrainage or 0)
     }
 
-    if request.method == "POST":
-        montant = float(request.form.get("montant", 0))
-        payment_method = request.form.get("payment_method")
+    # récupérer les services selon le pays
+    country_code = COUNTRY_CODE.get(user.country)
+    services = SERVICES.get(country_code, [])
 
-        # Vérification du montant
+    if request.method == "POST":
+
+        montant = float(request.form.get("montant", 0))
+        service_id = int(request.form.get("payment_method"))
+
         if montant <= 0:
             flash("Veuillez saisir un montant valide.", "danger")
             return redirect(url_for("retrait_page"))
@@ -1519,35 +1597,61 @@ def retrait_page():
             flash(f"Le montant minimum de retrait est de {MIN_RETRAIT} XOF.", "danger")
             return redirect(url_for("retrait_page"))
 
-        # Montant total incluant les frais
         montant_total = montant + FRAIS
 
-        # Vérifier que le solde parrainage est suffisant
         if montant_total > stats["commissions_total"]:
             flash("Solde parrainage insuffisant pour ce retrait + les frais.", "danger")
             return redirect(url_for("retrait_page"))
 
-        # Enregistrer la demande
+        # sécurité : vérifier que le service appartient au pays
+        valid_services = [s["id"] for s in services]
+
+        if service_id not in valid_services:
+            flash("Service de paiement invalide.", "danger")
+            return redirect(url_for("retrait_page"))
+
+        wallet = user.phone
+
+        # appel API SoleasPay
+        response = envoyer_retrait_soleaspay(service_id, wallet, montant)
+
+        # vérifier la réponse
+        if not response:
+            flash("Erreur connexion API SoleasPay.", "danger")
+            return redirect(url_for("retrait_page"))
+
+        if response.get("success") != True:
+            flash(f"Erreur API : {response.get('message','Paiement refusé')}", "danger")
+            return redirect(url_for("retrait_page"))
+
+        # enregistrer retrait
         nouveau_retrait = Retrait(
             montant=montant,
             frais=FRAIS,
-            payment_method=payment_method,
-            statut="en_attente",
+            payment_method=service_id,
+            statut="successful",
             phone=user.phone,
             pays=user.country
         )
+
         db.session.add(nouveau_retrait)
 
-        # Déduire du solde parrainage (commission)
         user.solde_parrainage -= montant_total
+        user.total_retrait = (user.total_retrait or 0) + montant_total
 
         db.session.commit()
 
-        flash(f"Votre demande de {montant} XOF a été soumise avec succès. Frais appliqués : {FRAIS} XOF.", "success")
+        flash(f"Retrait de {montant} XOF envoyé avec succès.", "success")
+
         return redirect(url_for("dashboard_page"))
 
-    # Passer stats au template
-    return render_template("retrait.html", user=user, stats=stats)
+    return render_template(
+        "retrait.html",
+        user=user,
+        stats=stats,
+        services=services
+    )
+
 
 def get_team_total(user):
     # Niveau 1 : filleuls directs
@@ -1616,7 +1720,7 @@ def retrait_points_page():
     tranches = total_points // 100
     montant_xof = tranches * 200
     points_utilisables = tranches * 100
-    retrait_min = 3500
+    retrait_min = 4000
 
     if request.method == "POST":
         if montant_xof < retrait_min:

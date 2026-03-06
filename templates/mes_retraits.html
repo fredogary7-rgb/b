@@ -123,8 +123,8 @@
                         <td style="font-size: 12px;">{{ r.date.strftime('%d/%m/%Y') }}<br><span style="opacity: 0.6;">{{ r.date.strftime('%H:%M') }}</span></td>
 
                         <td>
-                            {% if r.statut == "validé" %}
-                                <span class="status ok"><i class="fa fa-check-circle"></i> Validé</span>
+                            {% if r.statut == "successful" %}
+                                <span class="status ok"><i class="fa fa-check-circle"></i> Réussi</span>
                             {% elif r.statut == "refusé" %}
                                 <span class="status no"><i class="fa fa-times-circle"></i> Refusé</span>
                             {% else %}

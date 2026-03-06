@@ -1,0 +1,84 @@
+<!-- templates/admin/debug_retrait.html -->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test Retrait - NovaTrade</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+body {
+    font-family: 'Poppins', sans-serif;
+    background: #f0f4ff;
+    padding: 30px;
+    color: #333;
+}
+.container {
+    max-width: 500px;
+    margin: auto;
+    background: #fff;
+    padding: 25px 30px;
+    border-radius: 20px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+}
+h2 { text-align:center; margin-bottom: 20px; color: #5a57e3; }
+label { display:block; margin-bottom:5px; font-weight:600; }
+input, select {
+    width: 100%; padding: 12px; margin-bottom: 15px;
+    border-radius: 12px; border: 1px solid #ccc; font-size: 14px;
+}
+button {
+    width: 100%; padding: 14px; background:#5a57e3; color:#fff;
+    border:none; border-radius:12px; font-size:16px; cursor:pointer;
+}
+button:hover { filter: brightness(1.1); }
+.result { margin-top:20px; padding:12px; border-radius:12px; background:#f1f5f9; }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Test Retrait NovaTrade</h2>
+
+<form id="retraitForm">
+  <label>Nom utilisateur</label>
+  <input type="text" id="username" value="novatrade" required>
+
+  <label>Service ID</label>
+  <input type="number" id="service_id" value="37" required>
+
+  <label>Montant</label>
+  <input type="number" id="montant" value="1000" required>
+
+  <button type="submit">Envoyer le retrait</button>
+</form>
+
+<div id="result"></div>
+
+<script>
+document.getElementById("retraitForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const data = {
+    username: document.getElementById("username").value,
+    service_id: parseInt(document.getElementById("service_id").value),
+    montant: parseInt(document.getElementById("montant").value)
+  };
+
+  try {
+    const res = await fetch("/admin/test_retrait", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+    const json = await res.json();
+    document.getElementById("result").innerText = JSON.stringify(json, null, 2);
+  } catch (err) {
+    document.getElementById("result").innerText = err;
+  }
+});
+</script>
+
+</body>
+</html>
