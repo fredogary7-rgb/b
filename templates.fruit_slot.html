@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>NovaSlot - Fruits de Luxe</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { background: #1a1a2e; font-family: 'Poppins', sans-serif; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .slot-machine { background: #16213e; padding: 40px; border: 5px solid #e94560; border-radius: 30px; text-align: center; box-shadow: 0 0 50px rgba(233, 69, 96, 0.3); }
+        
+        .reels-container { display: flex; gap: 15px; justify-content: center; margin: 30px 0; }
+        .reel { width: 80px; height: 100px; background: white; border-radius: 10px; display: flex; justify-content: center; align-items: center; font-size: 50px; color: #333; transition: transform 0.1s; }
+        
+        .controls { margin-top: 20px; }
+        .btn-spin { background: #e94560; color: white; border: none; padding: 15px 40px; border-radius: 50px; font-size: 20px; font-weight: bold; cursor: pointer; transition: 0.3s; box-shadow: 0 5px 15px rgba(233, 69, 96, 0.4); }
+        .btn-spin:disabled { background: #555; cursor: not-allowed; }
+        
+        .balance { font-size: 18px; color: #0f3460; background: #fff; padding: 5px 20px; border-radius: 20px; font-weight: bold; margin-bottom: 20px; display: inline-block; }
+        .win-msg { height: 30px; margin-top: 15px; font-weight: bold; color: #00ff41; }
+    </style>
+</head>
+<body>
+
+<div class="slot-machine">
+    <div class="balance">SOLDE: <span id="balance">{{ user.solde_revenu }}</span> XOF</div>
+    <h1>NOVASLOT</h1>
+    
+    <div class="reels-container">
+        <div id="reel1" class="reel">🍒</div>
+        <div id="reel2" class="reel">🍒</div>
+        <div id="reel3" class="reel">🍒</div>
+    </div>
+
+    <div class="controls">
+        <input type="number" id="bet" value="100" min="100" style="padding: 10px; border-radius: 10px; border: none; width: 80px; text-align: center; margin-right: 10px;">
+        <button class="btn-spin" id="spin-btn" onclick="spin()">LANCER</button>
+    </div>
+
+    <div class="win-msg" id="msg"></div>
+</div>
+
+<script>
+const symbols = ["🍒", "🍋", "🍊", "🍇", "🔔", "💎"];
+
+function spin() {
+    const bet = document.getElementById('bet').value;
+    const btn = document.getElementById('spin-btn');
+    const msg = document.getElementById('msg');
+    
+    btn.disabled = true;
+    msg.innerText = "";
+
+    fetch('/game/slot-spin', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ bet: parseInt(bet) })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.status === 'error') {
+            alert(data.message);
+            btn.disabled = false;
+            return;
+        }
+
+        // Animation de roulement
+        let duration = 2000;
+        let startTime = Date.now();
+        
+        let timer = setInterval(() => {
+            document.getElementById('reel1').innerText = symbols[Math.floor(Math.random() * symbols.length)];
+            document.getElementById('reel2').innerText = symbols[Math.floor(Math.random() * symbols.length)];
+            document.getElementById('reel3').innerText = symbols[Math.floor(Math.random() * symbols.length)];
+            
+            if (Date.now() - startTime > duration) {
+                clearInterval(timer);
+                // Affichage du vrai résultat
+                document.getElementById('reel1').innerText = data.reels[0];
+                document.getElementById('reel2').innerText = data.reels[1];
+                document.getElementById('reel3').innerText = data.reels[2];
+                
+                document.getElementById('balance').innerText = data.new_balance;
+                btn.disabled = false;
+
+                if (data.game_status === 'win') {
+                    msg.innerText = "🎉 GAGNÉ : " + data.reward + " XOF !";
+                }
+            }
+        }, 100);
+    });
+}
+</script>
+
+</body>
+</html>
+

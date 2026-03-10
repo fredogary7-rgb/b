@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Netflix Direct - NovaTrade</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
+        body { background: #e1e9ff; padding: 20px; color: #444; min-height: 100vh; }
+        .container { max-width: 500px; margin: 0 auto; }
+        
+        .netflix-card {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 25px;
+            padding: 30px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+
+        .netflix-logo { color: #e50914; font-size: 60px; margin-bottom: 20px; }
+        
+        .btn-access {
+            display: block;
+            width: 100%;
+            padding: 18px;
+            background: #e50914; /* Rouge iconique Netflix */
+            color: white;
+            border-radius: 15px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 16px;
+            margin-top: 25px;
+            transition: 0.3s;
+        }
+        .btn-access:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(229, 9, 20, 0.3); }
+
+        .info-list { text-align: left; margin-top: 25px; font-size: 14px; color: #666; }
+        .info-list li { margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="netflix-card">
+        <div class="netflix-logo"><i class="fab fa-netflix"></i></div>
+        <h1>Netflix Visionnage</h1>
+        <p style="color: #666; margin-top: 5px;">Accès direct à votre catalogue de séries et films</p>
+
+        <ul class="info-list">
+            <li><i class="fa fa-check-circle" style="color: #2ecc71;"></i> Catalogue mis à jour en temps réel.</li>
+            <li><i class="fa fa-check-circle" style="color: #2ecc71;"></i> Aucun téléchargement nécessaire.</li>
+            <li><i class="fa fa-check-circle" style="color: #2ecc71;"></i> Streaming haute définition fluide.</li>
+        </ul>
+
+        <a href="https://net20.cc/" target="_blank" class="btn-access">
+            Accéder à la plateforme <i class="fa fa-external-link-alt"></i>
+        </a>
+    </div>
+
+    <a href="/apk" style="display:block; text-align:center; margin-top:25px; color:#5a57e3; text-decoration:none;">
+        <i class="fa fa-arrow-left"></i> Retour aux services
+    </a>
+</div>
+
+</body>
+</html>
+

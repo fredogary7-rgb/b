@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retrait Jeux - NovaTrade</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
+        body { background: #e1e9ff; padding: 20px; min-height: 100vh; color: #333; }
+        
+        .retrait-container { max-width: 500px; margin: 0 auto; }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(15px);
+            border-radius: 24px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+        }
+
+        .header-box {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 25px;
+            border-radius: 20px;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px; color: #555; }
+        
+        .input-group { margin-bottom: 20px; }
+        
+        input, select {
+            width: 100%;
+            padding: 14px;
+            border-radius: 14px;
+            border: 1px solid #ddd;
+            background: #fff;
+            outline: none;
+            font-size: 15px;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 14px;
+            background: #5a57e3;
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn-submit:hover { opacity: 0.9; transform: translateY(-2px); }
+
+        .flash-msg { padding: 12px; border-radius: 12px; margin-bottom: 20px; font-size: 13px; text-align: center; }
+        .danger { background: #ffcccc; color: #a94442; }
+        .success { background: #d4edda; color: #155724; }
+    </style>
+</head>
+<body>
+
+<div class="retrait-container">
+    <div class="glass-card">
+        <div class="header-box">
+            <i class="fa fa-gamepad" style="font-size: 35px; margin-bottom: 10px;"></i>
+            <h3>Solde des jeux</h3>
+            <h1 style="font-size: 32px;">{{ "{:,}".format(solde_dispo) }} XOF</h1>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-msg {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST">
+            <div class="input-group">
+                <label class="label">Montant à retirer (Min: {{ min_retrait }} XOF)</label>
+                <input type="number" name="montant" placeholder="Ex: 4000" required min="{{ min_retrait }}">
+                <p style="font-size: 12px; color: #888; margin-top: 5px;">
+                    Frais de transaction : {{ frais }} XOF
+                </p>
+            </div>
+
+            <div class="input-group">
+                <label class="label">Méthode de paiement</label>
+                <select name="payment_method" required>
+                    {% for service in services %}
+                        <option value="{{ service.id }}">{{ service.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label class="label">Numéro de réception</label>
+                <input type="text" value="{{ user.phone }}" required style="background: #f9f9f9; color: #888;">
+            </div>
+
+            <button type="submit" class="btn-submit">Valider le retrait</button>
+        </form>
+
+        <a href="/dashboard" style="display:block; text-align:center; margin-top:20px; color: #5a57e3; text-decoration:none; font-size: 14px;">
+            <i class="fa fa-arrow-left"></i> Retour
+        </a>
+    </div>
+</div>
+
+</body>
+</html>
+

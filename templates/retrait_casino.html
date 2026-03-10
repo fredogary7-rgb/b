@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retrait Casino - NovaTrade</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
+        body { background: #e1e9ff; padding: 20px; color: #333; }
+        
+        .retrait-container { max-width: 500px; margin: 0 auto; }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        }
+
+        .bonus-header {
+            background: linear-gradient(135deg, #f2994a, #f2c94c);
+            color: white;
+            padding: 20px;
+            border-radius: 20px;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .label { display: block; margin-bottom: 8px; font-size: 14px; font-weight: 600; color: #555; }
+        
+        .input-group { margin-bottom: 20px; }
+        
+        input, select {
+            width: 100%;
+            padding: 12px 15px;
+            border-radius: 12px;
+            border: 1px solid #ddd;
+            background: white;
+            outline: none;
+            font-size: 15px;
+        }
+
+        .btn-retrait {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            background: #5a57e3;
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn-retrait:hover { opacity: 0.9; transform: translateY(-2px); }
+        
+        .back-link { display: block; text-align: center; margin-top: 20px; color: #5a57e3; text-decoration: none; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<div class="retrait-container">
+    <div class="glass-card">
+        <div class="bonus-header">
+            <i class="fa fa-coins" style="font-size: 30px; margin-bottom: 10px;"></i>
+            <h3>Mon Solde Casino</h3>
+            <h2 style="font-size: 28px;">{{ "{:,}".format(stats.bonus_total) }} XOF</h2>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div style="padding: 10px; border-radius: 10px; margin-bottom: 15px; background: {% if category=='danger' %}#ffcccc{% else %}#ccffcc{% endif %}; color: #333; font-size: 13px;">
+                  {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form method="POST">
+            <div class="input-group">
+                <label class="label">Montant à retirer (Min: {{ min_retrait }} XOF)</label>
+                <input type="number" name="montant" placeholder="Ex: 500" required min="{{ min_retrait }}">
+            </div>
+
+            <div class="input-group">
+                <label class="label">Méthode de paiement ({{ user.country }})</label>
+                <select name="payment_method" required>
+                    {% for service in services %}
+                        <option value="{{ service.id }}">{{ service.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label class="label">Numéro de réception</label>
+                <input type="text" value="{{ user.phone }}" required style="background: #f0f0f0;">
+                <small style="font-size: 11px; color: #888;">Le retrait est envoyé vers votre numéro de compte.</small>
+            </div>
+
+            <button type="submit" class="btn-retrait">Confirmer le retrait</button>
+        </form>
+
+        <a href="/dashboard" class="back-link"><i class="fa fa-arrow-left"></i> Retour au tableau de bord</a>
+    </div>
+</div>
+
+</body>
+</html>
+

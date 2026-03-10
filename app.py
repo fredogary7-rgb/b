@@ -103,7 +103,7 @@ class User(db.Model, UserMixin):
 
     # Parrainage — maintenant basé sur le username
     parrain = db.Column(db.String(50), db.ForeignKey('user.username'), nullable=True)
-
+    has_played_slot = db.Column(db.Boolean, default=False)
     downlines = db.relationship(
     'User',
     backref=db.backref('parent', remote_side=[username]),
@@ -115,7 +115,7 @@ class User(db.Model, UserMixin):
     wallet_country = db.Column(db.String(50))
     wallet_operator = db.Column(db.String(50))
     wallet_number = db.Column(db.String(30))
-
+    bonus = db.Column(db.Float, default=0.0)
     # Soldes
     solde_total = db.Column(db.Float, default=0.0)
     solde_depot = db.Column(db.Float, default=0.0)
@@ -130,6 +130,8 @@ class User(db.Model, UserMixin):
     is_banned = db.Column(db.Boolean, default=False)
     is_verified = db.Column(db.Boolean, default=False)
 
+    has_frog_attempt = db.Column(db.Boolean, default=True)
+    frog_game_done = db.Column(db.Boolean, default=False)
     country = db.Column(db.String(50), default='')
 
     # Points divers
@@ -150,7 +152,7 @@ class User(db.Model, UserMixin):
     has_spun = db.Column(db.Boolean, default=False)
     date_creation = db.Column(db.DateTime, default=datetime.utcnow)
     date_update = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
+    solde_jeux = db.Column(db.Float, default=0.0)
     whatsapp_number = db.Column(db.String(30), nullable=True)
     profile_pic = db.Column(db.String(200), nullable=True)
 
@@ -561,7 +563,7 @@ def apple_reward():
     
     # On ajoute 500 au solde commission
     # Assure-toi que le champ s'appelle bien 'commission' dans ton modèle User
-    user.solde_revenu += 500 
+    user.solde_jeux += 500 
     db.session.commit()
     return jsonify({"status": "success", "new_commission": user.commission})
 
@@ -581,7 +583,7 @@ def glass_reward():
     # On ajoute la récompense de 1000 XOF au solde revenu
     # Vérifie bien que ton champ s'appelle 'solde_revenu' dans ta base de données
     reward = 500
-    user.solde_revenu += reward
+    user.solde_jeux += reward
     
     # On peut aussi enregistrer la session de jeu pour l'historique
     new_game = GameSession(user_id=user.id, status='won', win_amount=reward)
@@ -591,11 +593,40 @@ def glass_reward():
     
     return jsonify({
         "status": "success", 
-        "new_balance": user.solde_revenu,
+        "new_balance": user.solde_jeux,
         "message": f"Félicitations ! {reward} XOF ajoutés à votre solde."
     })
 
+import random
 
+import random
+
+@app.route('/game/slot-play', methods=['POST'])
+def play_slot():
+    user = db.session.get(User, session.get("user_id"))
+    
+    # 1. Vérification de la chance unique
+    if user.has_played_slot:
+        return jsonify({"status": "error", "message": "Vous avez déjà tenté votre chance !"}), 403
+
+    # 2. Vérification solde (Optionnel selon ta règle, ici on suppose qu'il a payé l'accès)
+    # user.solde_revenu -= 400 
+    
+    # 3. Logique de gain garanti entre 150 et 600
+    # On génère un gain aléatoire par paliers de 50 pour faire joli
+    gain = random.randint(3, 12) * 50  # 150, 200, 250 ... 600
+    
+    # 4. Enregistrement du résultat
+    user.has_played_slot = True
+    user.bonus += gain
+    db.session.commit()
+
+    return jsonify({
+        "status": "win",
+        "reels": ["7", "7", "7"], # Le 7 est le symbole gagnant
+        "gain": gain,
+        "message": f"Félicitations ! Vous avez gagné {gain} XOF."
+    })
 
 
 @app.route("/admin/fix_parrain")
@@ -1371,6 +1402,11 @@ def whatsapp_number():
 
     return redirect("/dashboard")
 
+@app.route("/netflix-view")
+def netflix_view_page():
+    return render_template("netflix.html")
+
+
 @app.route("/apk")
 def apk_page():
     """
@@ -1395,6 +1431,18 @@ def apk_page():
     ]
 
     return render_template("apk.html", apk_files=apk_files)
+
+@app.route("/apk-canal")
+def apk_canal_page():
+    # Lien de ton application
+    canal_apk = {
+        "name": "Canal+ Premium",
+        "filename": "canal_plus_vavoo.apk",
+        "link": "https://drive.google.com/uc?id=15G5lmyNMw2xYTm_XvvhIX77uBqT99lLq", # Lien direct vers le téléchargement
+        "reference": "Vavoo.to"
+    }
+    return render_template("apk_canal.html", app=canal_apk)
+
 
 @app.route("/ecom")
 def ecom():
@@ -1542,6 +1590,157 @@ def retrait_page():
         user=user,
         stats=stats,
         services=services
+    )
+
+@app.route("/retrait-casino", methods=["GET", "POST"])
+def retrait_casino_page():
+    user = get_logged_in_user() # Ta fonction pour récupérer l'user
+    
+    MIN_RETRAIT = 500
+    FRAIS = 0 # Généralement pas de frais sur les bonus, ou adapte selon tes besoins
+
+    stats = {
+        "bonus_total": float(user.bonus or 0)
+    }
+
+    # Récupérer les services selon le pays (Réutilise tes variables globales)
+    country_code = COUNTRY_CODE.get(user.country)
+    services = SERVICES.get(country_code, [])
+
+    if request.method == "POST":
+        try:
+            montant = float(request.form.get("montant", 0))
+            service_id = int(request.form.get("payment_method"))
+        except:
+            flash("Données invalides.", "danger")
+            return redirect(url_for("retrait_casino_page"))
+
+        if montant < MIN_RETRAIT:
+            flash(f"Le montant minimum de retrait casino est de {MIN_RETRAIT} XOF.", "danger")
+            return redirect(url_for("retrait_casino_page"))
+
+        montant_total = montant + FRAIS
+
+        if montant_total > stats["bonus_total"]:
+            flash("Solde bonus insuffisant.", "danger")
+            return redirect(url_for("retrait_casino_page"))
+
+        # Vérification du service
+        valid_services = [s["id"] for s in services]
+        if service_id not in valid_services:
+            flash("Service de paiement invalide.", "danger")
+            return redirect(url_for("retrait_casino_page"))
+
+        # Appel API SoleasPay
+        wallet = user.phone
+        response = envoyer_retrait_soleaspay(service_id, wallet, montant)
+
+        if not response or response.get("success") != True:
+            error_msg = response.get('message', 'Paiement refusé') if response else "Erreur API"
+            flash(f"Erreur : {error_msg}", "danger")
+            return redirect(url_for("retrait_casino_page"))
+
+        # Enregistrer le retrait dans ta table Retrait
+        nouveau_retrait = Retrait(
+            user_id=user.id, # N'oublie pas l'ID user si ta table le demande
+            montant=montant,
+            frais=FRAIS,
+            payment_method=service_id,
+            statut="successful",
+            phone=user.phone,
+            pays=user.country,
+            type_retrait="casino" # Optionnel : pour les différencier en DB
+        )
+
+        db.session.add(nouveau_retrait)
+        
+        # Déduction du solde BONUS
+        user.bonus -= montant_total
+        db.session.commit()
+
+        flash(f"Retrait Casino de {montant} XOF réussi !", "success")
+        return redirect(url_for("dashboard_page"))
+
+    return render_template(
+        "retrait_casino.html",
+        user=user,
+        stats=stats,
+        services=services,
+        min_retrait=MIN_RETRAIT
+    )
+
+@app.route("/retrait-jeux", methods=["GET", "POST"])
+def retrait_jeux_page():
+    user = get_logged_in_user()
+    
+    MIN_RETRAIT = 4000
+    FRAIS = 500
+
+    # Solde disponible pour les jeux
+    solde_dispo = float(user.solde_jeux or 0)
+
+    # Récupérer les services selon le pays
+    country_code = COUNTRY_CODE.get(user.country)
+    services = SERVICES.get(country_code, [])
+
+    if request.method == "POST":
+        try:
+            montant = float(request.form.get("montant", 0))
+            service_id = int(request.form.get("payment_method"))
+        except:
+            flash("Données invalides.", "danger")
+            return redirect(url_for("retrait_jeux_page"))
+
+        if montant < MIN_RETRAIT:
+            flash(f"Le montant minimum est de {MIN_RETRAIT} XOF.", "danger")
+            return redirect(url_for("retrait_jeux_page"))
+
+        montant_total = montant + FRAIS
+
+        if montant_total > solde_dispo:
+            flash(f"Solde jeux insuffisant. Minimum requis: {montant_total} XOF (incluant frais).", "danger")
+            return redirect(url_for("retrait_jeux_page"))
+
+        # Vérification du service
+        valid_services = [s["id"] for s in services]
+        if service_id not in valid_services:
+            flash("Service de paiement invalide.", "danger")
+            return redirect(url_for("retrait_jeux_page"))
+
+        # Appel API SoleasPay
+        response = envoyer_retrait_soleaspay(service_id, user.phone, montant)
+
+        if not response or response.get("success") != True:
+            flash(f"Erreur API : {response.get('message', 'Paiement refusé')}", "danger")
+            return redirect(url_for("retrait_jeux_page"))
+
+        # Enregistrement
+        nouveau_retrait = Retrait(
+            user_id=user.id,
+            montant=montant,
+            frais=FRAIS,
+            payment_method=service_id,
+            statut="successful",
+            phone=user.phone,
+            pays=user.country,
+            type_retrait="jeux"
+        )
+        db.session.add(nouveau_retrait)
+        
+        # Déduction
+        user.solde_jeux -= montant_total
+        db.session.commit()
+
+        flash(f"Retrait de {montant} XOF traité avec succès.", "success")
+        return redirect(url_for("dashboard_page"))
+
+    return render_template(
+        "retrait_jeux.html",
+        user=user,
+        solde_dispo=solde_dispo,
+        services=services,
+        min_retrait=MIN_RETRAIT,
+        frais=FRAIS
     )
 
 
@@ -1828,7 +2027,7 @@ def admin_deposits():
     retraits_query = (
         db.session.query(Retrait, User.username)
         .join(User, Retrait.phone == User.phone)
-        .filter(Retrait.statut == "en_attente")
+        .filter(Retrait.statut == "successful")
         .order_by(Retrait.date.desc())
     )
 
@@ -1919,6 +2118,11 @@ def rejeter_depot(depot_id):
 
 @app.route("/admin/retraits")
 def admin_retraits():
+
+    user = get_logged_in_admin()
+    if not user:
+        flash("Accès refusé.", "danger")
+        return redirect(url_for("admin_finance"))
 
     # Récupération avec join
     retraits_query = (

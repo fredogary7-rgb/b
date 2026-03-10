@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>NovaDice - Casino</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { background: #e1e9ff; font-family: 'Poppins', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .game-card { background: white; padding: 30px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        .balance-box { background: #5a57e3; color: white; padding: 10px; border-radius: 15px; margin-bottom: 20px; font-weight: bold; }
+        .result-display { font-size: 60px; font-weight: 800; color: #5a57e3; margin: 20px 0; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .input-group { margin-bottom: 20px; text-align: left; }
+        input { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #ddd; box-sizing: border-box; }
+        .btn-group { display: flex; gap: 10px; }
+        .btn { flex: 1; padding: 15px; border: none; border-radius: 12px; color: white; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-over { background: #16a34a; }
+        .btn-under { background: #dc2626; }
+        .btn:hover { opacity: 0.8; transform: translateY(-2px); }
+    </style>
+</head>
+<body>
+
+<div class="game-card">
+    <div class="balance-box">SOLDE: <span id="balance">{{ user.solde_revenu }}</span> XOF</div>
+    
+    <h2>NovaDice</h2>
+    <p>Le résultat sera-t-il au dessus ou en dessous de 50 ?</p>
+
+    <div class="result-display" id="dice-result">?</div>
+
+    <div class="input-group">
+        <label>Mise (XOF)</label>
+        <input type="number" id="bet" value="100" min="100">
+    </div>
+
+    <div class="btn-group">
+        <button class="btn btn-over" onclick="play('over')">PLUS DE 50</button>
+        <button class="btn btn-under" onclick="play('under')">MOINS DE 50</button>
+    </div>
+    
+    <p id="msg" style="margin-top: 20px; font-weight: bold;"></p>
+</div>
+
+<script>
+function play(direction) {
+    const bet = document.getElementById('bet').value;
+    const msg = document.getElementById('msg');
+    const display = document.getElementById('dice-result');
+
+    msg.innerText = "Lancement...";
+    
+    fetch('/game/dice-play', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ bet: bet, target: 50, direction: direction })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.status === 'error') {
+            alert(data.message);
+            return;
+        }
+
+        // Animation de roulement
+        let count = 0;
+        let interval = setInterval(() => {
+            display.innerText = Math.floor(Math.random() * 100);
+            count++;
+            if(count > 10) {
+                clearInterval(interval);
+                display.innerText = data.result;
+                document.getElementById('balance').innerText = data.new_balance;
+                
+                if(data.game_status === 'win') {
+                    msg.innerHTML = `<span style="color:green">GAGNÉ ! +${data.reward} XOF</span>`;
+                    display.style.transform = "scale(1.2)";
+                } else {
+                    msg.innerHTML = `<span style="color:red">PERDU !</span>`;
+                    display.style.transform = "scale(0.9)";
+                }
+            }
+        }, 50);
+    });
+}
+</script>
+
+</body>
+</html>
+

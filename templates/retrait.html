@@ -229,11 +229,20 @@ color:#64748b;
 <h2>Demande de retrait</h2>
 
 <div class="notice">
-<i class="fa fa-info-circle"></i>
-<strong>Avis important :</strong><br>
-Vérifiez que le numéro <b>{{ user.phone }}</b> est correct.
-En cas d'erreur contactez le support NovaTrade.
+    <i class="fa fa-info-circle"></i>
+    <strong>Avis important :</strong><br>
+    Vérifiez que le numéro est correct avant de valider :<br>
+    
+    <div style="margin-top: 10px; display: flex; align-items: center; gap: 5px;">
+        <input type="tel" name="phone" value="{{ user.phone }}" required
+               style="padding: 8px; border-radius: 8px; border: 1px solid #ccc; width: 100%; font-weight: bold; color: #5a57e3;">
+    </div>
+    
+    <small style="display:block; margin-top:5px; color: #666;">
+        Vous pouvez modifier ce numéro ci-dessus avant de cliquer sur valider.
+    </small>
 </div>
+
 
 {% with messages = get_flashed_messages(with_categories=true) %}
 {% if messages %}

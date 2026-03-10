@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frog Hunter - NovaTrade</title>
+    <style>
+        body {
+            margin: 0; padding: 0; background: #0077be;
+            font-family: 'Poppins', sans-serif;
+            overflow: hidden; display: flex; flex-direction: column; align-items: center;
+        }
+
+        /* Animation de l'eau */
+        .water {
+            position: absolute; bottom: 0; width: 100%; height: 100%;
+            background: linear-gradient(180deg, #1e88e5 0%, #004d40 100%);
+            z-index: 0; animation: wave 10s infinite alternate;
+        }
+        @keyframes wave { from { transform: translateY(0); } to { transform: translateY(20px); } }
+
+        .game-area { z-index: 1; display: grid; grid-template-columns: repeat(5, 60px); gap: 15px; margin-top: 50px; }
+
+        .leaf {
+            width: 60px; height: 60px; background: #4caf50; border-radius: 50% 50% 10% 50%;
+            display: flex; justify-content: center; align-items: center; color: rgba(255,255,255,0.3);
+            font-weight: bold; cursor: pointer; border: 2px solid #2e7d32;
+            transition: all 0.3s;
+        }
+        .leaf.active { background: #81c784; box-shadow: 0 0 15px white; }
+
+        #frog {
+            width: 50px; position: absolute; bottom: 50px; left: 50%;
+            transition: all 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            z-index: 2;
+        }
+
+        .controls { position: absolute; bottom: 30px; display: flex; gap: 20px; }
+        button { padding: 15px 30px; font-size: 18px; border-radius: 15px; border: none; cursor: pointer; font-weight: bold; }
+        #btn-start { background: #4caf50; color: white; }
+        #btn-cashout { background: #ff9800; color: white; display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="water"></div>
+    <h2 style="z-index:1; color:white;">Nova Frog Hunter</h2>
+
+    <div class="game-area" id="grid"></div>
+
+    <img src="https://cdn-icons-png.flaticon.com/512/616/616450.png" id="frog" alt="Frog">
+
+    <div class="controls">
+        <button id="btn-start" onclick="startGame()">JOUER (150F)</button>
+        <button id="btn-cashout" onclick="cashout()">ENCAISSER</button>
+    </div>
+
+    <script>
+        let currentStep = 0;
+        const grid = document.getElementById('grid');
+        const frog = document.getElementById('frog');
+        
+        // Création des nénuphars
+        for(let r=4; r>=1; r--) {
+            for(let c=0; c<5; c++) {
+                let div = document.createElement('div');
+                div.className = 'leaf';
+                div.innerHTML = r === 1 ? '1.3' : (r === 2 ? '2.17' : (r === 3 ? '5.43' : '27.16'));
+                div.onclick = () => jump(div, r);
+                grid.appendChild(div);
+            }
+        }
+
+        function startGame() {
+            fetch('/game/frog-start', {method: 'POST'}).then(res => {
+                if(res.ok) {
+                    document.getElementById('btn-start').style.display = 'none';
+                    alert("Chance unique activée ! Choisissez un nénuphar.");
+                }
+            });
+        }
+
+        function jump(el, row) {
+            // Animation de saut réel
+            frog.style.left = el.offsetLeft + "px";
+            frog.style.top = (el.offsetTop - 50) + "px";
+            
+            // Logique de survie (80% de chance)
+            setTimeout(() => {
+                if(Math.random() > 0.2) {
+                    currentStep = row;
+                    document.getElementById('btn-cashout').style.display = 'block';
+                    document.getElementById('btn-cashout').innerText = "ENCAISSER";
+                } else {
+                    alert("La grenouille a coulé !");
+                    location.reload();
+                }
+            }, 600);
+        }
+
+        function cashout() {
+            fetch('/game/frog-cashout', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({step: currentStep})
+            }).then(res => res.json()).then(data => {
+                alert("Gagné : " + data.amount + " FCFA");
+                window.location.href = "/dashboard";
+            });
+        }
+    </script>
+</body>
+</html>
+
