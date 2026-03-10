@@ -1,0 +1,22 @@
+{
+  "name": "NovaTrade",
+  "short_name": "NovaTrade",
+  "start_url": "/inscription",
+  "display": "standalone",
+  "background_color": "#e1e9ff",
+  "theme_color": "#5a57e3",
+  "description": "Plateforme d'affiliation et services NovaTrade",
+  "icons": [
+    {
+      "src": "/static/images/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/images/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
+
