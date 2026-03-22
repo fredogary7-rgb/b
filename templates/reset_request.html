@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Récupération | NovaTrade</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
+        body {
+            background: #e1e9ff;
+            background-image: radial-gradient(at 0% 0%, rgba(197, 202, 255, 0.5) 0px, transparent 50%),
+                              radial-gradient(at 100% 100%, rgba(225, 200, 255, 0.4) 0px, transparent 50%);
+            min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px;
+        }
+        .login-card {
+            background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.4); border-radius: 25px;
+            padding: 30px; width: 100%; max-width: 420px; text-align: center;
+        }
+        .header-box {
+            background: linear-gradient(135deg, #8e54e9 0%, #4776e6 100%);
+            margin: -30px -30px 25px -30px; padding: 20px;
+            border-radius: 25px 25px 15px 15px; display: flex; align-items: center; justify-content: center; color: white;
+        }
+        .header-box img { width: 45px; height: 45px; border-radius: 12px; margin-right: 12px; background: white; padding: 4px; }
+        .title-section h1 { font-size: 22px; color: #333; margin-bottom: 8px; font-weight: 700; }
+        .title-section p { font-size: 13px; color: #666; margin-bottom: 25px; }
+        .input-group { position: relative; margin-bottom: 20px; text-align: left; }
+        .input-group label { display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 8px; margin-left: 5px; }
+        .input-field { position: relative; }
+        .input-field i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #8e54e9; }
+        .input-field input {
+            width: 100%; padding: 13px 15px 13px 45px; border-radius: 15px; border: 1px solid #fff;
+            background: rgba(255, 255, 255, 0.8); outline: none; transition: 0.3s;
+        }
+        .btn-login {
+            width: 100%; padding: 15px; background: #5a57e3; color: white; border-radius: 15px;
+            font-weight: 600; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px;
+        }
+        .loader { display: none; width: 18px; height: 18px; border: 2px solid #ffffff; border-bottom-color: transparent; border-radius: 50%; animation: rotation 0.8s linear infinite; }
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .alert { padding: 10px; border-radius: 10px; margin-bottom: 15px; font-size: 12px; text-align: center; }
+        .alert-danger { background: #fee2e2; color: #dc2626; }
+        .alert-success { background: #dcfce7; color: #16a34a; }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div class="header-box">
+            <img src="/static/images/n.jpg" alt="Logo">
+            <h2>NovaTrade</h2>
+        </div>
+        <div class="title-section">
+            <h1>Récupération</h1>
+            <p>Entrez votre email pour recevoir un code.</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form method="POST" onsubmit="return handleReset();">
+            <div class="input-group">
+                <label>Votre adresse Email</label>
+                <div class="input-field">
+                    <i class="fa fa-envelope"></i>
+                    <input type="email" name="email" placeholder="exemple@mail.com" required>
+                </div>
+            </div>
+            <button type="submit" class="btn-login" id="reset-btn">
+                <span id="btn-text">Envoyer le code</span>
+                <div class="loader" id="loader"></div>
+            </button>
+        </form>
+        <div style="margin-top:20px; font-size:13px;">
+            <a href="/connexion" style="color:#5a57e3; font-weight:700; text-decoration:none;">Retour à la connexion</a>
+        </div>
+    </div>
+    <script>
+        function handleReset() {
+            document.getElementById('reset-btn').disabled = true;
+            document.getElementById('loader').style.display = 'inline-block';
+            document.getElementById('btn-text').innerText = 'Envoi en cours...';
+            return true;
+        }
+    </script>
+</body>
+</html>
+

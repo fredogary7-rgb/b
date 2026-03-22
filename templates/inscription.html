@@ -21,13 +21,12 @@
 
     <link rel="manifest" href="/static/manifest.json">
     <meta name="theme-color" content="#5a57e3">
-    
+
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    
+
     <link rel="icon" href="/static/images/favicon-48.png" sizes="48x48" type="image/png">
     <link rel="icon" href="/static/images/icon-192.png" sizes="192x192" type="image/png">
-</head>
 
     <style>
         /* STYLE NOVATRADE - GLASSMORPHISM */
@@ -110,9 +109,35 @@
             background: #5a57e3; color: white; font-weight: 700; font-size: 16px;
             cursor: pointer; transition: 0.3s ease;
             box-shadow: 0 6px 20px rgba(90, 87, 227, 0.2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
         }
 
         .btn-submit:hover { transform: translateY(-2px); filter: brightness(1.1); }
+        
+        /* Style du Loader */
+        .loader {
+            display: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #ffffff;
+            border-bottom-color: transparent;
+            border-radius: 50%;
+            animation: rotation 0.8s linear infinite;
+        }
+
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
 
         .alert { padding: 12px; border-radius: 12px; margin-bottom: 15px; font-size: 13px; font-weight: 600; text-align: center; }
         .flash.danger { background: #fee2e2; color: #dc2626; }
@@ -143,11 +168,11 @@
           {% endif %}
         {% endwith %}
 
-        <form method="POST" action="{{ url_for('inscription_page') }}">
+        <form method="POST" action="{{ url_for('inscription_page') }}" onsubmit="return handleFormSubmit(this);">
 
             <label>Nom d'utilisateur</label>
             <div class="input-wrapper">
-                <input type="text" name="username" placeholder="Choisissez un pseudo" required 
+                <input type="text" name="username" placeholder="Choisissez un pseudo" required
                        value="{{ '' if session.get('username_exists') else request.form.get('username','') }}">
             </div>
 
@@ -173,7 +198,7 @@
 
             <label>Parrain</label>
             <div class="input-wrapper">
-                <input type="text" name="parrain" value="{{ request.form.get('parrain', code_ref) }}" readonly 
+                <input type="text" name="parrain" value="{{ request.form.get('parrain', code_ref) }}" readonly
                        style="background: rgba(0,0,0,0.05); color: #64748b; cursor: not-allowed;">
             </div>
 
@@ -194,7 +219,11 @@
                 <label for="terms" style="margin:0; text-transform: none; font-weight: 500; font-size: 12px; color: #666;">J'accepte les conditions</label>
             </div>
 
-            <button type="submit" class="btn-submit">Créer mon compte</button>
+            <button type="submit" class="btn-submit" id="submit-btn">
+                <span id="btn-text">Recevoir le code de vérification</span>
+                <div class="loader" id="loader"></div>
+            </button>
+
         </form>
 
         <div class="login-footer">
@@ -213,6 +242,19 @@
                 input.type = "password";
                 icon.classList.replace("fa-eye-slash", "fa-eye");
             }
+        }
+
+        function handleFormSubmit(form) {
+            const btn = document.getElementById('submit-btn');
+            const loader = document.getElementById('loader');
+            const btnText = document.getElementById('btn-text');
+
+            // On active le loader et on désactive le bouton
+            btn.disabled = true;
+            loader.style.display = 'inline-block';
+            btnText.innerText = 'Envoi en cours...';
+            
+            return true;
         }
     </script>
 </body>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Poppins', Arial, sans-serif;
+            background-color: #f4f7ff;
+            margin: 0;
+            padding: 0;
+        }
+        .wrapper {
+            width: 100%;
+            table-layout: fixed;
+            background-color: #f4f7ff;
+            padding-bottom: 40px;
+        }
+        .main {
+            background-color: #ffffff;
+            margin: 0 auto;
+            width: 100%;
+            max-width: 600px;
+            border-spacing: 0;
+            color: #444444;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(90, 87, 227, 0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #8e54e9 0%, #4776e6 100%);
+            padding: 40px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            color: #ffffff;
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .content {
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .content h2 {
+            color: #333;
+            font-size: 22px;
+            margin-bottom: 10px;
+        }
+        .content p {
+            color: #666;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+        .otp-box {
+            background: #f0f3ff;
+            border: 2px dashed #5a57e3;
+            border-radius: 15px;
+            display: inline-block;
+            margin: 30px 0;
+            padding: 20px 40px;
+        }
+        .otp-code {
+            font-size: 36px;
+            font-weight: 800;
+            color: #5a57e3;
+            letter-spacing: 8px;
+        }
+        .footer {
+            background-color: #f9fafb;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #999;
+        }
+        .footer a {
+            color: #5a57e3;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <table class="main">
+            <tr>
+                <td class="header">
+                    <h1>NOVATRADE</h1>
+                </td>
+            </tr>
+            <tr>
+                <td class="content">
+                    <h2>Vérification de sécurité</h2>
+                    <p>Bonjour,</p>
+                    <p>Pour finaliser votre inscription et rejoindre l'élite de <strong>NovaTrade</strong>, veuillez utiliser le code de vérification unique ci-dessous :</p>
+                    
+                    <div class="otp-box">
+                        <span class="otp-code">{{ otp_code }}</span>
+                    </div>
+
+                    <p style="font-size: 13px; font-style: italic; color: #999;">
+                        Ce code est valable pendant 10 minutes. <br>
+                        Si vous n'avez pas sollicité ce code, ignorez cet email.
+                    </p>
+                </td>
+            </tr>
+            <tr>
+                <td class="footer">
+                    <p>&copy; 2026 NovaTrade - Plateforme d'Affiliation Professionnelle</p>
+                    <p>Besoin d'aide ? <a href="#">Contactez le support</a></p>
+                </td>
+            </tr>
+        </table>
+    </div>
+</body>
+</html>
+

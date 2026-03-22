@@ -111,7 +111,7 @@ class User(db.Model, UserMixin):
     )
     commission_total = db.Column(db.Float, default=0.0)
     has_seen_pay_ok = db.Column(db.Boolean, default=False)
-    # Informations du portefeuille
+    ip_address = db.Column(db.String(45)) # Ajoute cette ligne
     wallet_country = db.Column(db.String(50))
     wallet_operator = db.Column(db.String(50))
     wallet_number = db.Column(db.String(30))
@@ -147,6 +147,7 @@ class User(db.Model, UserMixin):
     last_youtube_date = db.Column(db.String(10), default=None)
     last_tiktok_date = db.Column(db.String(20), default=None)
     last_login = db.Column(db.DateTime, nullable=True)
+    game_played_count = db.Column(db.Integer, default=0) # Nombre de fois qu'il a joué
     login_count = db.Column(db.Integer, default=0)
     has_spun_wheel = db.Column(db.Boolean, default=False)
     has_spun = db.Column(db.Boolean, default=False)
@@ -162,40 +163,41 @@ class User(db.Model, UserMixin):
 # ==============================
 # 📦 MODELS
 # ==============================
+
 class Depot(db.Model):
     __tablename__ = "depot"
 
     id = db.Column(db.Integer, primary_key=True)
 
-    # 🔗 Lien vers l'utilisateur via username (nom d'utilisateur)
+    # 🔁 Ancien système
     user_name = db.Column(
         db.String(50),
         db.ForeignKey("user.username", ondelete="CASCADE"),
-        nullable=False
+        nullable=True
     )
 
-    # 📱 Informations utilisateur
-    phone = db.Column(db.String(30), nullable=False)
+    # 🆕 Nouveau système
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("user.id", ondelete="CASCADE"),
+        nullable=True
+    )
 
-    # 🛠 Informations paiement
+    # ✅ TRÈS IMPORTANT : préciser foreign_keys
+    user = db.relationship(
+        "User",
+        backref="depots",
+        foreign_keys=[user_id]  # 👈 ICI la correction
+    )
+
+    phone = db.Column(db.String(30), nullable=False)
     operator = db.Column(db.String(50), nullable=False)
     country = db.Column(db.String(50), nullable=False)
-
-    # 💰 Montant déposé
     montant = db.Column(db.Float, nullable=False)
-
-    # 🔖 Référence transaction
     reference = db.Column(db.String(200), nullable=True)
-
-    # 📌 Statut du dépôt
     statut = db.Column(db.String(20), default="pending")
-
     email = db.Column(db.String(120), nullable=True)
-    # ⏱ Date création
     date = db.Column(db.DateTime, default=datetime.utcnow)
-
-    def __repr__(self):
-        return f"<Depot {self.id} | User: {self.user_name} | Montant: {self.montant}>"
 
 class Commission(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -205,10 +207,13 @@ class Commission(db.Model):
     niveau = db.Column(db.Integer, nullable=False)
     date = db.Column(db.DateTime, default=datetime.utcnow)
 
+
 class Retrait(db.Model):
     __tablename__ = "retrait"
 
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, nullable=True)  # ✅ NOUVELLE COLONNE
+
     phone = db.Column(db.String(30), nullable=False)
     montant = db.Column(db.Float, nullable=False)
     statut = db.Column(db.String(20), default="en_attente")
@@ -275,6 +280,28 @@ class GameSession(db.Model):
     status = db.Column(db.String(20), default='pending') # pending, won, lost
     date = db.Column(db.DateTime, default=datetime.utcnow)
 
+def send_otp(recipient_email, code_otp):
+    try:
+        html_content = render_template(
+            'email_otp.html',
+            otp_code=code_otp,
+            user_email=recipient_email
+        )
+
+        msg = Message(
+            subject="Votre code de sécurité Novatrade",
+            sender=("Novatrade Sécurité", app.config['MAIL_USERNAME']),
+            recipients=[recipient_email]
+        )
+
+        msg.html = html_content
+
+        mail.send(msg)
+        return True
+
+    except Exception as e:
+        print(f"Erreur d'envoi : {e}")
+        return False
 
 def donner_commission(parrain_username, montant_depot):
     """Crée la commission et remplit solde_revenu, solde_parrainage et commission_total selon les niveaux."""
@@ -380,6 +407,18 @@ def calculer_montant_points(user):
     return montant_xof, points_utilisables
 
 
+from flask_mail import Mail, Message
+import random
+
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'novatrade26@gmail.com'
+app.config['MAIL_PASSWORD'] = 'bdkf fphn pooy ttnl'
+app.config['MAIL_DEFAULT_SENDER'] = app.config['MAIL_USERNAME']  # ✅ AJOUT
+
+mail = Mail(app)
+
 import requests
 
 import requests
@@ -428,12 +467,124 @@ def init_db():
     print("✅ Base de données initialisée avec succès !")
 
 
+
+@app.route('/test-mail')
+def test_mail():
+    print("TEST ENVOI EMAIL...")
+
+    success = send_otp("1xthom14@gmail.com", "123456")
+
+    print("RESULTAT :", success)
+
+    return "OK"
+
+# --- ROUTE DEMANDE DE RESET ---
+@app.route('/reset-password', methods=['GET', 'POST'])
+def reset_password_request():
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip()
+        user = User.query.filter_by(email=email).first()
+        
+        if user:
+            otp = str(random.randint(100000, 999999))
+            if send_otp(email, otp):
+                session['otp'] = otp
+                session['mode'] = 'reset'
+                session['reset_email'] = email
+                flash("Un code de vérification a été envoyé à votre email.", "success")
+                return redirect(url_for('verify_page'))
+        else:
+            flash("Cet email n'existe pas dans notre base.", "danger")
+            
+    return render_template('reset_request.html')
+
+@app.route('/verify', methods=['GET', 'POST'])
+def verify_page():
+    if request.method == 'POST':
+        code_saisi = request.form.get('code')
+
+        if code_saisi != session.get('otp'):
+            flash("Code incorrect.", "danger")
+            return redirect(url_for('verify_page'))
+
+        # Logique Inscription
+        if session.get('mode') == 'inscription':
+            data = session.get('temp_user')
+            try:
+                new_user = User(
+                    uid=str(uuid.uuid4()),
+                    username=data['username'],
+                    email=data['email'],
+                    phone=data['phone'],
+                    country=data['country'],
+                    password=data['password'],
+                    parrain=data['parrain'],
+                    # --- AJOUT DE L'IP ICI ---
+                    ip_address=data.get('ip_address'), 
+                    # -------------------------
+                    solde_total=0, 
+                    solde_depot=0, 
+                    solde_revenu=0, 
+                    solde_parrainage=0,
+                    date_creation=datetime.now(timezone.utc)
+                )
+                db.session.add(new_user)
+                db.session.commit()
+                
+                session["user_id"] = new_user.id
+                session.pop('otp', None)
+                session.pop('temp_user', None)
+                
+                flash("Inscription réussie !", "success")
+                return redirect(url_for("dashboard_bloque"))
+            except Exception as e:
+                db.session.rollback()
+                flash("Erreur lors de la création du compte : " + str(e), "danger")
+
+        # LOGIQUE RESET
+        elif session.get('mode') == 'reset':
+            return redirect(url_for('new_password_page'))
+
+    return render_template('verify.html')
+
+
+@app.route('/new-password', methods=['GET', 'POST'])
+def new_password_page():
+    if 'reset_email' not in session:
+        return redirect(url_for('connexion_page'))
+
+    if request.method == 'POST':
+        password = request.form.get('password')
+        confirm = request.form.get('confirm_password')
+
+        if password != confirm:
+            flash("Les mots de passe ne correspondent pas.", "danger")
+            return render_template('new_password.html')
+
+        user = User.query.filter_by(email=session['reset_email']).first()
+        if user:
+            user.password = generate_password_hash(password)
+            db.session.commit()
+            session.pop('reset_email', None)
+            session.pop('otp', None)
+            flash("Mot de passe modifié avec succès ! Connectez-vous.", "success")
+            return redirect(url_for('connexion_page'))
+
+    return render_template('new_password.html')
+
+
 @app.route("/inscription", methods=["GET", "POST"])
 def inscription_page():
     ref_code = request.args.get("ref", "").strip().lower()
     session.pop("username_exists", None)
 
     if request.method == "POST":
+        # --- NOUVELLE LOGIQUE : RÉCUPÉRATION DE L'IP ---
+        user_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+        if user_ip and ',' in user_ip:
+            user_ip = user_ip.split(',')[0].strip()
+        # ----------------------------------------------
+
         username = request.form.get("username", "").strip().lower()
         email = request.form.get("email", "").strip()
         country = request.form.get("country", "").strip()
@@ -444,7 +595,12 @@ def inscription_page():
 
         errors = []
 
-        # 🔒 Vérifications de base
+        # 🛡️ VÉRIFICATION ANTI-MULTICOMPTE (NOUVEAU)
+        existing_ip = User.query.filter_by(ip_address=user_ip).first()
+        if existing_ip:
+            errors.append("Vous avez déjà créé un compte avec cet appareil.")
+
+        # 🔒 Tes vérifications de base (Inchangées)
         if not all([username, email, country, phone, password, confirm]):
             errors.append("Tous les champs sont obligatoires.")
 
@@ -454,7 +610,7 @@ def inscription_page():
         if password and confirm and password != confirm:
             errors.append("Les mots de passe ne correspondent pas.")
 
-        # 🔎 Vérification doublons en UNE requête
+        # 🔎 Tes vérifications doublons (Inchangées)
         if username and email and phone:
             existing_users = User.query.filter(
                 (User.username == username) |
@@ -471,49 +627,41 @@ def inscription_page():
                 if user.phone == phone:
                     errors.append("Ce numéro est déjà enregistré.")
 
-        # 🔗 Vérification parrainage
+        # 🔗 Ta vérification parrainage (Inchangée)
         parrain_user = None
         if parrain_code:
             parrain_user = User.query.filter_by(username=parrain_code).first()
             if not parrain_user:
                 errors.append("Code parrain invalide.")
 
-        # 🚨 S'il y a des erreurs
+        # 🚨 Gestion des erreurs (Inchangée)
         if errors:
             for error in errors:
                 flash(error, "danger")
             return render_template("inscription.html", code_ref=ref_code)
 
-        # ✅ Création utilisateur
+        # ✅ ÉTAPE OTP (Mise à jour pour inclure l'IP dans la session temp)
         try:
-            new_user = User(
-                uid=str(uuid.uuid4()),
-                username=username,
-                email=email,
-                phone=phone,
-                country=country,
-                password=generate_password_hash(password),
-                parrain=parrain_user.username if parrain_user else None,
-                solde_total=0,
-                solde_depot=0,
-                solde_revenu=0,
-                solde_parrainage=0,
-                date_creation=datetime.now(timezone.utc)
-            )
-
-            db.session.add(new_user)
-            db.session.commit()
-
-            session["user_id"] = new_user.id
-
-            flash("Inscription réussie !", "success")
-            return redirect(url_for("dashboard_bloque"))
-
+            otp = str(random.randint(100000, 999999))
+            if send_otp(email, otp):
+                session['otp'] = otp
+                session['mode'] = 'inscription'
+                # On ajoute l'IP dans les données temporaires
+                session['temp_user'] = {
+                    'username': username,
+                    'email': email,
+                    'phone': phone,
+                    'country': country,
+                    'password': generate_password_hash(password),
+                    'parrain': parrain_user.username if parrain_user else None,
+                    'ip_address': user_ip  # <--- TRÈS IMPORTANT
+                }
+                flash("Un code de vérification a été envoyé à votre email.", "success")
+                return redirect(url_for('verify_page'))
+            else:
+                flash("Erreur lors de l'envoi de l'email.", "danger")
         except Exception as e:
-            db.session.rollback()
-            flash("Erreur lors de l’inscription : " + str(e), "danger")
-            return render_template("inscription.html", code_ref=ref_code)
-
+            flash("Erreur service OTP : " + str(e), "danger")                                                                     
     return render_template("inscription.html", code_ref=ref_code)
 
 
@@ -546,6 +694,68 @@ def obtenir_token():
     except Exception as e:
         return None, str(e)
 
+
+@app.route('/game/apple', methods=['GET', 'POST'])
+def apple_game():
+    if 'user_id' not in session:
+        return redirect(url_for('connexion_page'))
+
+    # Utilisation de db.session.get pour éviter le "LegacyAPIWarning"
+    user = db.session.get(User, session['user_id'])
+    
+    if not user:
+        return redirect(url_for('connexion_page'))
+
+    # 1. Calculer les droits de jeu
+    # On compte les filleuls (ceux qui ont 'parrain' = username du user)
+    filleuls_actifs = User.query.filter_by(parrain=user.username).count()
+    
+    # Droit de base (1) + 1 jeu tous les 5 filleuls
+    total_allowed_games = 1 + (filleuls_actifs // 5)
+
+    # Sécurité "or 0" : Si game_played_count est None, on utilise 0 pour la comparaison
+    joue_actuel = user.game_played_count or 0
+    can_play = joue_actuel < total_allowed_games
+    
+    # Calcul des invitations restantes pour le prochain tour
+    remaining_invites = 5 - (filleuls_actifs % 5) if not can_play else 0
+
+    # --- LOGIQUE AFFICHAGE (GET) ---
+    if request.method == 'GET':
+        return render_template('apple_game.html', 
+                               user=user, 
+                               can_play=can_play, 
+                               remaining=remaining_invites)
+
+    # --- LOGIQUE ENCAISSEMENT (POST) ---
+    if request.method == 'POST':
+        if not can_play:
+            return jsonify({"status": "error", "message": f"Invite encore {remaining_invites} personnes pour rejouer !"})
+
+        data = request.json
+        gain = data.get('gain', 0)
+
+        # Sécurité anti-triche : Max 400 F (16 paliers * 25 F)
+        if gain > 400:
+            return jsonify({"status": "error", "message": "Tentative de triche détectée."})
+
+        try:
+            # Créditer le joueur (on sécurise aussi les soldes avec "or 0")
+            user.bonus += gain
+            
+            # Incrémenter le compteur de parties (on s'assure qu'il part de 0)
+            user.game_played_count = (user.game_played_count or 0) + 1
+
+            db.session.commit()
+
+            return jsonify({
+                "status": "success",
+                "message": f"Gain de {gain} F ajouté à votre solde !",
+                "new_balance": user.solde_revenu
+            })
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"status": "error", "message": "Erreur lors de l'enregistrement."})
 
 
 @app.route('/game/apple-of-fortune')
@@ -1102,6 +1312,19 @@ def dashboard_page():
     total_users, total_deposits, total_withdrawn = get_global_stats()
     revenu_cumule = (user.solde_parrainage or 0) + (user.solde_revenu or 0)
 
+    # 🍏 LOGIQUE DU JEU APPLE OF FORTUNE (AJOUTÉ ICI)
+    # On compte les filleuls qui ont ce user comme parrain
+    filleuls_count = User.query.filter_by(parrain=user.username).count()
+    
+    # Droit de base (1) + 1 tous les 5 filleuls
+    total_allowed = 1 + (filleuls_count // 5)
+    
+    # Est-ce qu'il peut jouer ?
+    can_play = (user.game_played_count or 0) < total_allowed
+    
+    # Combien en manque-t-il pour la prochaine partie ?
+    remaining = 5 - (filleuls_count % 5) if not can_play else 0
+
     return render_template(
         "dashboard.html",
         user=user,
@@ -1114,8 +1337,12 @@ def dashboard_page():
         total_deposits=total_deposits,
         referral_code=referral_code,
         referral_link=referral_link,
-        total_withdrawn=total_withdrawn
+        total_withdrawn=total_withdrawn,
+        # NOUVELLES VARIABLES ENVOYÉES AU HTML
+        can_play=can_play,
+        remaining=remaining
     )
+
 
 def user_is_activated(user):
     if user.premier_depot:
@@ -1507,34 +1734,36 @@ def profile_page():
 PUBLIC_API_KEY = "SP_y7QKkaamPsVTlw8GDDGyzlJ7bmPUvdLorOQqWUXfRLI_AP"
 PRIVATE_SECRET_KEY = "SP_-YQFuI5M9B1H2bNSNycwI_YQBc_kXkGACp-mLoBdWqI"
 
-
 @app.route("/retrait", methods=["GET", "POST"])
 def retrait_page():
-
     user = get_logged_in_user()
 
     MIN_RETRAIT = 4000
+    MAX_RETRAIT = 50000
     FRAIS = 500
 
-    stats = {
-        "commissions_total": float(user.solde_parrainage or 0)
-    }
+    stats = {"commissions_total": float(user.solde_parrainage or 0)}
 
     # récupérer les services selon le pays
     country_code = COUNTRY_CODE.get(user.country)
     services = SERVICES.get(country_code, [])
 
     if request.method == "POST":
-
         montant = float(request.form.get("montant", 0))
         service_id = int(request.form.get("payment_method"))
+        wallet = request.form.get("phone")  # numéro saisi par l'utilisateur
 
+        # validations
         if montant <= 0:
             flash("Veuillez saisir un montant valide.", "danger")
             return redirect(url_for("retrait_page"))
 
         if montant < MIN_RETRAIT:
             flash(f"Le montant minimum de retrait est de {MIN_RETRAIT} XOF.", "danger")
+            return redirect(url_for("retrait_page"))
+
+        if montant > MAX_RETRAIT:
+            flash(f"Le montant maximum de retrait est de {MAX_RETRAIT} XOF.", "danger")
             return redirect(url_for("retrait_page"))
 
         montant_total = montant + FRAIS
@@ -1544,18 +1773,16 @@ def retrait_page():
             return redirect(url_for("retrait_page"))
 
         # sécurité : vérifier que le service appartient au pays
-        valid_services = [s["id"] for s in services]
-
-        if service_id not in valid_services:
+        service = next((s for s in services if s["id"] == service_id), None)
+        if not service:
             flash("Service de paiement invalide.", "danger")
             return redirect(url_for("retrait_page"))
 
-        wallet = user.phone
+        service_name = service["name"]
 
         # appel API SoleasPay
         response = envoyer_retrait_soleaspay(service_id, wallet, montant)
 
-        # vérifier la réponse
         if not response:
             flash("Erreur connexion API SoleasPay.", "danger")
             return redirect(url_for("retrait_page"))
@@ -1566,12 +1793,14 @@ def retrait_page():
 
         # enregistrer retrait
         nouveau_retrait = Retrait(
+            user_id=user.id,  # ✅ LIAISON UTILISATEUR
             montant=montant,
             frais=FRAIS,
-            payment_method=service_id,
+            payment_method=service_name,
             statut="successful",
-            phone=user.phone,
-            pays=user.country
+            phone=wallet,  # on enregistre le numéro saisi
+            pays=user.country,
+            date=datetime.utcnow()
         )
 
         db.session.add(nouveau_retrait)
@@ -1582,15 +1811,9 @@ def retrait_page():
         db.session.commit()
 
         flash(f"Retrait de {montant} XOF envoyé avec succès.", "success")
+        return redirect(url_for("mes_retraits"))
 
-        return redirect(url_for("dashboard_page"))
-
-    return render_template(
-        "retrait.html",
-        user=user,
-        stats=stats,
-        services=services
-    )
+    return render_template("retrait.html", user=user, stats=stats, services=services)
 
 @app.route("/retrait-casino", methods=["GET", "POST"])
 def retrait_casino_page():
@@ -2026,7 +2249,7 @@ def admin_deposits():
     # ==========================
     retraits_query = (
         db.session.query(Retrait, User.username)
-        .join(User, Retrait.phone == User.phone)
+        .join(User, Retrait.user_id == User.id)
         .filter(Retrait.statut == "successful")
         .order_by(Retrait.date.desc())
     )
