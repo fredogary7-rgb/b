@@ -782,25 +782,25 @@ def apple_reward():
     if not user:
         return jsonify({"status": "error"}), 403
 
-    # On récupère le gain envoyé par le JS
     data = request.get_json()
     gain = int(data.get('gain', 0))
 
-    # Sécurité : Max 250 XOF (10 paliers * 25)
-    if gain > 250: gain = 250
+    if gain > 250: gain = 250 # Sécurité
 
     try:
-        # On ajoute au solde_jeux ou commission selon ton choix
-        user.solde_jeux = (user.solde_jeux or 0) + gain
+        # Créditer le solde quoi qu'il arrive
+        if gain > 0:
+            user.solde_jeux = (user.solde_jeux or 0) + gain
         
-        # IMPORTANT : On marque qu'il a joué pour la session (si tu as cette colonne)
-        # user.has_played_this_round = True 
+        # On enregistre qu'il a utilisé sa chance
+        # Si tu as une colonne 'has_played_this_round', décommente la ligne suivante :
+        # user.has_played_this_round = True
         
         db.session.commit()
         return jsonify({"status": "success", "new_balance": user.solde_jeux})
     except:
         db.session.rollback()
-        return jsonify({"status": "error", "message": "Erreur DB"}), 500
+        return jsonify({"status": "error"}), 500
 
 
 @app.route('/game/glass-bridge')

@@ -174,10 +174,12 @@
 
         const cells = document.getElementById(`row-${rowIdx}`).querySelectorAll('.cell');
 
+        // SI GAGNÉ (POMME)
         if (!gameData[rowIdx].includes(cellIdx)) {
             cells[cellIdx].className = 'cell good';
             cells[cellIdx].innerHTML = '<i class="fa fa-apple-alt"></i>';
-            currentGain += 25;
+            currentGain += 25; // On ajoute 25 au compteur local
+            
             document.getElementById('gain-display').innerText = currentGain + " XOF";
             document.getElementById('cash-val').innerText = currentGain;
             
@@ -185,42 +187,61 @@
             if (currentStep < totalRows) {
                 activateRow(currentStep);
             } else {
-                await processCashout();
+                // Gagné le niveau max (10)
+                await processCashout(true);
             }
-        } else {
+        } 
+        // SI PERDU (BOMBE)
+        else {
+            gameActive = false; // Arrête le jeu
             cells[cellIdx].className = 'cell bad';
             cells[cellIdx].innerHTML = '<i class="fa fa-bomb"></i>';
-            gameActive = false;
-            // Marquer comme joué même si perdu
-            localStorage.setItem('apple_last_played', new Date().toDateString());
-            setTimeout(() => { alert("PERDU ! Vous avez touché une bombe."); location.reload(); }, 600);
+            
+            // On bloque les clics
+            document.querySelectorAll('.cell').forEach(c => c.classList.add('disabled'));
+
+            // ON CRÉDITE AUTOMATIQUEMENT MÊME SI PERDU
+            if (currentGain > 0) {
+                alert(`BOMBE ! Vous avez perdu au niveau ${rowIdx + 1}, mais vos gains de ${currentGain} XOF sont quand même crédités !`);
+                await processCashout(false); // false car on a perdu le dernier tour
+            } else {
+                alert("BOMBE ! Vous n'aviez pas encore accumulé de gains.");
+                localStorage.setItem('apple_last_played', new Date().toDateString());
+                location.reload();
+            }
         }
     }
 
-    async function processCashout() {
-        if (currentGain <= 0) return;
+    async function processCashout(isWin = true) {
         gameActive = false;
         const btn = document.getElementById('cashoutBtn');
-        btn.innerHTML = '<span class="loader"></span> Encaissement...';
+        btn.innerHTML = '<span class="loader"></span> Crédit en cours...';
+        btn.disabled = true;
 
-        const res = await fetch('/game/apple-reward', { 
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ gain: currentGain })
-        });
-        
-        const data = await res.json();
-        if (data.status === 'success') {
-            localStorage.setItem('apple_last_played', new Date().toDateString());
-            alert("FÉLICITATIONS ! " + currentGain + " XOF ajoutés.");
+        try {
+            const res = await fetch('/game/apple-reward', { 
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ gain: currentGain })
+            });
+            
+            const data = await res.json();
+            if (data.status === 'success') {
+                // On bloque la chance de jouer pour aujourd'hui
+                localStorage.setItem('apple_last_played', new Date().toDateString());
+                
+                if(isWin) {
+                    alert("FÉLICITATIONS ! Gain de " + currentGain + " XOF récupéré !");
+                }
+                window.location.href = "/dashboard";
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Erreur de connexion, mais votre gain est enregistré.");
             window.location.href = "/dashboard";
         }
     }
 
-    window.onload = () => {
-        checkRestrictions();
-        createGrid();
-    };
 </script>
 </body>
 </html>
