@@ -149,11 +149,24 @@
         btn.innerHTML = '<span class="loader"></span> Préparation...';
         btn.disabled = true;
 
-        // Génération des bombes selon tes règles
+        // Génération des bombes selon tes nouvelles règles
         gameData = [];
         for (let i = 0; i < totalLevels; i++) {
             let bombs = [];
-            let count = (i === 0) ? 0 : (i === 1) ? 1 : (i === 2) ? 2 : (i === 3) ? 3 : (i === 4) ? 4 : 5;
+            let count = 0;
+
+            // Définition du nombre de bombes par niveau (i est l'index de 0 à 15)
+            if (i === 0) count = 0;      // Niveau 1 : 0 pourri
+            else if (i === 1) count = 0; // Niveau 2 : 0 pourri
+            else if (i === 2) count = 1; // Niveau 3 : 1 pourri
+            else if (i === 3) count = 2; // Niveau 4 : 2 pourri
+            else if (i === 4) count = 3; // Niveau 5 : 3 pourri
+            else if (i === 5) count = 3; // Niveau 6 : 3 pourri
+            else if (i === 6) count = 4; // Niveau 7 : 4 pourri
+            else if (i === 7) count = 5; // Niveau 8 : 5 pourri
+            else count = 6;              // Niveau 9 à 16 : 6 pourris
+
+            // Placement aléatoire des bombes dans la ligne
             while(bombs.length < count) {
                 let r = Math.floor(Math.random() * 8);
                 if(!bombs.includes(r)) bombs.push(r);
@@ -171,6 +184,7 @@
             activateRow(0);
         }, 500);
     }
+
 
     function activateRow(lvl) {
         document.querySelectorAll('.cell').forEach(c => {
@@ -197,17 +211,27 @@
         if(lvl !== currentLevel) return;
 
         const cell = document.getElementById(`cell-${lvl}-${col}`);
-        
+
         if(gameData[lvl].includes(col)) {
-            cell.innerHTML = '<i class="fas fa-bomb text-red-600"></i>';
+            // L'utilisateur a touché une bombe
+            cell.innerHTML = '<i class="fas fa-leaf text-yellow-500"></i>';
             cell.style.background = "#fee2e2";
-            setTimeout(() => { alert("PERDU !"); location.reload(); }, 500);
+            
+            // On désactive les clics pour éviter les doubles clics pendant l'animation
+            document.querySelectorAll('.cell').forEach(c => c.classList.add('disabled'));
+
+            setTimeout(() => { 
+                alert("PERDU ! Vous repartez avec vos gains accumulés : " + currentGain + " F"); 
+                processCashout(); // Crédite le dernier prix et redirige
+            }, 600);
+
         } else {
+            // L'utilisateur a trouvé une pomme
             cell.innerHTML = '<i class="fas fa-apple-alt text-green-600"></i>';
             cell.style.background = "#dcfce7";
             currentGain += 25;
             currentLevel++;
-            
+
             document.getElementById('gain-txt').innerText = currentGain;
             document.getElementById('cashout-val').innerText = currentGain;
             document.getElementById('lvl-display').innerText = (currentLevel + 1 > 16) ? 16 : currentLevel + 1;
@@ -215,11 +239,12 @@
             if(currentLevel < totalLevels) {
                 activateRow(currentLevel);
             } else {
-                alert("Jackpot ! 400 F !");
+                alert("Jackpot ! Félicitations !");
                 processCashout();
             }
         }
     }
+
 
     async function processCashout() {
         const btn = document.getElementById('cashout-btn');

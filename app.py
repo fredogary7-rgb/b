@@ -133,7 +133,7 @@ class User(db.Model, UserMixin):
     has_frog_attempt = db.Column(db.Boolean, default=True)
     frog_game_done = db.Column(db.Boolean, default=False)
     country = db.Column(db.String(50), default='')
-
+    has_played_this_round = db.Column(db.Boolean, default=False)
     # Points divers
     points = db.Column(db.Integer, default=0)
     points_video = db.Column(db.Integer, default=0)
@@ -279,6 +279,19 @@ class GameSession(db.Model):
     win_amount = db.Column(db.Integer, default=500) # Gain potentiel
     status = db.Column(db.String(20), default='pending') # pending, won, lost
     date = db.Column(db.DateTime, default=datetime.utcnow)
+
+class GameControl(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    end_time = db.Column(db.DateTime, nullable=True)
+
+    @classmethod
+    def is_active(cls):
+        control = cls.query.first()
+        if control and control.end_time:
+            from datetime import datetime
+            return datetime.now() < control.end_time
+        return False
+
 
 def send_otp(recipient_email, code_otp):
     try:
@@ -700,69 +713,67 @@ def apple_game():
     if 'user_id' not in session:
         return redirect(url_for('connexion_page'))
 
-    # Utilisation de db.session.get pour éviter le "LegacyAPIWarning"
+    # Utilisation de db.session.get pour la compatibilité SQLAlchemy 2.0
     user = db.session.get(User, session['user_id'])
     
-    if not user:
-        return redirect(url_for('connexion_page'))
+    game_window_active = GameControl.is_active()
+    # Vérification stricte du booléen
+    can_play = game_window_active and not getattr(user, 'has_played_this_round', True)
 
-    # 1. Calculer les droits de jeu
-    # On compte les filleuls (ceux qui ont 'parrain' = username du user)
-    filleuls_actifs = User.query.filter_by(parrain=user.username).count()
-    
-    # Droit de base (1) + 1 jeu tous les 5 filleuls
-    total_allowed_games = 1 + (filleuls_actifs // 5)
-
-    # Sécurité "or 0" : Si game_played_count est None, on utilise 0 pour la comparaison
-    joue_actuel = user.game_played_count or 0
-    can_play = joue_actuel < total_allowed_games
-    
-    # Calcul des invitations restantes pour le prochain tour
-    remaining_invites = 5 - (filleuls_actifs % 5) if not can_play else 0
-
-    # --- LOGIQUE AFFICHAGE (GET) ---
     if request.method == 'GET':
         return render_template('apple_game.html', 
-                               user=user, 
                                can_play=can_play, 
-                               remaining=remaining_invites)
+                               is_active=game_window_active)
 
-    # --- LOGIQUE ENCAISSEMENT (POST) ---
     if request.method == 'POST':
         if not can_play:
-            return jsonify({"status": "error", "message": f"Invite encore {remaining_invites} personnes pour rejouer !"})
+            return jsonify({"status": "error", "message": "Action non autorisée."})
 
         data = request.json
-        gain = data.get('gain', 0)
-
-        # Sécurité anti-triche : Max 400 F (16 paliers * 25 F)
-        if gain > 400:
-            return jsonify({"status": "error", "message": "Tentative de triche détectée."})
-
+        # Conversion forcée en float pour éviter l'erreur de calcul
         try:
-            # Créditer le joueur (on sécurise aussi les soldes avec "or 0")
+            gain = float(data.get('gain', 0))
+            if gain > 400: gain = 400.0
+            
+            # Correction cruciale : initialisation si None et addition
+            if user.bonus is None: user.bonus = 0.0
             user.bonus += gain
             
-            # Incrémenter le compteur de parties (on s'assure qu'il part de 0)
-            user.game_played_count = (user.game_played_count or 0) + 1
-
+            # On marque comme joué
+            user.has_played_this_round = True
+            
             db.session.commit()
-
-            return jsonify({
-                "status": "success",
-                "message": f"Gain de {gain} F ajouté à votre solde !",
-                "new_balance": user.solde_revenu
-            })
+            return jsonify({"status": "success", "message": f"Félicitations ! +{gain} F"})
+            
         except Exception as e:
             db.session.rollback()
-            return jsonify({"status": "error", "message": "Erreur lors de l'enregistrement."})
+            # Affiche l'erreur réelle dans ton terminal Termux pour déboguer
+            print(f"DEBUG ERROR: {e}") 
+            return jsonify({"status": "error", "message": "Erreur technique base de données."})
 
+
+@app.route('/admin/open-game-30')
+def open_game():
+    try:
+        control = GameControl.query.first() or GameControl()
+        # Assure-toi de l'import : from datetime import datetime, timedelta
+        control.end_time = datetime.now() + timedelta(minutes=30)
+        
+        # Réinitialisation propre
+        db.session.query(User).update({User.has_played_this_round: False})
+        
+        db.session.add(control)
+        db.session.commit()
+        return "Jeu activé pour 30 minutes !"
+    except Exception as e:
+        db.session.rollback()
+        return f"Erreur admin : {e}"
 
 @app.route('/game/apple-of-fortune')
 def apple_game_page():
-    user = get_logged_in_user()
+    user = get_logged_in_user() # Utilise ta fonction habituelle
     if not user:
-        return redirect(url_for('login'))
+        return redirect(url_for('connexion_page'))
     return render_template('apple_fortune.html', user=user)
 
 @app.route('/game/apple-reward', methods=['POST'])
@@ -770,12 +781,27 @@ def apple_reward():
     user = get_logged_in_user()
     if not user:
         return jsonify({"status": "error"}), 403
-    
-    # On ajoute 500 au solde commission
-    # Assure-toi que le champ s'appelle bien 'commission' dans ton modèle User
-    user.solde_jeux += 500 
-    db.session.commit()
-    return jsonify({"status": "success", "new_commission": user.commission})
+
+    # On récupère le gain envoyé par le JS
+    data = request.get_json()
+    gain = int(data.get('gain', 0))
+
+    # Sécurité : Max 250 XOF (10 paliers * 25)
+    if gain > 250: gain = 250
+
+    try:
+        # On ajoute au solde_jeux ou commission selon ton choix
+        user.solde_jeux = (user.solde_jeux or 0) + gain
+        
+        # IMPORTANT : On marque qu'il a joué pour la session (si tu as cette colonne)
+        # user.has_played_this_round = True 
+        
+        db.session.commit()
+        return jsonify({"status": "success", "new_balance": user.solde_jeux})
+    except:
+        db.session.rollback()
+        return jsonify({"status": "error", "message": "Erreur DB"}), 500
+
 
 @app.route('/game/glass-bridge')
 def game_page():
@@ -1302,9 +1328,7 @@ def dashboard_page():
     referral_code = user.username
     referral_link = url_for("inscription_page", _external=True) + f"?ref={referral_code}"
 
-    # 🔒 Bloqué SEULEMENT si :
-    # - pas activé
-    # - ET n'a jamais visité dashboard_pay_ok
+    # 🔒 Sécurité d'accès au dashboard
     if not user_is_activated(user) and not user.has_seen_pay_ok:
         return redirect(url_for("dashboard_bloque"))
 
@@ -1312,18 +1336,13 @@ def dashboard_page():
     total_users, total_deposits, total_withdrawn = get_global_stats()
     revenu_cumule = (user.solde_parrainage or 0) + (user.solde_revenu or 0)
 
-    # 🍏 LOGIQUE DU JEU APPLE OF FORTUNE (AJOUTÉ ICI)
-    # On compte les filleuls qui ont ce user comme parrain
-    filleuls_count = User.query.filter_by(parrain=user.username).count()
+    # 🍏 --- NOUVELLE LOGIQUE APPLE OF FORTUNE ---
+    # On utilise la méthode de classe qu'on a définie dans GameControl
+    is_active = GameControl.is_active()
     
-    # Droit de base (1) + 1 tous les 5 filleuls
-    total_allowed = 1 + (filleuls_count // 5)
-    
-    # Est-ce qu'il peut jouer ?
-    can_play = (user.game_played_count or 0) < total_allowed
-    
-    # Combien en manque-t-il pour la prochaine partie ?
-    remaining = 5 - (filleuls_count % 5) if not can_play else 0
+    # can_play est vrai SI le jeu est activé par l'admin 
+    # ET SI l'utilisateur n'a pas encore joué pour ce tour
+    can_play = is_active and not (user.has_played_this_round)
 
     return render_template(
         "dashboard.html",
@@ -1338,9 +1357,9 @@ def dashboard_page():
         referral_code=referral_code,
         referral_link=referral_link,
         total_withdrawn=total_withdrawn,
-        # NOUVELLES VARIABLES ENVOYÉES AU HTML
+        # ON ENVOIE LES NOUVELLES VARIABLES ICI
         can_play=can_play,
-        remaining=remaining
+        is_active=is_active
     )
 
 
@@ -1819,7 +1838,7 @@ def retrait_page():
 def retrait_casino_page():
     user = get_logged_in_user() # Ta fonction pour récupérer l'user
     
-    MIN_RETRAIT = 500
+    MIN_RETRAIT = 400
     FRAIS = 0 # Généralement pas de frais sur les bonus, ou adapte selon tes besoins
 
     stats = {
