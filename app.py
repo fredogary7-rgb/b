@@ -592,11 +592,10 @@ def inscription_page():
     session.pop("username_exists", None)
 
     if request.method == "POST":
-        # --- NOUVELLE LOGIQUE : RÉCUPÉRATION DE L'IP ---
+        # --- RÉCUPÉRATION DE L'IP ---
         user_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
         if user_ip and ',' in user_ip:
             user_ip = user_ip.split(',')[0].strip()
-        # ----------------------------------------------
 
         username = request.form.get("username", "").strip().lower()
         email = request.form.get("email", "").strip()
@@ -608,12 +607,12 @@ def inscription_page():
 
         errors = []
 
-        # 🛡️ VÉRIFICATION ANTI-MULTICOMPTE (NOUVEAU)
+        # 🛡️ VÉRIFICATION ANTI-MULTICOMPTE
         existing_ip = User.query.filter_by(ip_address=user_ip).first()
         if existing_ip:
             errors.append("Vous avez déjà créé un compte avec cet appareil.")
 
-        # 🔒 Tes vérifications de base (Inchangées)
+        # 🔒 Vérifications de base
         if not all([username, email, country, phone, password, confirm]):
             errors.append("Tous les champs sont obligatoires.")
 
@@ -623,7 +622,7 @@ def inscription_page():
         if password and confirm and password != confirm:
             errors.append("Les mots de passe ne correspondent pas.")
 
-        # 🔎 Tes vérifications doublons (Inchangées)
+        # 🔎 Vérifications doublons
         if username and email and phone:
             existing_users = User.query.filter(
                 (User.username == username) |
@@ -640,26 +639,26 @@ def inscription_page():
                 if user.phone == phone:
                     errors.append("Ce numéro est déjà enregistré.")
 
-        # 🔗 Ta vérification parrainage (Inchangée)
+        # 🔗 Vérification parrainage
         parrain_user = None
         if parrain_code:
             parrain_user = User.query.filter_by(username=parrain_code).first()
             if not parrain_user:
                 errors.append("Code parrain invalide.")
 
-        # 🚨 Gestion des erreurs (Inchangée)
         if errors:
             for error in errors:
                 flash(error, "danger")
             return render_template("inscription.html", code_ref=ref_code)
 
-        # ✅ ÉTAPE OTP (Mise à jour pour inclure l'IP dans la session temp)
+        # ✅ ÉTAPE OTP (Initialisation des champs de jeu ici)
         try:
             otp = str(random.randint(100000, 999999))
             if send_otp(email, otp):
                 session['otp'] = otp
                 session['mode'] = 'inscription'
-                # On ajoute l'IP dans les données temporaires
+                
+                # On prépare les données pour la création finale dans verify_page
                 session['temp_user'] = {
                     'username': username,
                     'email': email,
@@ -667,14 +666,21 @@ def inscription_page():
                     'country': country,
                     'password': generate_password_hash(password),
                     'parrain': parrain_user.username if parrain_user else None,
-                    'ip_address': user_ip  # <--- TRÈS IMPORTANT
+                    'ip_address': user_ip,
+                    
+                    # --- INITIALISATION POUR LE JEU APPLE ---
+                    'solde_jeux': 0,
+                    'commission': 0,
+                    'has_played_this_round': False
+                    # ----------------------------------------
                 }
                 flash("Un code de vérification a été envoyé à votre email.", "success")
                 return redirect(url_for('verify_page'))
             else:
                 flash("Erreur lors de l'envoi de l'email.", "danger")
         except Exception as e:
-            flash("Erreur service OTP : " + str(e), "danger")                                                                     
+            flash("Erreur service OTP : " + str(e), "danger")
+            
     return render_template("inscription.html", code_ref=ref_code)
 
 
