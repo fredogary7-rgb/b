@@ -713,50 +713,76 @@ def obtenir_token():
     except Exception as e:
         return None, str(e)
 
-
 @app.route('/game/apple', methods=['GET', 'POST'])
 def apple_game():
     if 'user_id' not in session:
         return redirect(url_for('connexion_page'))
 
-    # Utilisation de db.session.get pour la compatibilité SQLAlchemy 2.0
     user = db.session.get(User, session['user_id'])
-    
+
+    # État global du jeu
     game_window_active = GameControl.is_active()
-    # Vérification stricte du booléen
-    can_play = game_window_active and not getattr(user, 'has_played_this_round', True)
 
+    # 🔥 TA LOGIQUE (OR)
+    has_played = getattr(user, 'has_played_this_round', False)
+    can_play = game_window_active or not has_played
+
+    # ======================
+    # ======= GET ==========
+    # ======================
     if request.method == 'GET':
-        return render_template('apple_game.html', 
-                               can_play=can_play, 
-                               is_active=game_window_active)
+        return render_template(
+            'apple_game.html',
+            can_play=can_play,
+            is_active=game_window_active,
+            has_played_this_round=has_played  # ⚠️ IMPORTANT pour ton HTML
+        )
 
+    # ======================
+    # ======= POST =========
+    # ======================
     if request.method == 'POST':
-        if not can_play:
-            return jsonify({"status": "error", "message": "Action non autorisée."})
+
+        # 🔥 RECHECK AVEC TA LOGIQUE (OR)
+        if not (GameControl.is_active() or not user.has_played_this_round):
+            return jsonify({
+                "status": "error",
+                "message": "Action non autorisée."
+            })
 
         data = request.json
-        # Conversion forcée en float pour éviter l'erreur de calcul
+
         try:
             gain = float(data.get('gain', 0))
-            if gain > 400: gain = 400.0
-            
-            # Correction cruciale : initialisation si None et addition
-            if user.bonus is None: user.bonus = 0.0
+
+            # Limite max
+            if gain > 400:
+                gain = 400.0
+
+            # Initialisation bonus
+            if user.bonus is None:
+                user.bonus = 0.0
+
             user.bonus += gain
-            
-            # On marque comme joué
+
+            # Marquer comme joué
             user.has_played_this_round = True
-            
+
             db.session.commit()
-            return jsonify({"status": "success", "message": f"Félicitations ! +{gain} F"})
-            
+
+            return jsonify({
+                "status": "success",
+                "message": f"Félicitations ! +{gain} F"
+            })
+
         except Exception as e:
             db.session.rollback()
-            # Affiche l'erreur réelle dans ton terminal Termux pour déboguer
-            print(f"DEBUG ERROR: {e}") 
-            return jsonify({"status": "error", "message": "Erreur technique base de données."})
+            print(f"DEBUG ERROR: {e}")
 
+            return jsonify({
+                "status": "error",
+                "message": "Erreur technique base de données."
+            })
 
 @app.route('/admin/open-game-30')
 def open_game():
@@ -1365,7 +1391,8 @@ def dashboard_page():
         total_withdrawn=total_withdrawn,
         # ON ENVOIE LES NOUVELLES VARIABLES ICI
         can_play=can_play,
-        is_active=is_active
+        is_active=is_active,
+        has_played_this_round=user.has_played_this_round
     )
 
 

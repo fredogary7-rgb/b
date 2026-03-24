@@ -441,50 +441,61 @@ footer { text-align: center; padding: 20px; font-size: 12px; color: #888; }
         </div>
     </div>
 
-<div class="glass" style="margin-top: 20px; padding: 20px; border-left: 5px solid #5a57e3;">
-    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
-        <div style="display: flex; align-items: center; gap: 12px;">
-            <div style="background: #5a57e3; width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white;">
-                <i class="fas fa-apple-alt"></i>
-            </div>
-            <div>
-                <h3 style="font-size: 16px; font-weight: 700; color: #333;">Apple of Fortune</h3>
-                <p style="font-size: 11px; color: #666;">Événement Flash</p>
-            </div>
-        </div>
+<div class="glass" style="margin-top: 20px; padding: 20px; border-left: 5px solid #5a57e3;">  
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">  
+        <div style="display: flex; align-items: center; gap: 12px;">  
+            <div style="background: #5a57e3; width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white;">  
+                <i class="fas fa-apple-alt"></i>  
+            </div>  
+            <div>  
+                <h3 style="font-size: 16px; font-weight: 700; color: #333;">Apple of Fortune</h3>  
+                <p style="font-size: 11px; color: #666;">Événement Flash</p>  
+            </div>  
+        </div>  
 
-        {% if can_play or not has_played_this_round %}
-            <span style="background: #dcfce7; color: #16a34a; padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 700;">OUVERT</span>
-        {% else %}
-            <span style="background: #fee2e2; color: #dc2626; padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 700;">FERMÉ</span>
-        {% endif %}
-    </div>
+        {% if has_played_this_round %}
+            <span style="background: #fee2e2; color: #dc2626; padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 700;">FERMÉ</span>  
+        {% elif can_play or not has_played_this_round %}
+            <span style="background: #dcfce7; color: #16a34a; padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 700;">OUVERT</span>  
+        {% else %}  
+            <span style="background: #fee2e2; color: #dc2626; padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 700;">FERMÉ</span>  
+        {% endif %}  
+    </div>  
 
-    <div style="background: rgba(255,255,255,0.4); padding: 15px; border-radius: 15px; margin-bottom: 15px;">
-        {% if can_play %}
-            <p style="font-size: 13px; color: #444; line-height: 1.4;">
-                🏃 <strong>Vite !</strong> Le jeu est actuellement déverrouillé. Vous avez une chance de gagner 400 F !
+    <div style="background: rgba(255,255,255,0.4); padding: 15px; border-radius: 15px; margin-bottom: 15px;">  
+        {% if has_played_this_round %}
+            <p style="font-size: 13px; color: #dc2626;">
+                🔒 Vous avez déjà joué pour ce round
             </p>
-        {% elif is_active %}
-            <p style="font-size: 13px; color: #666;">
-                Vous avez déjà tenté votre chance pour cette session. Attendez le prochain signal !
-            </p>
-        {% else %}
-            <p style="font-size: 13px; color: #666; line-height: 1.4;">
-                Le jeu est actuellement <strong>verrouillé</strong>. Restez branchés sur notre canal pour l'ouverture surprise !
-            </p>
-        {% endif %}
-    </div>
+        {% elif can_play %}  
+            <p style="font-size: 13px; color: #444; line-height: 1.4;">  
+                🏃 <strong>Vite !</strong> Le jeu est actuellement déverrouillé. Vous avez une chance de gagner 400 F !  
+            </p>  
+        {% elif is_active %}  
+            <p style="font-size: 13px; color: #666;">  
+                Vous avez déjà tenté votre chance pour cette session. Attendez le prochain signal !  
+            </p>  
+        {% else %}  
+            <p style="font-size: 13px; color: #666; line-height: 1.4;">  
+                Le jeu est actuellement <strong>verrouillé</strong>. Restez branchés sur notre canal pour l'ouverture surprise !  
+            </p>  
+        {% endif %}  
+    </div>  
 
-    {% if can_play or not has_played_this_round %}
-        <a href="{{ url_for('apple_game') }}" style="display: block; text-align: center; background: #5a57e3; color: white; padding: 12px; border-radius: 12px; text-decoration: none; font-weight: 700;">
-            Jouer maintenant
-        </a>
-    {% else %}
+    {% if has_played_this_round %}
         <button disabled style="width: 100%; background: #cbd5e1; color: #64748b; padding: 12px; border-radius: 12px; border: none; font-weight: 700; cursor: not-allowed;">
-            <i class="fas fa-clock" style="margin-right: 8px;"></i> En attente d'activation
+            🔒 Déjà joué
         </button>
+    {% elif can_play or not has_played_this_round %}  
+        <a href="{{ url_for('apple_game') }}" style="display: block; text-align: center; background: #5a57e3; color: white; padding: 12px; border-radius: 12px; text-decoration: none; font-weight: 700;">  
+            Jouer maintenant  
+        </a>  
+    {% else %}  
+        <button disabled style="width: 100%; background: #cbd5e1; color: #64748b; padding: 12px; border-radius: 12px; border: none; font-weight: 700; cursor: not-allowed;">  
+            <i class="fas fa-clock" style="margin-right: 8px;"></i> En attente d'activation  
+        </button>  
     {% endif %}
+
 </div>
 
     <div class="ref-section">
