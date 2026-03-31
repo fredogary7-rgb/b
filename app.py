@@ -297,9 +297,14 @@ import threading
 import requests
 import os
 
+
 API_KEY = os.getenv("RESEND_API_KEY")
 
 def send_otp(recipient_email, code_otp):
+    if not API_KEY:
+        print("❌ API KEY manquante")
+        return False
+
     try:
         html_content = render_template(
             'email_otp.html',
@@ -310,7 +315,7 @@ def send_otp(recipient_email, code_otp):
         response = requests.post(
             "https://api.resend.com/emails",
             headers={
-                "Authorization": "Bearer TON_API_KEY",
+                "Authorization": f"Bearer {API_KEY}",
                 "Content-Type": "application/json"
             },
             json={
@@ -323,7 +328,11 @@ def send_otp(recipient_email, code_otp):
 
         print("📨 Réponse Resend:", response.json())
 
-        return True
+        if response.status_code in [200, 201]:
+            return True
+        else:
+            print("❌ Erreur API:", response.text)
+            return False
 
     except Exception as e:
         print("❌ Erreur :", e)
