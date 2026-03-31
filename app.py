@@ -304,7 +304,7 @@ def send_otp(recipient_email, code_otp):
 
         msg = Message(
             subject="Votre code de sécurité Novatrade",
-            sender=("Novatrade Sécurité", app.config['MAIL_USERNAME']),
+            sender=("NOVATRADE", app.config['MAIL_USERNAME']),
             recipients=[recipient_email]
         )
 
