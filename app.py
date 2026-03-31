@@ -295,6 +295,9 @@ class GameControl(db.Model):
 import threading
 
 import requests
+import os
+
+API_KEY = os.getenv("RESEND_API_KEY")
 
 def send_otp(recipient_email, code_otp):
     try:
