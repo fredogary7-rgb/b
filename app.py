@@ -292,6 +292,15 @@ class GameControl(db.Model):
             return datetime.now() < control.end_time
         return False
 
+import threading
+
+def send_otp_async(app, msg):
+    with app.app_context():
+        try:
+            mail.send(msg)
+        except Exception as e:
+            print(f"Erreur d'envoi async : {e}")
+
 
 def send_otp(recipient_email, code_otp):
     try:
@@ -309,7 +318,13 @@ def send_otp(recipient_email, code_otp):
 
         msg.html = html_content
 
-        mail.send(msg)
+        # 🔥 envoi NON BLOQUANT
+        thread = threading.Thread(
+            target=send_otp_async,
+            args=(app, msg)
+        )
+        thread.start()
+
         return True
 
     except Exception as e:
