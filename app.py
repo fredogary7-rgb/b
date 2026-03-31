@@ -426,8 +426,8 @@ import random
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'novatrade26@gmail.com'
-app.config['MAIL_PASSWORD'] = 'bdkf fphn pooy ttnl'
+app.config['MAIL_USERNAME'] = 'luminastar2026@gmail.com'
+app.config['MAIL_PASSWORD'] = 'suca ejwg zfln kepf'
 app.config['MAIL_DEFAULT_SENDER'] = app.config['MAIL_USERNAME']  # ✅ AJOUT
 
 mail = Mail(app)
