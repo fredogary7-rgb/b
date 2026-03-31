@@ -319,7 +319,7 @@ def send_otp(recipient_email, code_otp):
                 "Content-Type": "application/json"
             },
             json={
-                "from": "Novatrade <no-reply@nova-trade.cc>",
+                "from": "NOVATRADE <no-reply@nova-trade.cc>",
                 "to": [recipient_email],
                 "subject": "Votre code de sécurité Novatrade",
                 "html": html_content
