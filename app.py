@@ -294,6 +294,8 @@ class GameControl(db.Model):
 
 import threading
 
+import requests
+
 def send_otp(recipient_email, code_otp):
     try:
         html_content = render_template(
@@ -302,21 +304,26 @@ def send_otp(recipient_email, code_otp):
             user_email=recipient_email
         )
 
-        msg = Message(
-            subject="Votre code de sécurité Novatrade",
-            sender=("NOVATRADE", app.config['MAIL_USERNAME']),
-            recipients=[recipient_email]
+        response = requests.post(
+            "https://api.resend.com/emails",
+            headers={
+                "Authorization": "Bearer TON_API_KEY",
+                "Content-Type": "application/json"
+            },
+            json={
+                "from": "Novatrade <no-reply@nova-trade.cc>",
+                "to": [recipient_email],
+                "subject": "Votre code de sécurité Novatrade",
+                "html": html_content
+            }
         )
 
-        msg.html = html_content
+        print("📨 Réponse Resend:", response.json())
 
-        mail.send(msg)
-
-        print("✅ Email envoyé à :", recipient_email)
         return True
 
     except Exception as e:
-        print("❌ Erreur d'envoi :", str(e))
+        print("❌ Erreur :", e)
         return False
 
 def donner_commission(parrain_username, montant_depot):
