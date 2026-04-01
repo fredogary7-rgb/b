@@ -466,41 +466,59 @@ UPLOAD_FOLDER = 'static/uploads/channel'
 
 @app.route("/admin/canal/edit", methods=["GET", "POST"])
 def admin_canal_edit():
-    # ... (ton code de vérification admin)
+    user_id = session.get('user_id')
+    user = db.session.get(User, user_id) if user_id else None
     
+    # Sécurité Admin
+
     if request.method == "POST":
         content = request.form.get("content")
-        file = request.files.get("media") # Le fichier image/vidéo OU le vocal
-        
-        media_url = None
-        media_type = None
+        file = request.files.get("media")
+        media_url, media_type = None, None
 
         if file and file.filename != '':
             filename = secure_filename(file.filename)
-            # Gestion spécifique du nom pour le blob audio
-            if "vocal" in filename or filename == "blob":
-                filename = f"vocal_{int(datetime.now().timestamp())}.webm"
+            timestamp = int(datetime.now().timestamp())
             
+            # Gestion du nom pour les vocaux
+            if "vocal" in filename or filename == "blob":
+                filename = f"vocal_{timestamp}.webm"
+            else:
+                filename = f"{timestamp}_{filename}"
+            
+            # Sauvegarde physique du fichier
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             media_url = f"/static/uploads/{filename}"
             
-            # DETERMINATION DU TYPE
+            # Détection du type pour la base de données
             ext = filename.lower().split('.')[-1]
-            if ext in ['jpg', 'jpeg', 'png', 'gif']:
-                media_type = 'image'
-            elif ext in ['mp4', 'mov', 'avi']:
-                media_type = 'video'
-            elif ext in ['webm', 'mp3', 'wav', 'ogg']:
-                media_type = 'audio' # <--- TRÈS IMPORTANT
+            if ext in ['jpg', 'jpeg', 'png', 'gif']: media_type = 'image'
+            elif ext in ['mp4', 'mov', 'avi']: media_type = 'video'
+            elif ext in ['webm', 'mp3', 'wav', 'ogg']: media_type = 'audio'
 
+        # Création du message
         new_msg = ChannelMessage(
             content=content, 
             media_url=media_url, 
-            media_type=media_type
+            media_type=media_type,
+            timestamp=datetime.now()
         )
         db.session.add(new_msg)
         db.session.commit()
+        
+        # Redirection après POST pour éviter de renvoyer le formulaire en actualisant
         return redirect(url_for('admin_canal_edit'))
+
+    # --- C'EST ICI QUE CA BLOQUAIT ---
+    # Ce bloc doit être exécuté pour le "GET" (affichage de la page)
+    messages = ChannelMessage.query.order_by(ChannelMessage.id.desc()).all()
+    sub_count = User.query.count() # Ou ChannelSub.query.count() selon ta table
+    
+    # ON RENVOIE TOUJOURS LE RENDER_TEMPLATE A LA FIN
+    return render_template("admin_canal.html", 
+                           user=user, 
+                           messages=messages, 
+                           sub_count=sub_count)
 
 
 @app.route("/admin/canal/delete/<int:id>")
