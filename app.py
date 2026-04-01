@@ -735,6 +735,8 @@ def obtenir_token():
     except Exception as e:
         return None, str(e)
 
+MAX_GAIN = 500.0
+
 @app.route('/game/apple', methods=['GET', 'POST'])
 def apple_game():
     if 'user_id' not in session:
@@ -742,12 +744,16 @@ def apple_game():
 
     user = db.session.get(User, session['user_id'])
 
-    # État global du jeu
     game_window_active = GameControl.is_active()
 
-    # 🔥 TA LOGIQUE (OR)
     has_played = getattr(user, 'has_played_this_round', False)
-    can_play = game_window_active or not has_played
+
+    # 🔥 NOUVEAU : blocage si >= 500
+    total_bonus = user.bonus or 0.0
+    is_blocked_500 = total_bonus >= MAX_GAIN
+
+    # TA LOGIQUE (on garde)
+    can_play = (game_window_active or not has_played) and not is_blocked_500
 
     # ======================
     # ======= GET ==========
@@ -757,7 +763,9 @@ def apple_game():
             'apple_game.html',
             can_play=can_play,
             is_active=game_window_active,
-            has_played_this_round=has_played  # ⚠️ IMPORTANT pour ton HTML
+            has_played_this_round=has_played,
+            is_blocked_500=is_blocked_500,
+            total_bonus=total_bonus
         )
 
     # ======================
@@ -765,7 +773,14 @@ def apple_game():
     # ======================
     if request.method == 'POST':
 
-        # 🔥 RECHECK AVEC TA LOGIQUE (OR)
+        # 🔒 BLOQUAGE 500 PRIORITAIRE
+        if (user.bonus or 0) >= MAX_GAIN:
+            return jsonify({
+                "status": "error",
+                "message": "Vous avez déjà cumulé 500 XOF pour ce jeu."
+            })
+
+        # 🔥 TA LOGIQUE (recheck)
         if not (GameControl.is_active() or not user.has_played_this_round):
             return jsonify({
                 "status": "error",
@@ -777,17 +792,14 @@ def apple_game():
         try:
             gain = float(data.get('gain', 0))
 
-            # Limite max
-            if gain > 400:
-                gain = 400.0
+            # limite pour ne jamais dépasser 500
+            if (user.bonus or 0) + gain > MAX_GAIN:
+                gain = MAX_GAIN - (user.bonus or 0)
 
-            # Initialisation bonus
             if user.bonus is None:
                 user.bonus = 0.0
 
             user.bonus += gain
-
-            # Marquer comme joué
             user.has_played_this_round = True
 
             db.session.commit()
@@ -1369,34 +1381,31 @@ def whatsapp_channel():
 def dashboard_page():
     user_id = session.get("user_id")
     if not user_id:
-        flash("Vous devez vous connecter pour accéder au dashboard.", "danger")
+        flash("Vous devez vous connecter.", "danger")
         return redirect(url_for("connexion_page"))
 
     user = db.session.get(User, user_id)
     if not user:
         session.clear()
-        flash("Session invalide, veuillez vous reconnecter.", "danger")
         return redirect(url_for("connexion_page"))
 
-    # 🔗 Lien de parrainage
     referral_code = user.username
     referral_link = url_for("inscription_page", _external=True) + f"?ref={referral_code}"
 
-    # 🔒 Sécurité d'accès au dashboard
     if not user_is_activated(user) and not user.has_seen_pay_ok:
         return redirect(url_for("dashboard_bloque"))
 
-    # 📊 Stats globales
     total_users, total_deposits, total_withdrawn = get_global_stats()
     revenu_cumule = (user.solde_parrainage or 0) + (user.solde_revenu or 0)
 
-    # 🍏 --- NOUVELLE LOGIQUE APPLE OF FORTUNE ---
-    # On utilise la méthode de classe qu'on a définie dans GameControl
     is_active = GameControl.is_active()
-    
-    # can_play est vrai SI le jeu est activé par l'admin 
-    # ET SI l'utilisateur n'a pas encore joué pour ce tour
-    can_play = is_active and not (user.has_played_this_round)
+
+    # 🔥 NOUVEAU
+    total_bonus = user.bonus or 0
+    is_blocked_500 = total_bonus >= 500
+
+    # ta logique
+    can_play = (is_active and not user.has_played_this_round) and not is_blocked_500
 
     return render_template(
         "dashboard.html",
@@ -1411,12 +1420,13 @@ def dashboard_page():
         referral_code=referral_code,
         referral_link=referral_link,
         total_withdrawn=total_withdrawn,
-        # ON ENVOIE LES NOUVELLES VARIABLES ICI
+
+        # 🔥 GAME
         can_play=can_play,
         is_active=is_active,
-        has_played_this_round=user.has_played_this_round
+        has_played_this_round=user.has_played_this_round,
+        is_blocked_500=is_blocked_500
     )
-
 
 def user_is_activated(user):
     if user.premier_depot:
