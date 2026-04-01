@@ -101,8 +101,9 @@
 
     function updateIcon() {
         const hasText = txtInput.value.trim() !== "";
-        const hasFile = document.getElementById('mediaIn').files.length > 0 || document.getElementById('audioHidden').files.length > 0;
-        
+        const hasFile = document.getElementById('mediaIn').files.length > 0 || 
+                        document.getElementById('audioHidden').files.length > 0;
+
         if (hasText || hasFile) {
             mainIcon.className = "fa fa-paper-plane";
         } else {
@@ -114,10 +115,12 @@
 
     mainBtn.addEventListener('click', function(e) {
         const hasText = txtInput.value.trim() !== "";
-        const hasFile = document.getElementById('mediaIn').files.length > 0 || document.getElementById('audioHidden').files.length > 0;
+        const hasFile = document.getElementById('mediaIn').files.length > 0 || 
+                        document.getElementById('audioHidden').files.length > 0;
 
         if (hasText || hasFile) {
             if (isRecording) {
+                // Si on enregistre et qu'on clique sur l'avion, on stoppe et on envoie
                 stopRecordingAndSend();
             } else {
                 msgForm.submit();
@@ -129,33 +132,54 @@
 
     async function toggleRecording() {
         if (!isRecording) {
+            // Vérification de sécurité pour l'hébergement
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert("Microphone inaccessible. Vérifiez que votre site est bien en HTTPS (cadenas vert).");
+                return;
+            }
+
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                // On laisse le navigateur choisir le meilleur format supporté (webm ou mp4)
                 recorder = new MediaRecorder(stream);
                 chunks = [];
-                
-                recorder.ondataavailable = e => chunks.push(e.data);
-                
+
+                recorder.ondataavailable = e => {
+                    if (e.data && e.data.size > 0) {
+                        chunks.push(e.data);
+                    }
+                };
+
                 recorder.onstop = () => {
-                    const blob = new Blob(chunks, { type: 'audio/webm' });
-                    const file = new File([blob], "vocal.webm", { type: "audio/webm" });
+                    const blob = new Blob(chunks, { type: recorder.mimeType });
                     
+                    if (blob.size === 0) {
+                        alert("Erreur : Le fichier audio est vide.");
+                        return;
+                    }
+
+                    const file = new File([blob], "vocal.webm", { type: blob.type });
                     const dt = new DataTransfer();
                     dt.items.add(file);
                     document.getElementById('audioHidden').files = dt.files;
-                    
+
                     const url = URL.createObjectURL(blob);
                     previewZone.style.display = "block";
-                    render.innerHTML = `<div class="audio-preview"><i class="fa fa-microphone"></i><audio src="${url}" controls style="height:35px"></audio></div>`;
+                    render.innerHTML = `
+                        <div class="audio-preview">
+                            <i class="fa fa-microphone" style="color:#5a57e3"></i>
+                            <audio src="${url}" controls style="height:35px"></audio>
+                        </div>`;
                     updateIcon();
                 };
 
-                recorder.start();
+                recorder.start(100); // Collecte les données toutes les 100ms pour éviter les pertes
                 isRecording = true;
                 mainBtn.classList.add('recording');
                 updateIcon();
             } catch (err) {
-                alert("Erreur Micro : " + err.message + ". Vérifiez les permissions de votre navigateur.");
+                alert("Erreur Micro : " + err.message);
             }
         } else {
             recorder.stop();
@@ -166,9 +190,15 @@
     }
 
     function stopRecordingAndSend() {
+        recorder.onstop = () => {
+            const blob = new Blob(chunks, { type: recorder.mimeType });
+            const file = new File([blob], "vocal.webm", { type: blob.type });
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            document.getElementById('audioHidden').files = dt.files;
+            msgForm.submit();
+        };
         recorder.stop();
-        isRecording = false;
-        setTimeout(() => { msgForm.submit(); }, 500);
     }
 
     function handleMedia(input) {
@@ -184,12 +214,14 @@
     }
 
     function clearMedia() {
-        previewZone.style.display = "none"; render.innerHTML = "";
-        document.getElementById('mediaIn').value = ""; 
+        previewZone.style.display = "none"; 
+        render.innerHTML = "";
+        document.getElementById('mediaIn').value = "";
         document.getElementById('audioHidden').value = "";
         updateIcon();
     }
 </script>
+
 </body>
 </html>
 
