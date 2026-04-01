@@ -467,8 +467,6 @@ UPLOAD_FOLDER = 'static/uploads/channel'
 def admin_canal_edit():
     user_id = session.get('user_id')
     user = db.session.get(User, user_id) if user_id else None
-    if not user or not getattr(user, 'is_admin', False):
-        return redirect(url_for('view_channel'))
 
     if request.method == "POST":
         content = request.form.get("content")
