@@ -464,60 +464,75 @@ from werkzeug.utils import secure_filename
 # Dossier de stockage (mkdir -p static/uploads/channel)
 UPLOAD_FOLDER = 'static/uploads/channel'
 
+from datetime import datetime, timezone
+import os
+from werkzeug.utils import secure_filename
+
 @app.route("/admin/canal/edit", methods=["GET", "POST"])
 def admin_canal_edit():
     user_id = session.get('user_id')
     user = db.session.get(User, user_id) if user_id else None
-    
-    # Sécurité Admin
+
 
     if request.method == "POST":
         content = request.form.get("content")
         file = request.files.get("media")
-        media_url, media_type = None, None
+        media_url = None
+        media_type = None
 
         if file and file.filename != '':
-            filename = secure_filename(file.filename)
-            timestamp = int(datetime.now().timestamp())
-            
-            # Gestion du nom pour les vocaux
-            if "vocal" in filename or filename == "blob":
-                filename = f"vocal_{timestamp}.webm"
-            else:
-                filename = f"{timestamp}_{filename}"
-            
-            # Sauvegarde physique du fichier
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            media_url = f"/static/uploads/{filename}"
-            
-            # Détection du type pour la base de données
-            ext = filename.lower().split('.')[-1]
-            if ext in ['jpg', 'jpeg', 'png', 'gif']: media_type = 'image'
-            elif ext in ['mp4', 'mov', 'avi']: media_type = 'video'
-            elif ext in ['webm', 'mp3', 'wav', 'ogg']: media_type = 'audio'
+            original_filename = secure_filename(file.filename)
+            timestamp = int(datetime.now(timezone.utc).timestamp())
 
-        # Création du message
+            # 1. GESTION DU NOM ET FORCE LE TYPE SI VOCAL
+            # Si le fichier s'appelle 'blob' (envoi JS) ou contient 'vocal'
+            if "vocal" in original_filename.lower() or original_filename == "blob":
+                filename = f"vocal_{timestamp}.webm"
+                media_type = 'audio' # On définit le type immédiatement
+            else:
+                filename = f"{timestamp}_{original_filename}"
+
+            # 2. SAUVEGARDE PHYSIQUE
+            # Assure-toi que le dossier static/uploads existe sur ton serveur
+            upload_path = os.path.join(app.root_path, 'static', 'uploads', filename)
+            file.save(upload_path)
+            
+            # URL pour la base de données
+            media_url = f"/static/uploads/{filename}"
+
+            # 3. DÉTECTION DU TYPE (si ce n'est pas déjà fait pour l'audio)
+            if not media_type:
+                ext = filename.lower().split('.')[-1]
+                if ext in ['jpg', 'jpeg', 'png', 'gif']:
+                    media_type = 'image'
+                elif ext in ['mp4', 'mov', 'avi']:
+                    media_type = 'video'
+                elif ext in ['webm', 'mp3', 'wav', 'ogg']:
+                    media_type = 'audio'
+
+        # 4. CRÉATION DU MESSAGE EN BDD
         new_msg = ChannelMessage(
-            content=content, 
-            media_url=media_url, 
-            media_type=media_type,
-            timestamp=datetime.now()
+            content=content,
+            media_url=media_url,
+            media_type=media_type, # Ici, ce ne sera plus 'None'
+            timestamp=datetime.now(timezone.utc)
         )
         db.session.add(new_msg)
         db.session.commit()
-        
-        # Redirection après POST pour éviter de renvoyer le formulaire en actualisant
+
+        # Redirection pour vider le formulaire
         return redirect(url_for('admin_canal_edit'))
 
-    # --- C'EST ICI QUE CA BLOQUAIT ---
-    # Ce bloc doit être exécuté pour le "GET" (affichage de la page)
+    # --- PARTIE AFFICHAGE (GET) ---
+    # On récupère les messages du plus récent au plus ancien
     messages = ChannelMessage.query.order_by(ChannelMessage.id.desc()).all()
-    sub_count = User.query.count() # Ou ChannelSub.query.count() selon ta table
     
-    # ON RENVOIE TOUJOURS LE RENDER_TEMPLATE A LA FIN
-    return render_template("admin_canal.html", 
-                           user=user, 
-                           messages=messages, 
+    # Nombre d'abonnés (utilise ta table ChannelSub si elle existe)
+    sub_count = ChannelSub.query.count() if 'ChannelSub' in globals() else User.query.count()
+
+    return render_template("admin_canal.html",
+                           user=user,
+                           messages=messages,
                            sub_count=sub_count)
 
 
