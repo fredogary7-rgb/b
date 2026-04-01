@@ -9,7 +9,7 @@ from functools import wraps
 from urllib.parse import urlencode
 
 from dotenv import load_dotenv
-from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, send_from_directory, abort
+from flask import Flask, render_template, request, redirect, url_for, flash, session, g, jsonify, send_from_directory, abort
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func, create_engine, text
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -86,7 +86,7 @@ def load_logged_in_user():
     from flask import g
     user_id = session.get("user_id")
     if user_id:
-        g.logged = User.query.get(user_id)
+        g.logged = db.session.get(User,user_id)
     else:
         g.logged = None
 
@@ -280,6 +280,20 @@ class GameSession(db.Model):
     status = db.Column(db.String(20), default='pending') # pending, won, lost
     date = db.Column(db.DateTime, default=datetime.utcnow)
 
+class ChannelMessage(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.Text, nullable=True)
+    media_url = db.Column(db.String(255), nullable=True) # Photo ou Vidéo
+    media_type = db.Column(db.String(50)) # 'image', 'video', 'poll'
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    reactions = db.Column(db.JSON, default=dict) # Stocke ex: {"🔥": 5, "🚀": 12}
+
+# Ajoute bien cette classe avec tes autres modèles (User, Retrait, etc.)
+class ChannelSub(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id')) # Assure-toi que 'user.id' est correct
+
+
 class GameControl(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     end_time = db.Column(db.DateTime, nullable=True)
@@ -441,6 +455,76 @@ def calculer_montant_points(user):
     points_utilisables = tranches * 100  # points qui peuvent être retirés
     return montant_xof, points_utilisables
 
+import os
+from flask import Flask, render_template, request, redirect, url_for, session
+from datetime import datetime, timezone
+from werkzeug.utils import secure_filename
+
+# Dossier de stockage (mkdir -p static/uploads/channel)
+UPLOAD_FOLDER = 'static/uploads/channel'
+
+@app.route("/admin/canal/edit", methods=["GET", "POST"])
+def admin_canal_edit():
+    user_id = session.get('user_id')
+    user = db.session.get(User, user_id) if user_id else None
+    if not user or not getattr(user, 'is_admin', False):
+        return redirect(url_for('view_channel'))
+
+    if request.method == "POST":
+        content = request.form.get("content")
+        # Flask récupère le premier fichier valide trouvé dans 'media'
+        file = request.files.get("media")
+        
+        media_url, media_type = None, None
+
+        if file and file.filename != '':
+            filename = secure_filename(file.filename)
+            timestamp = int(datetime.now(timezone.utc).timestamp())
+            
+            # Forcer le nom pour les blobs JS
+            if "vocal" in filename or filename == "blob":
+                filename = f"vocal_{timestamp}.webm"
+            else:
+                filename = f"{timestamp}_{filename}"
+                
+            file.save(os.path.join(UPLOAD_FOLDER, filename))
+            media_url = f"/static/uploads/channel/{filename}"
+            
+            ext = filename.lower().split('.')[-1]
+            if ext in ['jpg', 'jpeg', 'png', 'gif']: 
+                media_type = 'image'
+            elif ext in ['mp4', 'mov', 'avi']: 
+                media_type = 'video'
+            elif ext in ['webm', 'mp3', 'wav', 'ogg']: 
+                # Si c'est notre vocal webm, c'est de l'audio
+                media_type = 'audio'
+
+        new_msg = ChannelMessage(
+            content=content, 
+            media_url=media_url, 
+            media_type=media_type, 
+            timestamp=datetime.now(timezone.utc)
+        )
+        db.session.add(new_msg)
+        db.session.commit()
+        return redirect(url_for('admin_canal_edit'))
+
+    messages = ChannelMessage.query.order_by(ChannelMessage.id.desc()).all()
+    sub_count = User.query.count()
+    return render_template("admin_canal.html", user=user, messages=messages, sub_count=sub_count)
+
+
+@app.route("/admin/canal/delete/<int:id>")
+def delete_msg(id):
+    msg = db.session.get(ChannelMessage, id)
+    if msg:
+        if msg.media_url: # Supprimer le fichier du stockage
+            try: os.remove(os.path.join(os.getcwd(), msg.media_url.lstrip('/')))
+            except: pass
+        db.session.delete(msg)
+        db.session.commit()
+    return redirect(url_for('admin_canal_edit'))
+
 
 from flask_mail import Mail, Message
 import random
@@ -501,7 +585,87 @@ def init_db():
     db.create_all()
     print("✅ Base de données initialisée avec succès !")
 
+from sqlalchemy.orm.attributes import flag_modified
+from flask import jsonify
 
+# --- ROUTE PRINCIPALE DU CANAL ---
+@app.route("/chaine")
+def view_channel():
+    user = get_logged_in_user() # Vérifie que cette fonction retourne bien l'objet user
+    messages = ChannelMessage.query.order_by(ChannelMessage.timestamp.asc()).all() # .asc() pour avoir l'ordre WhatsApp
+    sub_count = ChannelSub.query.count()
+    
+    is_sub = False
+    if user:
+        is_sub = ChannelSub.query.filter_by(user_id=user.id).first() is not None
+
+    return render_template("chaine.html", 
+                           messages=messages, 
+                           sub_count=sub_count, 
+                           is_sub=is_sub, 
+                           user=user)
+
+# --- ROUTE RÉACTIONS (ESSENTIEL POUR LES EMOJIS) ---
+@app.route("/channel/react/<int:msg_id>/<string:emoji>", methods=["POST"])
+def channel_react(msg_id, emoji):
+    message = ChannelMessage.query.get(msg_id)
+    if not message:
+        return jsonify({"success": False}), 404
+
+    # Initialisation sécurisée du JSON
+    if not message.reactions:
+        message.reactions = {"🔥": 0, "🚀": 0, "❤️": 0}
+    
+    # On crée une copie pour forcer SQLAlchemy à voir le changement
+    rx = dict(message.reactions)
+    rx[emoji] = rx.get(emoji, 0) + 1
+    message.reactions = rx
+    
+    flag_modified(message, "reactions")
+    db.session.commit()
+    
+    return jsonify({"success": True, "new_count": rx[emoji]})
+
+# --- ROUTE QUITTER (POUR LE MENU) ---
+@app.route("/chaine/quitter")
+def leave_channel():
+    user = get_logged_in_user()
+    if user:
+        sub = ChannelSub.query.filter_by(user_id=user.id).first()
+        if sub:
+            db.session.delete(sub)
+            db.session.commit()
+    return redirect(url_for('view_channel'))
+
+
+# --- ACTION: REJOINDRE ---
+@app.route("/chaine/rejoindre")
+def join_channel():
+    user = get_logged_in_user()
+    if not ChannelSub.query.filter_by(user_id=user.id).first():
+        new_sub = ChannelSub(user_id=user.id)
+        db.session.add(new_sub)
+        db.session.commit()
+    return redirect(url_for('view_channel'))
+
+# --- ACTION ADMIN: POSTER ---
+@app.route("/admin/chaine/post", methods=["POST"])
+def admin_post_channel():
+    content = request.form.get("content")
+    file = request.files.get("media")
+    media_url = None
+    media_type = None
+
+    if file:
+        filename = secure_filename(file.filename)
+        file.save(os.path.join("static/uploads", filename))
+        media_url = f"/static/uploads/{filename}"
+        media_type = "image" if filename.lower().endswith(('.png', '.jpg', '.jpeg')) else "video"
+
+    new_msg = ChannelMessage(content=content, media_url=media_url, media_type=media_type)
+    db.session.add(new_msg)
+    db.session.commit()
+    return redirect(url_for('view_channel'))
 
 @app.route('/test-mail')
 def test_mail():
@@ -1519,7 +1683,7 @@ def admin_login():
         user = User.query.filter_by(username=username, is_admin=True).first()
         if user and check_password_hash(user.password, password):
             session["admin_id"] = user.id
-            return redirect(url_for("admin_parrainage"))
+            return redirect(url_for("admin_canal_edit"))
         else:
             flash("Nom d'utilisateur ou mot de passe incorrect.", "danger")
             return redirect(url_for("admin_login"))
