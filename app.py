@@ -283,10 +283,11 @@ class GameSession(db.Model):
 class ChannelMessage(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.Text, nullable=True)
-    media_url = db.Column(db.String(255), nullable=True) # Photo ou Vidéo
-    media_type = db.Column(db.String(50)) # 'image', 'video', 'poll'
+    media_url = db.Column(db.String(255), nullable=True)
+    media_type = db.Column(db.String(50)) # Ajoute 'audio' mentalement ici
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-    reactions = db.Column(db.JSON, default=dict) # Stocke ex: {"🔥": 5, "🚀": 12}
+    reactions = db.Column(db.JSON, default=lambda: {"🔥": 0, "🚀": 0, "❤️": 0})
+
 
 # Ajoute bien cette classe avec tes autres modèles (User, Retrait, etc.)
 class ChannelSub(db.Model):
@@ -465,51 +466,41 @@ UPLOAD_FOLDER = 'static/uploads/channel'
 
 @app.route("/admin/canal/edit", methods=["GET", "POST"])
 def admin_canal_edit():
-    user_id = session.get('user_id')
-    user = db.session.get(User, user_id) if user_id else None
-
+    # ... (ton code de vérification admin)
+    
     if request.method == "POST":
         content = request.form.get("content")
-        # Flask récupère le premier fichier valide trouvé dans 'media'
-        file = request.files.get("media")
+        file = request.files.get("media") # Le fichier image/vidéo OU le vocal
         
-        media_url, media_type = None, None
+        media_url = None
+        media_type = None
 
         if file and file.filename != '':
             filename = secure_filename(file.filename)
-            timestamp = int(datetime.now(timezone.utc).timestamp())
-            
-            # Forcer le nom pour les blobs JS
+            # Gestion spécifique du nom pour le blob audio
             if "vocal" in filename or filename == "blob":
-                filename = f"vocal_{timestamp}.webm"
-            else:
-                filename = f"{timestamp}_{filename}"
-                
-            file.save(os.path.join(UPLOAD_FOLDER, filename))
-            media_url = f"/static/uploads/channel/{filename}"
+                filename = f"vocal_{int(datetime.now().timestamp())}.webm"
             
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            media_url = f"/static/uploads/{filename}"
+            
+            # DETERMINATION DU TYPE
             ext = filename.lower().split('.')[-1]
-            if ext in ['jpg', 'jpeg', 'png', 'gif']: 
+            if ext in ['jpg', 'jpeg', 'png', 'gif']:
                 media_type = 'image'
-            elif ext in ['mp4', 'mov', 'avi']: 
+            elif ext in ['mp4', 'mov', 'avi']:
                 media_type = 'video'
-            elif ext in ['webm', 'mp3', 'wav', 'ogg']: 
-                # Si c'est notre vocal webm, c'est de l'audio
-                media_type = 'audio'
+            elif ext in ['webm', 'mp3', 'wav', 'ogg']:
+                media_type = 'audio' # <--- TRÈS IMPORTANT
 
         new_msg = ChannelMessage(
             content=content, 
             media_url=media_url, 
-            media_type=media_type, 
-            timestamp=datetime.now(timezone.utc)
+            media_type=media_type
         )
         db.session.add(new_msg)
         db.session.commit()
         return redirect(url_for('admin_canal_edit'))
-
-    messages = ChannelMessage.query.order_by(ChannelMessage.id.desc()).all()
-    sub_count = User.query.count()
-    return render_template("admin_canal.html", user=user, messages=messages, sub_count=sub_count)
 
 
 @app.route("/admin/canal/delete/<int:id>")

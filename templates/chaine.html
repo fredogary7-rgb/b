@@ -62,30 +62,40 @@
         </div>
     </div>
 
-    <div class="content {% if not is_sub %}locked{% endif %}" id="chatBox">
-        {% for msg in messages %}
-        <div class="msg-bubble">
+<div class="content {% if not is_sub %}locked{% endif %}" id="chatBox">
+    {% for msg in messages %}
+    <div class="msg-bubble">
+        <div class="msg-media">
             {% if msg.media_type == 'image' %}
-                <img src="{{ msg.media_url }}">
+                <img src="{{ msg.media_url }}" alt="Image">
             {% elif msg.media_type == 'video' %}
                 <video src="{{ msg.media_url }}" controls></video>
             {% elif msg.media_type == 'audio' %}
-                <audio src="{{ msg.media_url }}" controls style="width: 100%;"></audio>
+                <div class="audio-wrapper">
+                    <i class="fa fa-play-circle"></i>
+                    <audio src="{{ msg.media_url }}" controls></audio>
+                </div>
             {% endif %}
-            
-            <p style="font-size: 14px; color: #333; line-height: 1.4;">{{ msg.content }}</p>
-            
-            <div class="reactions">
-                {% set r = msg.reactions or {"🔥": 0, "🚀": 0, "❤️": 0} %}
-                <button class="react-btn" onclick="sendReact({{ msg.id }}, '🔥')">🔥 <span id="count-🔥-{{ msg.id }}">{{ r['🔥'] }}</span></button>
-                <button class="react-btn" onclick="sendReact({{ msg.id }}, '🚀')">🚀 <span id="count-🚀-{{ msg.id }}">{{ r['🚀'] }}</span></button>
-                <button class="react-btn" onclick="sendReact({{ msg.id }}, '❤️')">❤️ <span id="count-❤️-{{ msg.id }}">{{ r['❤️'] }}</span></button>
-            </div>
-            
-            <div class="msg-time">{{ msg.timestamp.strftime('%H:%M') }}</div>
         </div>
-        {% endfor %}
+        
+        {% if msg.content %}
+        <p style="font-size: 14px; color: #333; line-height: 1.4; margin-bottom: 5px;">
+            {{ msg.content }}
+        </p>
+        {% endif %}
+        
+        <div class="reactions">
+            {% set r = msg.reactions or {"🔥": 0, "🚀": 0, "❤️": 0} %}
+            <button class="react-btn" onclick="sendReact({{ msg.id }}, '🔥')">🔥 <span id="count-🔥-{{ msg.id }}">{{ r['🔥'] }}</span></button>
+            <button class="react-btn" onclick="sendReact({{ msg.id }}, '🚀')">🚀 <span id="count-🚀-{{ msg.id }}">{{ r['🚀'] }}</span></button>
+            <button class="react-btn" onclick="sendReact({{ msg.id }}, '❤️')">❤️ <span id="count-❤️-{{ msg.id }}">{{ r['❤️'] }}</span></button>
+        </div>
+        
+        <div class="msg-time">{{ msg.timestamp.strftime('%H:%M') }}</div>
     </div>
+    {% endfor %}
+</div>
+
 
     {% if not is_sub %}
     <div class="join-bar">
