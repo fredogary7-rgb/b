@@ -2,187 +2,119 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Canal Officiel - NovaTrade</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Canal NovaTrade</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
     <style>
-        :root {
-            --bg-body: #e1e9ff;
-            --bg-chat: #f0f2f5;
-            --bg-card: #ffffff;
-            --text-main: #444444;
-            --text-sub: #888888;
-            --header-bg: rgba(255, 255, 255, 0.8);
-            --accent: #5a57e3;
-            --input-bg: #f8fafc;
-            --border: rgba(0,0,0,0.05);
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background: #e5ddd5; height: 100vh; display: flex; flex-direction: column; }
 
-        /* --- Mode Sombre --- */
-        body.dark-mode {
-            --bg-body: #0b141a;
-            --bg-chat: #0b141a;
-            --bg-card: #202c33;
-            --text-main: #e9edef;
-            --text-sub: #8696a0;
-            --header-bg: rgba(32, 44, 51, 0.9);
-            --accent: #8696a0;
-            --input-bg: #2a3942;
-            --border: rgba(255,255,255,0.1);
+        /* Header style Telegram */
+        .header {
+            background: white; padding: 10px 15px; display: flex; align-items: center;
+            gap: 12px; border-bottom: 1px solid #ddd; position: sticky; top: 0; z-index: 100;
         }
+        .header img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; }
+        .header-info h4 { font-size: 16px; color: #333; }
+        .header-info span { font-size: 12px; color: #888; }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; transition: background 0.3s, color 0.3s; }
-        body { background: var(--bg-body); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        /* Conteneur de messages */
+        .content { flex: 1; overflow-y: auto; padding: 15px; background: #e5ddd5; }
         
-        /* Header */
-        .app-header {
-            background: var(--header-bg); backdrop-filter: blur(10px);
-            padding: 10px 15px; display: flex; align-items: center; justify-content: space-between;
-            border-bottom: 1px solid var(--border); color: var(--accent); position: sticky; top: 0; z-index: 100;
-        }
-        .header-left { display: flex; align-items: center; gap: 12px; }
-        .channel-info { display: flex; flex-direction: column; }
-        .channel-name { font-weight: 600; font-size: 15px; color: var(--text-main); }
-        .sub-count { font-size: 11px; color: var(--text-sub); }
+        /* Effet de flou si non abonné */
+        .locked { filter: blur(8px); pointer-events: none; user-select: none; }
 
-        /* Chat Container */
-        .chat-container {
-            flex: 1; overflow-y: auto; padding: 15px;
-            background-color: var(--bg-chat);
-            background-image: url('https://user-images.githubusercontent.com/1500684/152102890-2ff6eb48-2c43-41aa-a8d7-e3505876386a.png');
-            background-blend-mode: overlay;
-            display: flex; flex-direction: column;
+        .msg-bubble {
+            background: white; padding: 10px; border-radius: 12px;
+            margin-bottom: 15px; max-width: 90%; box-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
-
-        .msg-card {
-            background: var(--bg-card); padding: 8px; border-radius: 12px;
-            max-width: 85%; margin-bottom: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            align-self: flex-start;
-        }
-        .msg-media { width: 100%; border-radius: 8px; margin-bottom: 5px; cursor: pointer; transition: transform 0.2s; }
-        .msg-media:active { transform: scale(0.98); }
-        .msg-content { font-size: 14px; margin-bottom: 10px; }
-        .msg-meta { font-size: 10px; color: var(--text-sub); text-align: right; }
+        .msg-bubble img, .msg-bubble video { width: 100%; border-radius: 8px; margin-bottom: 5px; }
+        .msg-time { font-size: 10px; color: #999; text-align: right; margin-top: 5px; }
 
         /* Réactions */
-        .reactions-bar { display: flex; gap: 8px; margin-bottom: 15px; padding-left: 5px; }
-        .btn-react {
-            background: var(--bg-card); border: none; padding: 4px 10px;
-            border-radius: 15px; font-size: 12px; cursor: pointer; color: var(--text-main);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        .reactions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+        .react-btn {
+            background: #f0f2f5; border: 1px solid #eee; padding: 4px 8px;
+            border-radius: 15px; font-size: 13px; cursor: pointer; transition: 0.2s;
         }
+        .react-btn:active { transform: scale(0.9); background: #e1e9ff; }
 
-        /* Barre de saisie */
-        .input-bar { padding: 10px; background: var(--header-bg); display: flex; align-items: center; gap: 10px; border-top: 1px solid var(--border); }
-        .actu-input { flex: 1; padding: 10px 15px; border-radius: 20px; border: none; outline: none; background: var(--input-bg); color: var(--text-main); }
-
-        /* --- Lightbox (Image plein écran) --- */
-        #lightbox {
-            display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); align-items: center; justify-content: center;
+        /* Barre Rejoindre (Flottante) */
+        .join-bar {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: white; padding: 15px; text-align: center;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 200;
         }
-        #lightbox img { max-width: 95%; max-height: 95%; border-radius: 10px; box-shadow: 0 0 20px rgba(255,255,255,0.1); }
-
-        /* Menu */
-        #dropMenu {
-            display: none; position: absolute; right: 0; top: 35px;
-            background: var(--bg-card); border-radius: 8px; width: 180px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 1000;
+        .btn-join {
+            background: #5a57e3; color: white; border: none; padding: 12px 40px;
+            border-radius: 25px; font-weight: bold; width: 100%; max-width: 300px; cursor: pointer;
         }
-        #dropMenu a { display: block; padding: 12px; font-size: 13px; color: var(--text-main); text-decoration: none; }
     </style>
 </head>
-<body class="">
+<body>
 
-    <div id="lightbox" onclick="this.style.display='none'">
-        <img id="lightbox-img" src="">
-    </div>
-
-    <div class="app-header">
-        <div class="header-left">
-            <a href="/"><i class="fa fa-arrow-left"></i></a>
-            <img src="/static/images/n.jpg" style="width: 35px; height: 35px; border-radius: 50%; border: 1px solid var(--border);">
-            <div class="channel-info">
-                <span class="channel-name">NovaTrade Officiel</span>
-                <span class="sub-count">{{ sub_count }} abonnés</span>
-            </div>
-        </div>
-        <div class="header-icons">
-            <i class="fa fa-adjust" onclick="toggleDarkMode()" style="cursor:pointer;"></i>
-            <div class="menu-container" style="position: relative;">
-                <i class="fa fa-ellipsis-v" onclick="toggleMenu()" style="cursor:pointer; padding: 5px;"></i>
-                <div id="dropMenu">
-                    <a href="#" onclick="toggleDarkMode()"><i class="fa fa-moon"></i> Mode Sombre/Clair</a>
-                    <a href="/chaine/quitter" style="color: #ff4b2b;"><i class="fa fa-sign-out-alt"></i> Quitter</a>
-                </div>
-            </div>
+    <div class="header">
+        <a href="/dashboard" style="color:#5a57e3"><i class="fa fa-arrow-left"></i></a>
+        <img src="/static/images/lu.jpg" alt="Logo">
+        <div class="header-info">
+            <h4>NovaTrade Officiel</h4>
+            <span>{{ sub_count }} abonnés</span>
         </div>
     </div>
 
-    <div class="chat-container" id="chatFeed">
+    <div class="content {% if not is_sub %}locked{% endif %}" id="chatBox">
         {% for msg in messages %}
-        <div class="msg-card">
-            {% if msg.media_url %}
-                <img src="{{ msg.media_url }}" class="msg-media" onclick="openLightbox(this.src)">
+        <div class="msg-bubble">
+            {% if msg.media_type == 'image' %}
+                <img src="{{ msg.media_url }}">
+            {% elif msg.media_type == 'video' %}
+                <video src="{{ msg.media_url }}" controls></video>
+            {% elif msg.media_type == 'audio' %}
+                <audio src="{{ msg.media_url }}" controls style="width: 100%;"></audio>
             {% endif %}
-            <div class="msg-content">{{ msg.content | urlize }}</div>
-            <div class="msg-meta">{{ msg.timestamp.strftime('%H:%M') }}</div>
-        </div>
-        <div class="reactions-bar">
-            <button class="btn-react" onclick="sendReact({{ msg.id }}, '🔥')">🔥 <span id="react-{{ msg.id }}-🔥">{{ msg.reactions.get('🔥', 0) }}</span></button>
-            <button class="btn-react" onclick="sendReact({{ msg.id }}, '🚀')">🚀 <span id="react-{{ msg.id }}-🚀">{{ msg.reactions.get('🚀', 0) }}</span></button>
-            <button class="btn-react" onclick="sendReact({{ msg.id }}, '❤️')">❤️ <span id="react-{{ msg.id }}-❤️">{{ msg.reactions.get('❤️', 0) }}</span></button>
+            
+            <p style="font-size: 14px; color: #333; line-height: 1.4;">{{ msg.content }}</p>
+            
+            <div class="reactions">
+                {% set r = msg.reactions or {"🔥": 0, "🚀": 0, "❤️": 0} %}
+                <button class="react-btn" onclick="sendReact({{ msg.id }}, '🔥')">🔥 <span id="count-🔥-{{ msg.id }}">{{ r['🔥'] }}</span></button>
+                <button class="react-btn" onclick="sendReact({{ msg.id }}, '🚀')">🚀 <span id="count-🚀-{{ msg.id }}">{{ r['🚀'] }}</span></button>
+                <button class="react-btn" onclick="sendReact({{ msg.id }}, '❤️')">❤️ <span id="count-❤️-{{ msg.id }}">{{ r['❤️'] }}</span></button>
+            </div>
+            
+            <div class="msg-time">{{ msg.timestamp.strftime('%H:%M') }}</div>
         </div>
         {% endfor %}
     </div>
 
-    {% if user.is_admin %}
-    <form class="input-bar" action="/admin/canal/edit" method="POST" enctype="multipart/form-data">
-        <input type="text" name="content" class="actu-input" placeholder="Écrire une actu" required>
-        <label for="mediaInput" style="cursor:pointer;"><i class="fa fa-paperclip" style="font-size: 20px; color: var(--text-sub);"></i></label>
-        <input type="file" name="media" id="mediaInput" style="display: none;">
-        <button type="submit" class="send-btn" style="background: #5a57e3; color: white; border: none; width: 40px; height: 40px; border-radius: 50%;"><i class="fa fa-paper-plane"></i></button>
-    </form>
+    {% if not is_sub %}
+    <div class="join-bar">
+        <p style="margin-bottom: 10px; font-size: 13px; color: #666;">Abonnez-vous pour voir les signaux et actualités.</p>
+        <form action="/chaine/rejoindre" method="POST">
+            <button type="submit" class="btn-join">REJOINDRE LA CHAÎNE</button>
+        </form>
+    </div>
     {% endif %}
 
     <script>
-        // 1. Scroll automatique vers le bas
-        const chatFeed = document.getElementById('chatFeed');
-        chatFeed.scrollTop = chatFeed.scrollHeight;
-
-        // 2. Gestion Lightbox (Image plein écran)
-        function openLightbox(src) {
-            const lb = document.getElementById('lightbox');
-            document.getElementById('lightbox-img').src = src;
-            lb.style.display = 'flex';
-        }
-
-        // 3. Mode Sombre / Clair
-        function toggleDarkMode() {
-            document.body.classList.toggle('dark-mode');
-            const isDark = document.body.classList.contains('dark-mode');
-            localStorage.setItem('theme', isDark ? 'dark' : 'light');
-        }
-
-        // Charger le thème préféré au démarrage
-        if (localStorage.getItem('theme') === 'dark') {
-            document.body.classList.add('dark-mode');
-        }
-
-        // 4. Menu & Réactions (Inchangés mais vérifiés)
-        function toggleMenu() {
-            const menu = document.getElementById('dropMenu');
-            menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
-        }
+        // Scroll automatique vers le bas
+        const chat = document.getElementById('chatBox');
+        chat.scrollTop = chat.scrollHeight;
 
         function sendReact(msgId, emoji) {
+            {% if not is_sub %}
+                alert("Abonnez-vous d'abord !");
+                return;
+            {% endif %}
+
             fetch(`/channel/react/${msgId}/${emoji}`, { method: 'POST' })
             .then(res => res.json())
             .then(data => {
                 if(data.success) {
-                    document.getElementById(`react-${msgId}-${emoji}`).innerText = data.new_count;
+                    const span = document.getElementById(`count-${emoji}-${msgId}`);
+                    span.innerText = data.new_count;
+                    // Petit effet visuel
+                    span.parentElement.style.background = "#e1e9ff";
                 }
             });
         }

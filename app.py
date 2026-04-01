@@ -587,17 +587,23 @@ def init_db():
 
 from sqlalchemy.orm.attributes import flag_modified
 from flask import jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from sqlalchemy.orm.attributes import flag_modified
 
-# --- ROUTE PRINCIPALE DU CANAL ---
 @app.route("/chaine")
 def view_channel():
-    user = get_logged_in_user() # Vérifie que cette fonction retourne bien l'objet user
-    messages = ChannelMessage.query.order_by(ChannelMessage.timestamp.asc()).all() # .asc() pour avoir l'ordre WhatsApp
-    sub_count = ChannelSub.query.count()
+    user_id = session.get('user_id')
+    user = db.session.get(User, user_id) if user_id else None
     
+    # Vérification de l'abonnement
     is_sub = False
     if user:
-        is_sub = ChannelSub.query.filter_by(user_id=user.id).first() is not None
+        sub = ChannelSub.query.filter_by(user_id=user.id).first()
+        is_sub = sub is not None
+
+    # On récupère les messages (ordre chronologique pour la lecture)
+    messages = ChannelMessage.query.order_by(ChannelMessage.timestamp.asc()).all()
+    sub_count = ChannelSub.query.count()
 
     return render_template("chaine.html", 
                            messages=messages, 
@@ -605,28 +611,40 @@ def view_channel():
                            is_sub=is_sub, 
                            user=user)
 
-# --- ROUTE RÉACTIONS (ESSENTIEL POUR LES EMOJIS) ---
+@app.route("/chaine/rejoindre", methods=["POST"])
+def join_channel():
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('login'))
+    
+    existing_sub = ChannelSub.query.filter_by(user_id=user_id).first()
+    if not existing_sub:
+        new_sub = ChannelSub(user_id=user_id)
+        db.session.add(new_sub)
+        db.session.commit()
+    
+    return redirect(url_for('view_channel'))
+
 @app.route("/channel/react/<int:msg_id>/<string:emoji>", methods=["POST"])
 def channel_react(msg_id, emoji):
-    message = ChannelMessage.query.get(msg_id)
+    message = db.session.get(ChannelMessage, msg_id)
     if not message:
         return jsonify({"success": False}), 404
 
-    # Initialisation sécurisée du JSON
-    if not message.reactions:
-        message.reactions = {"🔥": 0, "🚀": 0, "❤️": 0}
+    # Initialisation si vide
+    rx = dict(message.reactions) if message.reactions else {"🔥": 0, "🚀": 0, "❤️": 0}
     
-    # On crée une copie pour forcer SQLAlchemy à voir le changement
-    rx = dict(message.reactions)
+    # Incrémentation
     rx[emoji] = rx.get(emoji, 0) + 1
     message.reactions = rx
     
+    # Notifier SQLAlchemy du changement dans le JSON
     flag_modified(message, "reactions")
     db.session.commit()
-    
+
     return jsonify({"success": True, "new_count": rx[emoji]})
 
-# --- ROUTE QUITTER (POUR LE MENU) ---
+
 @app.route("/chaine/quitter")
 def leave_channel():
     user = get_logged_in_user()
@@ -638,15 +656,6 @@ def leave_channel():
     return redirect(url_for('view_channel'))
 
 
-# --- ACTION: REJOINDRE ---
-@app.route("/chaine/rejoindre")
-def join_channel():
-    user = get_logged_in_user()
-    if not ChannelSub.query.filter_by(user_id=user.id).first():
-        new_sub = ChannelSub(user_id=user.id)
-        db.session.add(new_sub)
-        db.session.commit()
-    return redirect(url_for('view_channel'))
 
 # --- ACTION ADMIN: POSTER ---
 @app.route("/admin/chaine/post", methods=["POST"])
