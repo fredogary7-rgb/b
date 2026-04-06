@@ -4,27 +4,104 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin NovaTrade</title>
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif}
-body{background:#e5ddd5;height:100vh;display:flex;flex-direction:column}
 
-.header{background:#5a57e3;color:white;padding:10px;display:flex;align-items:center;gap:10px}
-.header img{width:35px;height:35px;border-radius:50%}
+body{
+    background:#e5ddd5;
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+}
 
-.chat-box{flex:1;overflow:auto;padding:15px}
+.header{
+    background:#5a57e3;
+    color:white;
+    padding:10px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
 
-.msg-card{background:white;padding:10px;border-radius:10px;margin-bottom:15px}
-.msg-card img,.msg-card video{max-width:250px;margin-top:5px;border-radius:5px}
+.header img{
+    width:35px;
+    height:35px;
+    border-radius:50%;
+}
 
-.bottom-bar{display:flex;padding:10px;background:#f0f2f5;gap:5px}
-.input-group{flex:1;background:white;border-radius:20px;display:flex;align-items:center;padding:5px}
-.input-group input{flex:1;border:none;outline:none;padding:8px}
+.chat-box{
+    flex:1;
+    overflow:auto;
+    padding:15px;
+}
 
-.btn-action{background:#5a57e3;color:white;border:none;width:45px;height:45px;border-radius:50%}
+.msg-card{
+    background:white;
+    padding:10px;
+    border-radius:10px;
+    margin-bottom:15px;
+}
 
-.recording{background:red}
+.msg-card img,.msg-card video{
+    max-width:250px;
+    margin-top:5px;
+    border-radius:5px;
+}
+
+.actions{
+    margin-top:5px;
+    display:flex;
+    gap:10px;
+    font-size:13px;
+}
+
+.actions a,.actions button{
+    background:none;
+    border:none;
+    cursor:pointer;
+}
+
+.delete{color:red;}
+.edit{color:#5a57e3;}
+
+.bottom-bar{
+    display:flex;
+    padding:10px;
+    background:#f0f2f5;
+    gap:5px;
+}
+
+.input-group{
+    flex:1;
+    background:white;
+    border-radius:20px;
+    display:flex;
+    align-items:center;
+    padding:5px;
+}
+
+.input-group input{
+    flex:1;
+    border:none;
+    outline:none;
+    padding:8px;
+}
+
+.btn-action{
+    background:#5a57e3;
+    color:white;
+    border:none;
+    width:45px;
+    height:45px;
+    border-radius:50%;
+}
+
+.recording{
+    background:red;
+}
 </style>
 </head>
 
@@ -39,7 +116,8 @@ body{background:#e5ddd5;height:100vh;display:flex;flex-direction:column}
 <div class="chat-box">
 {% for msg in messages %}
 <div class="msg-card">
-<p>{{ msg.content }}</p>
+
+<p id="text-{{ msg.id }}">{{ msg.content }}</p>
 
 {% if msg.media_type == 'image' %}
 <img src="{{ msg.media_url }}">
@@ -54,6 +132,12 @@ body{background:#e5ddd5;height:100vh;display:flex;flex-direction:column}
 {% endif %}
 
 <div style="font-size:10px">Type: {{ msg.media_type }}</div>
+
+<div class="actions">
+    <a href="/delete_msg/{{ msg.id }}" class="delete">Supprimer</a>
+    <button onclick="editMsg({{ msg.id }})" class="edit">Modifier</button>
+</div>
+
 </div>
 {% endfor %}
 </div>
@@ -62,6 +146,7 @@ body{background:#e5ddd5;height:100vh;display:flex;flex-direction:column}
 
 <div class="input-group">
 <input type="text" name="content" id="txtInput" placeholder="Message">
+<label for="mediaIn"><i class="fa fa-paperclip"></i></label>
 <input type="file" name="media" id="mediaIn" hidden>
 </div>
 
@@ -79,10 +164,13 @@ let recorder, chunks=[], isRecording=false;
 const btn=document.getElementById("mainBtn");
 const icon=document.getElementById("icon");
 const form=document.getElementById("msgForm");
+const txtInput=document.getElementById("txtInput");
+const mediaIn=document.getElementById("mediaIn");
+const audioHidden=document.getElementById("audioHidden");
 
 btn.onclick=async()=>{
 
-// 🔥 ENVOI
+// ENVOI
 if(txtInput.value || mediaIn.files.length || audioHidden.files.length){
     if(isRecording){
         stopAndSend();
@@ -92,19 +180,18 @@ if(txtInput.value || mediaIn.files.length || audioHidden.files.length){
     return;
 }
 
-// 🔥 PAS DE MICRO → fallback
+// PAS DE MICRO
 if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
     alert("Micro non supporté → sélection audio");
     audioHidden.click();
     return;
 }
 
-// 🔥 START RECORD
+// START RECORD
 if(!isRecording){
 
 const stream=await navigator.mediaDevices.getUserMedia({audio:true});
 
-// 🔥 FORMAT AUTO
 let mime="audio/webm";
 if(!MediaRecorder.isTypeSupported(mime)){
     mime="audio/mp4";
@@ -144,6 +231,29 @@ icon.className="fa fa-microphone";
 
 function stopAndSend(){
 recorder.stop();
+}
+
+// ✏️ MODIFIER MESSAGE
+function editMsg(id){
+    const el=document.getElementById("text-"+id);
+    const oldText=el.innerText;
+
+    const newText=prompt("Modifier :",oldText);
+    if(newText===null) return;
+
+    fetch(`/edit_msg/${id}`,{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({content:newText})
+    })
+    .then(res=>res.json())
+    .then(data=>{
+        if(data.success){
+            el.innerText=newText;
+        }else{
+            alert("Erreur modification");
+        }
+    });
 }
 </script>
 

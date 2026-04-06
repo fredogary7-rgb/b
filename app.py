@@ -517,17 +517,34 @@ def admin_canal_edit():
     messages = ChannelMessage.query.order_by(ChannelMessage.id.desc()).all()
     return render_template("admin_canal.html", messages=messages)
 
-@app.route("/admin/canal/delete/<int:id>")
-def delete_msg(id):
-    msg = db.session.get(ChannelMessage, id)
-    if msg:
-        if msg.media_url: # Supprimer le fichier du stockage
-            try: os.remove(os.path.join(os.getcwd(), msg.media_url.lstrip('/')))
-            except: pass
-        db.session.delete(msg)
-        db.session.commit()
-    return redirect(url_for('admin_canal_edit'))
+@app.route("/edit_msg/<int:id>", methods=["POST"])
+def edit_msg(id):
+    msg = ChannelMessage.query.get_or_404(id)
 
+    data = request.get_json()
+    new_content = data.get("content")
+
+    msg.content = new_content
+    db.session.commit()
+
+    return {"success": True}
+
+@app.route("/delete_msg/<int:id>")
+def delete_msg(id):
+    msg = ChannelMessage.query.get_or_404(id)
+
+    # 🔥 supprime fichier si existe
+    if msg.media_url:
+        try:
+            path = msg.media_url.replace("/static/uploads/", "static/uploads/")
+            os.remove(path)
+        except:
+            pass
+
+    db.session.delete(msg)
+    db.session.commit()
+
+    return redirect(url_for('admin_canal_edit'))
 
 from flask_mail import Mail, Message
 import random
