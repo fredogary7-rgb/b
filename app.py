@@ -473,68 +473,58 @@ def admin_canal_edit():
     user_id = session.get('user_id')
     user = db.session.get(User, user_id) if user_id else None
 
-
     if request.method == "POST":
         content = request.form.get("content")
-        file = request.files.get("media")
-        media_url = None
-        media_type = None
+
+        # 🔥 PREND MEDIA OU AUDIO
+        file = request.files.get("media") or request.files.get("audio")
+
+        final_media_url = None
+        final_media_type = None 
 
         if file and file.filename != '':
-            original_filename = secure_filename(file.filename)
-            timestamp = int(datetime.now(timezone.utc).timestamp())
+            filename = secure_filename(file.filename)
+            timestamp = int(datetime.now().timestamp())
 
-            # 1. GESTION DU NOM ET FORCE LE TYPE SI VOCAL
-            # Si le fichier s'appelle 'blob' (envoi JS) ou contient 'vocal'
-            if "vocal" in original_filename.lower() or original_filename == "blob":
+            print("DEBUG FILE:", filename, file.content_type)
+
+            # 🔥 Détection audio prioritaire
+            if "vocal" in filename.lower() or file.content_type.startswith("audio"):
                 filename = f"vocal_{timestamp}.webm"
-                media_type = 'audio' # On définit le type immédiatement
+                final_media_type = 'audio'
             else:
-                filename = f"{timestamp}_{original_filename}"
+                filename = f"{timestamp}_{filename}"
 
-            # 2. SAUVEGARDE PHYSIQUE
-            # Assure-toi que le dossier static/uploads existe sur ton serveur
-            upload_path = os.path.join(app.root_path, 'static', 'uploads', filename)
-            file.save(upload_path)
-            
-            # URL pour la base de données
-            media_url = f"/static/uploads/{filename}"
+            # Sauvegarde
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            final_media_url = f"/static/uploads/{filename}"
 
-            # 3. DÉTECTION DU TYPE (si ce n'est pas déjà fait pour l'audio)
-            if not media_type:
+            # Détection si pas audio
+            if final_media_type is None:
                 ext = filename.lower().split('.')[-1]
-                if ext in ['jpg', 'jpeg', 'png', 'gif']:
-                    media_type = 'image'
-                elif ext in ['mp4', 'mov', 'avi']:
-                    media_type = 'video'
-                elif ext in ['webm', 'mp3', 'wav', 'ogg']:
-                    media_type = 'audio'
 
-        # 4. CRÉATION DU MESSAGE EN BDD
+                if ext in ['jpg', 'jpeg', 'png', 'gif']:
+                    final_media_type = 'image'
+                elif ext in ['mp4', 'mov', 'avi']:
+                    final_media_type = 'video'
+                elif ext in ['webm', 'mp3', 'wav', 'ogg']:
+                    final_media_type = 'audio'
+
+            print(f"--- DEBUG: {filename} | Type: {final_media_type}")
+
         new_msg = ChannelMessage(
             content=content,
-            media_url=media_url,
-            media_type=media_type, # Ici, ce ne sera plus 'None'
-            timestamp=datetime.now(timezone.utc)
+            media_url=final_media_url,
+            media_type=final_media_type,
+            timestamp=datetime.now()
         )
+
         db.session.add(new_msg)
         db.session.commit()
-
-        # Redirection pour vider le formulaire
         return redirect(url_for('admin_canal_edit'))
 
-    # --- PARTIE AFFICHAGE (GET) ---
-    # On récupère les messages du plus récent au plus ancien
     messages = ChannelMessage.query.order_by(ChannelMessage.id.desc()).all()
-    
-    # Nombre d'abonnés (utilise ta table ChannelSub si elle existe)
-    sub_count = ChannelSub.query.count() if 'ChannelSub' in globals() else User.query.count()
-
-    return render_template("admin_canal.html",
-                           user=user,
-                           messages=messages,
-                           sub_count=sub_count)
-
+    return render_template("admin_canal.html", user=user, messages=messages)
 
 @app.route("/admin/canal/delete/<int:id>")
 def delete_msg(id):
@@ -2096,27 +2086,38 @@ def retrait_page():
 
 @app.route("/retrait-casino", methods=["GET", "POST"])
 def retrait_casino_page():
-    user = get_logged_in_user() # Ta fonction pour récupérer l'user
-    
+    user = get_logged_in_user()
+    if not user:
+        return redirect(url_for('login')) # Sécurité si l'user n'est pas connecté
+
     MIN_RETRAIT = 400
-    FRAIS = 0 # Généralement pas de frais sur les bonus, ou adapte selon tes besoins
+    FRAIS = 0 
 
     stats = {
         "bonus_total": float(user.bonus or 0)
     }
 
-    # Récupérer les services selon le pays (Réutilise tes variables globales)
+    # Récupérer les services selon le pays
     country_code = COUNTRY_CODE.get(user.country)
     services = SERVICES.get(country_code, [])
 
     if request.method == "POST":
         try:
+            # RÉCUPÉRATION DES DONNÉES DU FORMULAIRE
             montant = float(request.form.get("montant", 0))
             service_id = int(request.form.get("payment_method"))
-        except:
+            # On récupère le numéro saisi par l'utilisateur
+            wallet = request.form.get("wallet") 
+        except Exception as e:
             flash("Données invalides.", "danger")
             return redirect(url_for("retrait_casino_page"))
 
+        # Vérification si le numéro est vide
+        if not wallet or len(wallet) < 8:
+            flash("Veuillez saisir un numéro de téléphone valide.", "danger")
+            return redirect(url_for("retrait_casino_page"))
+
+        # Logique de validation du montant
         if montant < MIN_RETRAIT:
             flash(f"Le montant minimum de retrait casino est de {MIN_RETRAIT} XOF.", "danger")
             return redirect(url_for("retrait_casino_page"))
@@ -2127,14 +2128,14 @@ def retrait_casino_page():
             flash("Solde bonus insuffisant.", "danger")
             return redirect(url_for("retrait_casino_page"))
 
-        # Vérification du service
+        # Vérification du service de paiement
         valid_services = [s["id"] for s in services]
         if service_id not in valid_services:
             flash("Service de paiement invalide.", "danger")
             return redirect(url_for("retrait_casino_page"))
 
-        # Appel API SoleasPay
-        wallet = user.phone
+        # --- APPEL API SOLEASPAY ---
+        # On utilise maintenant la variable 'wallet' saisie par l'utilisateur
         response = envoyer_retrait_soleaspay(service_id, wallet, montant)
 
         if not response or response.get("success") != True:
@@ -2142,25 +2143,24 @@ def retrait_casino_page():
             flash(f"Erreur : {error_msg}", "danger")
             return redirect(url_for("retrait_casino_page"))
 
-        # Enregistrer le retrait dans ta table Retrait
+        # --- ENREGISTREMENT EN BASE DE DONNÉES ---
         nouveau_retrait = Retrait(
-            user_id=user.id, # N'oublie pas l'ID user si ta table le demande
+            user_id=user.id,
             montant=montant,
             frais=FRAIS,
             payment_method=service_id,
             statut="successful",
-            phone=user.phone,
-            pays=user.country,
-            type_retrait="casino" # Optionnel : pour les différencier en DB
+            phone=wallet, # Le numéro saisi est enregistré ici
+            pays=user.country
         )
 
         db.session.add(nouveau_retrait)
-        
+
         # Déduction du solde BONUS
         user.bonus -= montant_total
         db.session.commit()
 
-        flash(f"Retrait Casino de {montant} XOF réussi !", "success")
+        flash(f"Retrait Casino de {montant} XOF réussi sur le numéro {wallet} !", "success")
         return redirect(url_for("dashboard_page"))
 
     return render_template(
@@ -2170,6 +2170,7 @@ def retrait_casino_page():
         services=services,
         min_retrait=MIN_RETRAIT
     )
+
 
 @app.route("/retrait-jeux", methods=["GET", "POST"])
 def retrait_jeux_page():

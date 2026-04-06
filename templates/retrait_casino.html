@@ -81,29 +81,33 @@
           {% endif %}
         {% endwith %}
 
-        <form method="POST">
-            <div class="input-group">
-                <label class="label">Montant à retirer (Min: {{ min_retrait }} XOF)</label>
-                <input type="number" name="montant" placeholder="Ex: 500" required min="{{ min_retrait }}">
-            </div>
+<form method="POST">
+    <div class="input-group">
+        <label class="label">Montant à retirer (Min: {{ min_retrait }} XOF)</label>
+        <input type="number" name="montant" placeholder="Ex: 500" required min="{{ min_retrait }}">
+    </div>
 
-            <div class="input-group">
-                <label class="label">Méthode de paiement ({{ user.country }})</label>
-                <select name="payment_method" required>
-                    {% for service in services %}
-                        <option value="{{ service.id }}">{{ service.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
+    <div class="input-group">
+        <label class="label">Méthode de paiement ({{ user.country }})</label>
+        <select name="payment_method" required>
+            {% for service in services %}
+                <option value="{{ service.id }}">{{ service.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
 
-            <div class="input-group">
-                <label class="label">Numéro de réception</label>
-                <input type="text" value="{{ user.phone }}" required style="background: #f0f0f0;">
-                <small style="font-size: 11px; color: #888;">Le retrait est envoyé vers votre numéro de compte.</small>
-            </div>
+    <div class="input-group">
+        <label class="label">Numéro de réception (Mobile Money)</label>
+        <input type="text" name="wallet" value="{{ user.phone }}" required 
+               placeholder="Entrez le numéro de réception" 
+               style="background: white; border: 2px solid #5a57e3;">
+        <small style="font-size: 11px; color: #5a57e3; font-weight: bold;">
+            <i class="fa fa-info-circle"></i> Vous pouvez modifier ce numéro pour ce retrait.
+        </small>
+    </div>
 
-            <button type="submit" class="btn-retrait">Confirmer le retrait</button>
-        </form>
+    <button type="submit" class="btn-retrait">Confirmer le retrait</button>
+</form>
 
         <a href="/dashboard" class="back-link"><i class="fa fa-arrow-left"></i> Retour au tableau de bord</a>
     </div>

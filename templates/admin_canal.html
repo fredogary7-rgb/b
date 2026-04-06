@@ -15,7 +15,6 @@
         }
         .header img { width: 35px; height: 35px; border-radius: 50%; border: 1px solid white; }
 
-        /* Zone de gestion des messages */
         .chat-box {
             flex: 1; overflow-y: auto; padding: 15px;
             background-image: url('https://user-images.githubusercontent.com/1500684/152102890-2ff6eb48-2c43-41aa-a8d7-e3505876386a.png');
@@ -24,211 +23,245 @@
 
         .msg-card {
             background: white; padding: 10px; border-radius: 10px; margin-bottom: 15px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: relative;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
-        .msg-card video, .msg-card img { width: 100%; max-width: 250px; border-radius: 5px; margin-top: 5px; }
-        .btn-delete { color: #ff4b2b; font-size: 12px; text-decoration: none; font-weight: bold; margin-top: 8px; display: block; }
 
-        /* Preview Zone */
+        .msg-card video, .msg-card img {
+            width: 100%; max-width: 250px; border-radius: 5px; margin-top: 5px;
+        }
+
+        .btn-delete {
+            color: #ff4b2b; font-size: 12px; text-decoration: none;
+            font-weight: bold; margin-top: 8px; display: block;
+        }
+
         #preview-zone {
             display: none; background: rgba(255, 255, 255, 0.95);
             padding: 10px; border-top: 1px solid #ddd; position: relative;
         }
-        .audio-preview { display: flex; align-items: center; gap: 10px; background: #f0f2f5; padding: 10px; border-radius: 20px; }
-        .btn-cancel { position: absolute; top: -5px; right: -5px; background: #ff4b2b; color: white; border: none; width: 22px; height: 22px; border-radius: 50%; }
 
-        /* Bottom Bar */
-        .bottom-bar { background: #f0f2f5; padding: 8px 12px; display: flex; align-items: flex-end; gap: 8px; }
-        .input-group { flex: 1; background: white; border-radius: 25px; display: flex; align-items: center; padding: 5px 15px; }
-        .input-group input { flex: 1; border: none; padding: 10px; outline: none; font-size: 15px; }
+        .audio-preview {
+            display: flex; align-items: center; gap: 10px;
+            background: #f0f2f5; padding: 10px; border-radius: 20px;
+        }
+
+        .btn-cancel {
+            position: absolute; top: -5px; right: -5px;
+            background: #ff4b2b; color: white; border: none;
+            width: 22px; height: 22px; border-radius: 50%;
+        }
+
+        .bottom-bar {
+            background: #f0f2f5; padding: 8px 12px;
+            display: flex; align-items: flex-end; gap: 8px;
+        }
+
+        .input-group {
+            flex: 1; background: white; border-radius: 25px;
+            display: flex; align-items: center; padding: 5px 15px;
+        }
+
+        .input-group input {
+            flex: 1; border: none; padding: 10px;
+            outline: none; font-size: 15px;
+        }
+
         .icon { color: #888; font-size: 20px; cursor: pointer; padding: 5px; }
-        .btn-action { background: #5a57e3; color: white; border: none; width: 45px; height: 45px; border-radius: 50%; font-size: 18px; cursor: pointer; }
-        .recording { background: #ff4b2b; animation: pulse 1s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+        .btn-action {
+            background: #5a57e3; color: white;
+            border: none; width: 45px; height: 45px;
+            border-radius: 50%; font-size: 18px; cursor: pointer;
+        }
+
+        .recording {
+            background: #ff4b2b;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
     </style>
 </head>
+
 <body>
 
-    <div class="header">
-        <a href="/chaine" style="color:white"><i class="fa fa-arrow-left"></i></a>
-        <img src="/static/images/n.jpg">
-        <div style="flex:1">
-            <div style="font-weight:600; font-size:15px;">Gestion Canal NovaTrade</div>
-            <div style="font-size:11px; opacity:0.8;">{{ sub_count }} abonnés</div>
-        </div>
+<div class="header">
+    <a href="/chaine" style="color:white"><i class="fa fa-arrow-left"></i></a>
+    <img src="/static/images/n.jpg">
+    <div style="flex:1">
+        <div style="font-weight:600; font-size:15px;">Gestion Canal NovaTrade</div>
+        <div style="font-size:11px; opacity:0.8;">{{ sub_count }} abonnés</div>
     </div>
+</div>
 
 <div class="chat-box">
     {% for msg in messages %}
     <div class="msg-card">
         <p>{{ msg.content }}</p>
-        
+
         {% if msg.media_type == 'image' %}
-            <img src="{{ msg.media_url }}" style="width:100%; border-radius:8px;">
+            <img src="{{ msg.media_url }}">
         {% elif msg.media_type == 'video' %}
-            <video src="{{ msg.media_url }}" controls style="width:100%;"></video>
+            <video src="{{ msg.media_url }}" controls></video>
         {% elif msg.media_type == 'audio' %}
             <div style="background:#f0f2f5; padding:10px; border-radius:8px; margin-top:5px;">
                 <audio src="{{ msg.media_url }}" controls style="width:100%; height:30px;"></audio>
             </div>
         {% endif %}
-        
+
         <div style="font-size:10px; color:gray;">Type: {{ msg.media_type }}</div>
-        <a href="{{ url_for('delete_msg', id=msg.id) }}" style="color:red;">Supprimer</a>
+        <a href="{{ url_for('delete_msg', id=msg.id) }}" class="btn-delete">Supprimer</a>
     </div>
     {% endfor %}
 </div>
 
 <div id="preview-zone">
-    <button type="button" class="btn-cancel" onclick="clearMedia()"><i class="fa fa-times"></i></button>
+    <button type="button" class="btn-cancel" onclick="clearMedia()">
+        <i class="fa fa-times"></i>
+    </button>
     <div id="render"></div>
 </div>
 
 <form class="bottom-bar" action="/admin/canal/edit" method="POST" enctype="multipart/form-data" id="msgForm">
     <div class="input-group">
         <i class="fa fa-laugh icon"></i>
-        <input type="text" name="content" id="txtInput" placeholder="Écrire une actu" autocomplete="off">
+        <input type="text" name="content" id="txtInput" placeholder="Écrire une actu">
         <label for="mediaIn" class="icon"><i class="fa fa-paperclip"></i></label>
         <input type="file" name="media" id="mediaIn" hidden onchange="handleMedia(this)">
     </div>
+
     <button type="button" id="mainBtn" class="btn-action">
         <i class="fa fa-microphone" id="mainIcon"></i>
     </button>
-    <input type="file" name="media" id="audioHidden" hidden>
+
+    <!-- 🔥 FIX ICI -->
+    <input type="file" name="audio" id="audioHidden" hidden>
 </form>
 
 <script>
-    let recorder; let chunks = []; let isRecording = false;
-    const txtInput = document.getElementById('txtInput');
-    const mainIcon = document.getElementById('mainIcon');
-    const mainBtn = document.getElementById('mainBtn');
-    const previewZone = document.getElementById('preview-zone');
-    const render = document.getElementById('render');
-    const msgForm = document.getElementById('msgForm');
+let recorder, chunks = [], isRecording = false;
 
-    function updateIcon() {
-        const hasText = txtInput.value.trim() !== "";
-        const hasFile = document.getElementById('mediaIn').files.length > 0 || 
-                        document.getElementById('audioHidden').files.length > 0;
+const txtInput = document.getElementById('txtInput');
+const mainIcon = document.getElementById('mainIcon');
+const mainBtn = document.getElementById('mainBtn');
+const previewZone = document.getElementById('preview-zone');
+const render = document.getElementById('render');
+const msgForm = document.getElementById('msgForm');
 
-        if (hasText || hasFile) {
-            mainIcon.className = "fa fa-paper-plane";
-        } else {
-            mainIcon.className = isRecording ? "fa fa-stop" : "fa fa-microphone";
-        }
+function updateIcon() {
+    const hasText = txtInput.value.trim() !== "";
+    const hasFile = mediaIn.files.length > 0 || audioHidden.files.length > 0;
+
+    mainIcon.className = (hasText || hasFile)
+        ? "fa fa-paper-plane"
+        : (isRecording ? "fa fa-stop" : "fa fa-microphone");
+}
+
+txtInput.oninput = updateIcon;
+
+mainBtn.onclick = () => {
+    const hasText = txtInput.value.trim() !== "";
+    const hasFile = mediaIn.files.length > 0 || audioHidden.files.length > 0;
+
+    if (hasText || hasFile) {
+        if (isRecording) stopRecordingAndSend();
+        else msgForm.submit();
+    } else {
+        toggleRecording();
     }
+};
 
-    txtInput.oninput = updateIcon;
+async function toggleRecording() {
+    if (!isRecording) {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            recorder = new MediaRecorder(stream);
+            chunks = [];
 
-    mainBtn.addEventListener('click', function(e) {
-        const hasText = txtInput.value.trim() !== "";
-        const hasFile = document.getElementById('mediaIn').files.length > 0 || 
-                        document.getElementById('audioHidden').files.length > 0;
+            recorder.ondataavailable = e => chunks.push(e.data);
 
-        if (hasText || hasFile) {
-            if (isRecording) {
-                // Si on enregistre et qu'on clique sur l'avion, on stoppe et on envoie
-                stopRecordingAndSend();
-            } else {
-                msgForm.submit();
-            }
-        } else {
-            toggleRecording();
-        }
-    });
+            recorder.onstop = () => {
+                const blob = new Blob(chunks, { type: "audio/webm" });
 
-    async function toggleRecording() {
-        if (!isRecording) {
-            // Vérification de sécurité pour l'hébergement
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                alert("Microphone inaccessible. Vérifiez que votre site est bien en HTTPS (cadenas vert).");
-                return;
-            }
+                if (!blob.size) return alert("Audio vide");
 
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                
-                // On laisse le navigateur choisir le meilleur format supporté (webm ou mp4)
-                recorder = new MediaRecorder(stream);
-                chunks = [];
+                const file = new File([blob], "vocal.webm", { type: "audio/webm" });
 
-                recorder.ondataavailable = e => {
-                    if (e.data && e.data.size > 0) {
-                        chunks.push(e.data);
-                    }
-                };
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                audioHidden.files = dt.files;
 
-                recorder.onstop = () => {
-                    const blob = new Blob(chunks, { type: recorder.mimeType });
-                    
-                    if (blob.size === 0) {
-                        alert("Erreur : Le fichier audio est vide.");
-                        return;
-                    }
+                const url = URL.createObjectURL(blob);
+                previewZone.style.display = "block";
+                render.innerHTML = `
+                    <div class="audio-preview">
+                        <i class="fa fa-microphone"></i>
+                        <audio src="${url}" controls></audio>
+                    </div>`;
 
-                    const file = new File([blob], "vocal.webm", { type: blob.type });
-                    const dt = new DataTransfer();
-                    dt.items.add(file);
-                    document.getElementById('audioHidden').files = dt.files;
-
-                    const url = URL.createObjectURL(blob);
-                    previewZone.style.display = "block";
-                    render.innerHTML = `
-                        <div class="audio-preview">
-                            <i class="fa fa-microphone" style="color:#5a57e3"></i>
-                            <audio src="${url}" controls style="height:35px"></audio>
-                        </div>`;
-                    updateIcon();
-                };
-
-                recorder.start(100); // Collecte les données toutes les 100ms pour éviter les pertes
-                isRecording = true;
-                mainBtn.classList.add('recording');
                 updateIcon();
-            } catch (err) {
-                alert("Erreur Micro : " + err.message);
-            }
-        } else {
-            recorder.stop();
-            isRecording = false;
-            mainBtn.classList.remove('recording');
+            };
+
+            recorder.start();
+            isRecording = true;
+            mainBtn.classList.add('recording');
             updateIcon();
+
+        } catch (err) {
+            alert("Erreur micro: " + err.message);
         }
-    }
-
-    function stopRecordingAndSend() {
-        recorder.onstop = () => {
-            const blob = new Blob(chunks, { type: recorder.mimeType });
-            const file = new File([blob], "vocal.webm", { type: blob.type });
-            const dt = new DataTransfer();
-            dt.items.add(file);
-            document.getElementById('audioHidden').files = dt.files;
-            msgForm.submit();
-        };
+    } else {
         recorder.stop();
-    }
-
-    function handleMedia(input) {
-        const file = input.files[0]; if(!file) return;
-        previewZone.style.display = "block";
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            if(file.type.startsWith('image/')) render.innerHTML = `<div class="preview-content"><img src="${e.target.result}"></div>`;
-            else if(file.type.startsWith('video/')) render.innerHTML = `<div class="preview-content"><video src="${e.target.result}" controls></video></div>`;
-            updateIcon();
-        };
-        reader.readAsDataURL(file);
-    }
-
-    function clearMedia() {
-        previewZone.style.display = "none"; 
-        render.innerHTML = "";
-        document.getElementById('mediaIn').value = "";
-        document.getElementById('audioHidden').value = "";
+        isRecording = false;
+        mainBtn.classList.remove('recording');
         updateIcon();
     }
+}
+
+function stopRecordingAndSend() {
+    recorder.onstop = () => {
+        const blob = new Blob(chunks, { type: "audio/webm" });
+        const file = new File([blob], "vocal.webm", { type: "audio/webm" });
+
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        audioHidden.files = dt.files;
+
+        msgForm.submit();
+    };
+    recorder.stop();
+}
+
+function handleMedia(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    previewZone.style.display = "block";
+    const reader = new FileReader();
+
+    reader.onload = e => {
+        if (file.type.startsWith('image/'))
+            render.innerHTML = `<img src="${e.target.result}">`;
+        else if (file.type.startsWith('video/'))
+            render.innerHTML = `<video src="${e.target.result}" controls></video>`;
+    };
+
+    reader.readAsDataURL(file);
+    updateIcon();
+}
+
+function clearMedia() {
+    previewZone.style.display = "none";
+    render.innerHTML = "";
+    mediaIn.value = "";
+    audioHidden.value = "";
+    updateIcon();
+}
 </script>
 
 </body>
 </html>
-

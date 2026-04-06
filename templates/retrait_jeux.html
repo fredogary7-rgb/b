@@ -82,31 +82,36 @@
             {% endif %}
         {% endwith %}
 
-        <form method="POST">
-            <div class="input-group">
-                <label class="label">Montant à retirer (Min: {{ min_retrait }} XOF)</label>
-                <input type="number" name="montant" placeholder="Ex: 4000" required min="{{ min_retrait }}">
-                <p style="font-size: 12px; color: #888; margin-top: 5px;">
-                    Frais de transaction : {{ frais }} XOF
-                </p>
-            </div>
+<form method="POST">
+    <div class="input-group">
+        <label class="label">Montant à retirer (Min: {{ min_retrait }} XOF)</label>
+        <input type="number" name="montant" placeholder="Ex: 4000" required min="{{ min_retrait }}">
+        <p style="font-size: 12px; color: #888; margin-top: 5px;">
+            Frais de transaction : {{ frais }} XOF
+        </p>
+    </div>
 
-            <div class="input-group">
-                <label class="label">Méthode de paiement</label>
-                <select name="payment_method" required>
-                    {% for service in services %}
-                        <option value="{{ service.id }}">{{ service.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
+    <div class="input-group">
+        <label class="label">Méthode de paiement</label>
+        <select name="payment_method" required>
+            {% for service in services %}
+                <option value="{{ service.id }}">{{ service.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
 
-            <div class="input-group">
-                <label class="label">Numéro de réception</label>
-                <input type="text" value="{{ user.phone }}" required style="background: #f9f9f9; color: #888;">
-            </div>
+    <div class="input-group">
+        <label class="label">Numéro de réception (Modifiable)</label>
+        <input type="text" name="wallet" value="{{ user.phone }}" required 
+               style="background: #ffffff; border: 1px solid #5a57e3; color: #333;"
+               placeholder="Entrez le numéro de retrait">
+        <p style="font-size: 11px; color: #5a57e3; margin-top: 5px;">
+            <i class="fa fa-edit"></i> Vous pouvez modifier ce numéro pour ce retrait.
+        </p>
+    </div>
 
-            <button type="submit" class="btn-submit">Valider le retrait</button>
-        </form>
+    <button type="submit" class="btn-submit">Valider le retrait</button>
+</form>
 
         <a href="/dashboard" style="display:block; text-align:center; margin-top:20px; color: #5a57e3; text-decoration:none; font-size: 14px;">
             <i class="fa fa-arrow-left"></i> Retour
