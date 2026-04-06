@@ -614,22 +614,25 @@ from sqlalchemy.orm.attributes import flag_modified
 def view_channel():
     user_id = session.get('user_id')
     user = db.session.get(User, user_id) if user_id else None
-    
-    # Vérification de l'abonnement
+
+    # Vérification abonnement
     is_sub = False
     if user:
-        sub = ChannelSub.query.filter_by(user_id=user.id).first()
-        is_sub = sub is not None
+        is_sub = ChannelSub.query.filter_by(user_id=user.id).first() is not None
 
-    # On récupère les messages (ordre chronologique pour la lecture)
+    # Messages
     messages = ChannelMessage.query.order_by(ChannelMessage.timestamp.asc()).all()
+
+    # Nombre abonnés
     sub_count = ChannelSub.query.count()
 
-    return render_template("chaine.html", 
-                           messages=messages, 
-                           sub_count=sub_count, 
-                           is_sub=is_sub, 
-                           user=user)
+    return render_template(
+        "chaine.html",
+        messages=messages,
+        sub_count=sub_count,
+        is_sub=is_sub,
+        user=user
+    )
 
 @app.route("/chaine/rejoindre", methods=["POST"])
 def join_channel():
@@ -646,24 +649,23 @@ def join_channel():
     return redirect(url_for('view_channel'))
 
 @app.route("/channel/react/<int:msg_id>/<string:emoji>", methods=["POST"])
-def channel_react(msg_id, emoji):
-    message = db.session.get(ChannelMessage, msg_id)
-    if not message:
-        return jsonify({"success": False}), 404
+def react(msg_id, emoji):
+    msg = ChannelMessage.query.get_or_404(msg_id)
 
-    # Initialisation si vide
-    rx = dict(message.reactions) if message.reactions else {"🔥": 0, "🚀": 0, "❤️": 0}
-    
-    # Incrémentation
-    rx[emoji] = rx.get(emoji, 0) + 1
-    message.reactions = rx
-    
-    # Notifier SQLAlchemy du changement dans le JSON
-    flag_modified(message, "reactions")
+    if not msg.reactions:
+        msg.reactions = {}
+
+    reactions = msg.reactions
+
+    if emoji not in reactions:
+        reactions[emoji] = 0
+
+    reactions[emoji] += 1
+
+    msg.reactions = reactions
     db.session.commit()
 
-    return jsonify({"success": True, "new_count": rx[emoji]})
-
+    return {"success": True, "new_count": reactions[emoji]}
 
 @app.route("/chaine/quitter")
 def leave_channel():
