@@ -37,6 +37,7 @@ os.makedirs(UPLOAD_FOLDER_VLOGS, exist_ok=True)
 app.config['UPLOAD_FOLDER_PROFILE'] = UPLOAD_FOLDER_PROFILE
 app.config['UPLOAD_FOLDER_VLOGS'] = UPLOAD_FOLDER_VLOGS
 app.config['UPLOAD_FOLDER_APPS'] = UPLOAD_FOLDER_APPS
+app.config['UPLOAD_FOLDER'] = 'static/uploads'
 
 def allowed_file(filename):
     """
@@ -470,61 +471,51 @@ from werkzeug.utils import secure_filename
 
 @app.route("/admin/canal/edit", methods=["GET", "POST"])
 def admin_canal_edit():
-    user_id = session.get('user_id')
-    user = db.session.get(User, user_id) if user_id else None
-
     if request.method == "POST":
+
         content = request.form.get("content")
 
-        # 🔥 PREND MEDIA OU AUDIO
+        # 🔥 récupère media OU audio
         file = request.files.get("media") or request.files.get("audio")
 
-        final_media_url = None
-        final_media_type = None 
+        media_url = None
+        media_type = None
 
-        if file and file.filename != '':
+        if file and file.filename:
+
             filename = secure_filename(file.filename)
+            ext = filename.split('.')[-1].lower()
             timestamp = int(datetime.now().timestamp())
 
-            print("DEBUG FILE:", filename, file.content_type)
+            filename = f"{timestamp}_{filename}"
+            path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
 
-            # 🔥 Détection audio prioritaire
-            if "vocal" in filename.lower() or file.content_type.startswith("audio"):
-                filename = f"vocal_{timestamp}.webm"
-                final_media_type = 'audio'
-            else:
-                filename = f"{timestamp}_{filename}"
+            file.save(path)
 
-            # Sauvegarde
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            final_media_url = f"/static/uploads/{filename}"
+            media_url = f"/static/uploads/{filename}"
 
-            # Détection si pas audio
-            if final_media_type is None:
-                ext = filename.lower().split('.')[-1]
+            # 🔥 TYPE AUTO
+            if ext in ["jpg","png","jpeg","gif"]:
+                media_type="image"
+            elif ext in ["mp4","mov","avi"]:
+                media_type="video"
+            elif ext in ["webm","mp3","wav","ogg"]:
+                media_type="audio"
 
-                if ext in ['jpg', 'jpeg', 'png', 'gif']:
-                    final_media_type = 'image'
-                elif ext in ['mp4', 'mov', 'avi']:
-                    final_media_type = 'video'
-                elif ext in ['webm', 'mp3', 'wav', 'ogg']:
-                    final_media_type = 'audio'
-
-            print(f"--- DEBUG: {filename} | Type: {final_media_type}")
-
-        new_msg = ChannelMessage(
+        msg = ChannelMessage(
             content=content,
-            media_url=final_media_url,
-            media_type=final_media_type,
+            media_url=media_url,
+            media_type=media_type,
             timestamp=datetime.now()
         )
 
-        db.session.add(new_msg)
+        db.session.add(msg)
         db.session.commit()
-        return redirect(url_for('admin_canal_edit'))
+
+        return redirect(url_for("admin_canal_edit"))
 
     messages = ChannelMessage.query.order_by(ChannelMessage.id.desc()).all()
-    return render_template("admin_canal.html", user=user, messages=messages)
+    return render_template("admin_canal.html", messages=messages)
 
 @app.route("/admin/canal/delete/<int:id>")
 def delete_msg(id):
