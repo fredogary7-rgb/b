@@ -101,7 +101,7 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(120), unique=True, nullable=False)
     phone = db.Column(db.String(30), unique=True, nullable=False)
     password = db.Column(db.String(300), nullable=False)
-
+    last_play_date = db.Column(db.DateTime, nullable=True) # Date précise du dernier clic
     # Parrainage — maintenant basé sur le username
     parrain = db.Column(db.String(50), db.ForeignKey('user.username'), nullable=True)
     has_played_slot = db.Column(db.Boolean, default=False)
@@ -125,7 +125,7 @@ class User(db.Model, UserMixin):
     total_retrait = db.Column(db.Float, default=0.0)
 
     premier_depot = db.Column(db.Boolean, default=False)
-
+    remaining_rounds = db.Column(db.Integer, default=4)
     has_free_attempt = db.Column(db.Boolean, default=True) # Une chance gratuite par utilisateur
     is_admin = db.Column(db.Boolean, default=False)
     is_banned = db.Column(db.Boolean, default=False)
@@ -930,7 +930,11 @@ def obtenir_token():
     except Exception as e:
         return None, str(e)
 
+from datetime import datetime, timedelta
+
 MAX_GAIN = 500.0
+CYCLE_DAYS = 3
+WINDOW_HOURS = 24
 
 @app.route('/game/apple', methods=['GET', 'POST'])
 def apple_game():
@@ -938,80 +942,68 @@ def apple_game():
         return redirect(url_for('connexion_page'))
 
     user = db.session.get(User, session['user_id'])
-
-    game_window_active = GameControl.is_active()
-
-    has_played = getattr(user, 'has_played_this_round', False)
-
-    # 🔥 NOUVEAU : blocage si >= 500
+    now = datetime.now()
+    
+    # 1. Vérification des blocages définitifs
     total_bonus = user.bonus or 0.0
     is_blocked_500 = total_bonus >= MAX_GAIN
+    no_rounds_left = (user.remaining_rounds or 0) <= 0
 
-    # TA LOGIQUE (on garde)
-    can_play = (game_window_active or not has_played) and not is_blocked_500
+    can_play = False
+    next_available_date = None
 
-    # ======================
-    # ======= GET ==========
-    # ======================
+    # Date de base pour le calcul (Inscription ou dernier jeu)
+    base_date = user.last_play_date or user.date_creation
+
+    if base_date and not is_blocked_500 and not no_rounds_left:
+        # Ouverture théorique : +3 jours après la dernière activité
+        next_available_date = base_date + timedelta(days=CYCLE_DAYS)
+        # Fermeture théorique : 24h après l'ouverture
+        deadline_date = next_available_date + timedelta(hours=WINDOW_HOURS)
+
+        if now < next_available_date:
+            # Trop tôt : Bouton incliquable
+            can_play = False
+        elif next_available_date <= now <= deadline_date:
+            # Dans la fenêtre : Cliquable
+            can_play = True
+        elif now > deadline_date:
+            # Fenêtre ratée : On pénalise et on décale le prochain round
+            user.remaining_rounds -= 1
+            user.last_play_date = next_available_date # On marque le créneau comme "utilisé"
+            db.session.commit()
+            return redirect(url_for('apple_game'))
+    
+    # Cas spécial : Premier jeu juste après inscription (si last_play_date est None)
+    if not user.last_play_date and not no_rounds_left and not is_blocked_500:
+        can_play = True
+
     if request.method == 'GET':
         return render_template(
             'apple_game.html',
             can_play=can_play,
-            is_active=game_window_active,
-            has_played_this_round=has_played,
-            is_blocked_500=is_blocked_500,
-            total_bonus=total_bonus
+            is_blocked_500=(is_blocked_500 or no_rounds_left),
+            next_date=next_available_date,
+            rounds_left=user.remaining_rounds
         )
 
-    # ======================
-    # ======= POST =========
-    # ======================
     if request.method == 'POST':
-
-        # 🔒 BLOQUAGE 500 PRIORITAIRE
-        if (user.bonus or 0) >= MAX_GAIN:
-            return jsonify({
-                "status": "error",
-                "message": "Vous avez déjà cumulé 500 XOF pour ce jeu."
-            })
-
-        # 🔥 TA LOGIQUE (recheck)
-        if not (GameControl.is_active() or not user.has_played_this_round):
-            return jsonify({
-                "status": "error",
-                "message": "Action non autorisée."
-            })
+        if not can_play:
+            return jsonify({"status": "error", "message": "Action non autorisée actuellement."})
 
         data = request.json
+        gain = float(data.get('gain', 0))
 
-        try:
-            gain = float(data.get('gain', 0))
+        if (user.bonus or 0) + gain > MAX_GAIN:
+            gain = MAX_GAIN - (user.bonus or 0)
 
-            # limite pour ne jamais dépasser 500
-            if (user.bonus or 0) + gain > MAX_GAIN:
-                gain = MAX_GAIN - (user.bonus or 0)
+        user.bonus = (user.bonus or 0.0) + gain
+        user.last_play_date = now
+        user.remaining_rounds -= 1
+        
+        db.session.commit()
+        return jsonify({"status": "success", "message": f"+{gain} F"})
 
-            if user.bonus is None:
-                user.bonus = 0.0
-
-            user.bonus += gain
-            user.has_played_this_round = True
-
-            db.session.commit()
-
-            return jsonify({
-                "status": "success",
-                "message": f"Félicitations ! +{gain} F"
-            })
-
-        except Exception as e:
-            db.session.rollback()
-            print(f"DEBUG ERROR: {e}")
-
-            return jsonify({
-                "status": "error",
-                "message": "Erreur technique base de données."
-            })
 
 @app.route('/admin/open-game-30')
 def open_game():
@@ -1572,6 +1564,13 @@ def api_check_activation():
 def whatsapp_channel():
     return render_template("chaine.html")
 
+from datetime import datetime, timedelta
+
+# Assure-toi que ces constantes sont définies en haut de ton app.py
+MAX_GAIN = 500.0
+CYCLE_DAYS = 3
+WINDOW_HOURS = 24
+
 @app.route("/dashboard")
 def dashboard_page():
     user_id = session.get("user_id")
@@ -1584,6 +1583,7 @@ def dashboard_page():
         session.clear()
         return redirect(url_for("connexion_page"))
 
+    # --- LOGIQUE DE PARRAINAGE ET STATS ---
     referral_code = user.username
     referral_link = url_for("inscription_page", _external=True) + f"?ref={referral_code}"
 
@@ -1593,14 +1593,36 @@ def dashboard_page():
     total_users, total_deposits, total_withdrawn = get_global_stats()
     revenu_cumule = (user.solde_parrainage or 0) + (user.solde_revenu or 0)
 
-    is_active = GameControl.is_active()
+    # --- NOUVELLE LOGIQUE DE JEU (STRICTE) ---
+    now = datetime.now()
+    total_bonus = user.bonus or 0.0
+    is_blocked_500 = total_bonus >= MAX_GAIN
+    no_rounds_left = (user.remaining_rounds or 0) <= 0
+    
+    can_play = False
+    next_date = None
+    
+    # Date de référence pour le cycle
+    base_date = user.last_play_date or user.date_creation
 
-    # 🔥 NOUVEAU
-    total_bonus = user.bonus or 0
-    is_blocked_500 = total_bonus >= 500
+    if base_date and not is_blocked_500 and not no_rounds_left:
+        next_date = base_date + timedelta(days=CYCLE_DAYS)
+        deadline_date = next_date + timedelta(hours=WINDOW_HOURS)
 
-    # ta logique
-    can_play = (is_active and not user.has_played_this_round) and not is_blocked_500
+        if now < next_date:
+            can_play = False
+        elif next_date <= now <= deadline_date:
+            can_play = True
+        elif now > deadline_date:
+            # Fenêtre ratée : On applique la pénalité immédiatement
+            user.remaining_rounds -= 1
+            user.last_play_date = next_date 
+            db.session.commit()
+            return redirect(url_for("dashboard_page"))
+
+    # Cas spécial : Premier jeu après inscription
+    if not user.last_play_date and not no_rounds_left and not is_blocked_500:
+        can_play = True
 
     return render_template(
         "dashboard.html",
@@ -1616,12 +1638,13 @@ def dashboard_page():
         referral_link=referral_link,
         total_withdrawn=total_withdrawn,
 
-        # 🔥 GAME
+        # --- VARIABLES JEU ---
         can_play=can_play,
-        is_active=is_active,
-        has_played_this_round=user.has_played_this_round,
-        is_blocked_500=is_blocked_500
+        next_date=next_date,
+        rounds_left=user.remaining_rounds or 0,
+        is_blocked_500=(is_blocked_500 or no_rounds_left)
     )
+
 
 def user_is_activated(user):
     if user.premier_depot:

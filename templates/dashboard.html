@@ -446,70 +446,56 @@ footer { text-align: center; padding: 20px; font-size: 12px; color: #888; }
         </div>
     </div>
 
-<div class="glass" style="margin-top: 20px; padding: 20px; border-left: 5px solid #5a57e3;">
+<div class="glass" style="margin-top: 20px; padding: 20px; border-left: 5px solid #5a57e3; background: white; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+    
     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
         <div style="display: flex; align-items: center; gap: 12px;">
             <div style="background: #5a57e3; width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white;">
                 <i class="fas fa-apple-alt"></i>
             </div>
             <div>
-                <h3 style="font-size: 16px; font-weight: 700; color: #333;">Apple of Fortune</h3>
-                <p style="font-size: 11px; color: #666;">Événement Flash</p>
+                <h3 style="font-size: 16px; font-weight: 700; color: #333; margin: 0;">Apple of Fortune</h3>
+                <p style="font-size: 11px; color: #666; margin: 0;">{{ rounds_left }} essais restants</p>
             </div>
         </div>
 
         {% if is_blocked_500 %}
-            <span style="background: #000; color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 10px;">BLOQUÉ</span>
-        {% elif has_played_this_round %}
-            <span style="background: #fee2e2; color: #dc2626; padding: 4px 10px; border-radius: 20px; font-size: 10px;">FERMÉ</span>
-        {% elif can_play or not has_played_this_round %}
-            <span style="background: #dcfce7; color: #16a34a; padding: 4px 10px; border-radius: 20px; font-size: 10px;">OUVERT</span>
+            <span style="background: #000; color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 10px;">FINI</span>
+        {% elif not can_play %}
+            <span style="background: #fee2e2; color: #dc2626; padding: 4px 10px; border-radius: 20px; font-size: 10px;">VERROUILLÉ</span>
         {% else %}
-            <span style="background: #fee2e2; color: #dc2626; padding: 4px 10px; border-radius: 20px; font-size: 10px;">FERMÉ</span>
+            <span style="background: #dcfce7; color: #16a34a; padding: 4px 10px; border-radius: 20px; font-size: 10px;">ACTIF</span>
         {% endif %}
     </div>
 
-    <div style="background: rgba(255,255,255,0.4); padding: 15px; border-radius: 15px; margin-bottom: 15px;">
+    <div style="background: rgba(90, 87, 227, 0.05); padding: 15px; border-radius: 15px; margin-bottom: 15px;">
         {% if is_blocked_500 %}
-            <p style="font-size: 13px; color: red;">
-                💰 Vous avez déjà cumulé 500 XOF pour ce jeu.
-            </p>
-        {% elif has_played_this_round %}
-            <p style="font-size: 13px; color: #dc2626;">
-                🔒 Vous avez déjà joué pour ce round revenez dans 3 jours
-            </p>
-        {% elif can_play %}
-            <p style="font-size: 13px;">
-                🏃 <strong>Vite !</strong> Vous pouvez gagner jusqu’à 500 F !
-            </p>
-        {% elif is_active %}
-            <p style="font-size: 13px; color: #666;">
-                Attendez le prochain signal !
+            <p style="font-size: 13px; color: #000; margin: 0;">💰 Objectif atteint ou rounds terminés.</p>
+        {% elif not can_play %}
+            <p style="font-size: 13px; color: #dc2626; margin: 0;">
+                ⏳ <strong>Attente :</strong> Prochain round le {{ next_date.strftime('%d/%m à %H:%M') }}.
             </p>
         {% else %}
-            <p style="font-size: 13px; color: #666;">
-                Jeu verrouillé
+            <p style="font-size: 13px; color: #16a34a; margin: 0;">
+                ✅ <strong>Disponible :</strong> Vous avez 24h pour jouer ce round !
             </p>
         {% endif %}
     </div>
 
     {% if is_blocked_500 %}
-        <button disabled style="width: 100%; background: #000; color: white; padding: 12px; border-radius: 12px;">
-            💰 Plafond atteint
+        <button disabled style="width: 100%; background: #000; color: white; padding: 12px; border-radius: 12px; border: none; font-weight: 600; cursor: not-allowed;">
+            Session terminée
         </button>
-    {% elif has_played_this_round %}
-        <button disabled style="width: 100%; background: #cbd5e1; color: #64748b; padding: 12px; border-radius: 12px;">
-            🔒 Déjà joué
+    {% elif not can_play %}
+        <button disabled style="width: 100%; background: #cbd5e1; color: #64748b; padding: 12px; border-radius: 12px; border: none; font-weight: 600; cursor: not-allowed;">
+            Indisponible
         </button>
-    {% elif can_play or not has_played_this_round %}
-        <a href="{{ url_for('apple_game') }}" style="display: block; text-align: center; background: #5a57e3; color: white; padding: 12px; border-radius: 12px; text-decoration: none;">
+    {% else %}
+        <a href="{{ url_for('apple_game') }}" style="display: block; text-align: center; background: #5a57e3; color: white; padding: 12px; border-radius: 12px; text-decoration: none; font-weight: 600; transition: 0.3s;">
             Jouer maintenant
         </a>
-    {% else %}
-        <button disabled style="width: 100%; background: #cbd5e1; color: #64748b; padding: 12px; border-radius: 12px;">
-            En attente
-        </button>
     {% endif %}
+
 </div>
 
     <div class="ref-section">
