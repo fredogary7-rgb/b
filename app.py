@@ -2040,7 +2040,7 @@ PRIVATE_SECRET_KEY = "SP_-YQFuI5M9B1H2bNSNycwI_YQBc_kXkGACp-mLoBdWqI"
 def retrait_page():
     user = get_logged_in_user()
 
-    MIN_RETRAIT = 4000
+    MIN_RETRAIT = 5000
     MAX_RETRAIT = 50000
     FRAIS = 500
 
