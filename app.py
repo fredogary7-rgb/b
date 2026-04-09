@@ -803,8 +803,16 @@ def new_password_page():
     return render_template('new_password.html')
 
 
+from datetime import datetime
+
 @app.route("/inscription", methods=["GET", "POST"])
 def inscription_page():
+    # --- BLOC DE MAINTENANCE (À ENLEVER APRÈS LE 11 AVRIL) ---
+    date_ouverture = datetime(2026, 4, 11, 12, 0, 0)
+    if datetime.now() < date_ouverture:
+        return render_template("maintenance_inscription.html")
+    # -------------------------------------------------------
+
     ref_code = request.args.get("ref", "").strip().lower()
     session.pop("username_exists", None)
 
@@ -868,14 +876,13 @@ def inscription_page():
                 flash(error, "danger")
             return render_template("inscription.html", code_ref=ref_code)
 
-        # ✅ ÉTAPE OTP (Initialisation des champs de jeu ici)
+        # ✅ ÉTAPE OTP
         try:
             otp = str(random.randint(100000, 999999))
             if send_otp(email, otp):
                 session['otp'] = otp
                 session['mode'] = 'inscription'
-                
-                # On prépare les données pour la création finale dans verify_page
+
                 session['temp_user'] = {
                     'username': username,
                     'email': email,
@@ -884,12 +891,9 @@ def inscription_page():
                     'password': generate_password_hash(password),
                     'parrain': parrain_user.username if parrain_user else None,
                     'ip_address': user_ip,
-                    
-                    # --- INITIALISATION POUR LE JEU APPLE ---
                     'solde_jeux': 0,
                     'commission': 0,
                     'has_played_this_round': False
-                    # ----------------------------------------
                 }
                 flash("Un code de vérification a été envoyé à votre email.", "success")
                 return redirect(url_for('verify_page'))
@@ -897,8 +901,20 @@ def inscription_page():
                 flash("Erreur lors de l'envoi de l'email.", "danger")
         except Exception as e:
             flash("Erreur service OTP : " + str(e), "danger")
-            
+
     return render_template("inscription.html", code_ref=ref_code)
+
+
+from datetime import datetime
+from flask import render_template
+
+def verification_lancement():
+    # Date cible : 11 Avril 2026 à 12h00
+    date_lancement = datetime(2026, 4, 11, 12, 0, 0)
+    if datetime.now() < date_lancement:
+        # On renvoie directement le template de maintenance
+        return render_template("maintenance_inscription.html")
+    return None
 
 
 PUBLIC_API_KEY = "SP_y7QKkaamPsVTlw8GDDGyzlJ7bmPUvdLorOQqWUXfRLI_AP"

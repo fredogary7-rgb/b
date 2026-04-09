@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>NovaTrade - Lancement Officiel</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif}
+
+body{
+    background:linear-gradient(135deg,#5a57e3,#1e1c5a);
+    color:white;
+    height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.container{
+    max-width:600px;
+    width:100%;
+    text-align:center;
+    padding:20px;
+}
+
+.logo{
+    font-size:60px;
+    color:#f2c94c;
+    margin-bottom:20px;
+    animation:float 3s infinite ease-in-out;
+}
+
+@keyframes float{
+    0%,100%{transform:translateY(0)}
+    50%{transform:translateY(-10px)}
+}
+
+h1{
+    font-size:2.5rem;
+    margin-bottom:10px;
+}
+
+.subtitle{
+    opacity:0.9;
+    margin-bottom:25px;
+}
+
+.highlight{
+    color:#f2c94c;
+    font-weight:bold;
+}
+
+.countdown{
+    display:flex;
+    justify-content:center;
+    gap:15px;
+    margin:25px 0;
+}
+
+.time-box{
+    background:rgba(255,255,255,0.15);
+    padding:15px;
+    border-radius:15px;
+    min-width:70px;
+    backdrop-filter:blur(6px);
+}
+
+.time-box span{
+    font-size:2rem;
+    font-weight:bold;
+}
+
+.time-box label{
+    font-size:0.7rem;
+    text-transform:uppercase;
+}
+
+/* 🔥 FEATURES */
+.features{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-top:20px;
+}
+
+.feature{
+    background:rgba(255,255,255,0.1);
+    padding:10px;
+    border-radius:10px;
+    font-size:13px;
+}
+
+/* 🔥 CTA */
+.btn{
+    margin-top:25px;
+    background:#f2c94c;
+    color:#1e1c5a;
+    border:none;
+    padding:12px 25px;
+    border-radius:25px;
+    font-weight:bold;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+.btn:hover{
+    transform:scale(1.05);
+}
+
+/* 🔥 FOOTER */
+.footer{
+    margin-top:25px;
+    font-size:12px;
+    opacity:0.7;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="logo"><i class="fa fa-rocket"></i></div>
+
+<h1>NovaTrade</h1>
+
+<p class="subtitle">
+Le projet d’affiliation <span class="highlight">nouvelle génération</span> arrive en Afrique.
+<br>Prépare-toi à générer des revenus en ligne facilement.
+</p>
+
+<!-- 🔥 COUNTDOWN -->
+<div class="countdown">
+    <div class="time-box"><span id="days">00</span><label>Jours</label></div>
+    <div class="time-box"><span id="hours">00</span><label>Heures</label></div>
+    <div class="time-box"><span id="minutes">00</span><label>Min</label></div>
+    <div class="time-box"><span id="seconds">00</span><label>Sec</label></div>
+</div>
+
+<p style="font-size:13px;">
+Ouverture officielle :
+<span class="highlight">11 Avril 2026 à 12h00</span>
+</p>
+
+<!-- 🔥 FEATURES -->
+<div class="features">
+    <div class="feature">💰 Revenus passifs automatisés</div>
+    <div class="feature">📊 Dashboard professionnel</div>
+    <div class="feature">🤖 Système intelligent</div>
+    <div class="feature">🌍 Disponible en Afrique</div>
+</div>
+
+<!-- 🔥 CTA -->
+<button class="btn" onclick="notify()">
+🔔 Être notifié du lancement
+</button>
+
+<div class="footer">
+NovaTrade © 2026 — Tous droits réservés
+</div>
+
+</div>
+
+<script>
+const launchDate = new Date("2026-04-11T12:00:00").getTime();
+
+setInterval(()=>{
+
+const now = new Date().getTime();
+const distance = launchDate - now;
+
+const days = Math.floor(distance/(1000*60*60*24));
+const hours = Math.floor((distance%(1000*60*60*24))/(1000*60*60));
+const minutes = Math.floor((distance%(1000*60*60))/(1000*60));
+const seconds = Math.floor((distance%(1000*60))/1000);
+
+document.getElementById("days").innerText = days;
+document.getElementById("hours").innerText = hours;
+document.getElementById("minutes").innerText = minutes;
+document.getElementById("seconds").innerText = seconds;
+
+if(distance < 0){
+    location.reload();
+}
+
+},1000);
+
+// 🔔 CTA
+function notify(){
+    alert("🔥 Tu seras parmi les premiers informés !");
+}
+</script>
+
+</body>
+</html>
