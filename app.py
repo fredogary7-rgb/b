@@ -2125,11 +2125,12 @@ PRIVATE_SECRET_KEY = "SP_-YQFuI5M9B1H2bNSNycwI_YQBc_kXkGACp-mLoBdWqI"
 import random
 from datetime import datetime, timedelta, UTC
 
+
+
 @app.route("/retrait", methods=["GET", "POST"])
 def retrait_page():
     user = get_logged_in_user()
 
-    # 🔐 Sécurité : vérifier utilisateur connecté
     if not user:
         flash("Veuillez vous connecter.", "danger")
         return redirect(url_for("login"))
@@ -2156,15 +2157,15 @@ def retrait_page():
         # VALIDATIONS
         # ==========================
         if montant <= 0:
-            flash("Montant invalide.", "danger")
+            flash("Veuillez saisir un montant valide.", "danger")
             return redirect(url_for("retrait_page"))
 
         if montant < MIN_RETRAIT:
-            flash(f"Minimum {MIN_RETRAIT} XOF.", "danger")
+            flash(f"Le montant minimum est {MIN_RETRAIT} XOF.", "danger")
             return redirect(url_for("retrait_page"))
 
         if montant > MAX_RETRAIT:
-            flash(f"Maximum {MAX_RETRAIT} XOF.", "danger")
+            flash(f"Le montant maximum est {MAX_RETRAIT} XOF.", "danger")
             return redirect(url_for("retrait_page"))
 
         montant_total = montant + FRAIS
@@ -2173,25 +2174,24 @@ def retrait_page():
             flash("Solde insuffisant.", "danger")
             return redirect(url_for("retrait_page"))
 
-        # 🔎 Vérifier service
         service = next((s for s in services if s["id"] == service_id), None)
         if not service:
             flash("Service invalide.", "danger")
             return redirect(url_for("retrait_page"))
 
         # ==========================
-        # 🔥 GENERATION OTP
+        # 🔐 GENERATION OTP
         # ==========================
         otp_code = str(random.randint(100000, 999999))
 
-        session['otp'] = otp_code
-        session['mode'] = 'retrait'
+        session["otp"] = otp_code
+        session["mode"] = "retrait"
 
-        session['otp_expiration'] = (
+        session["otp_expiration"] = (
             datetime.now(UTC) + timedelta(minutes=10)
         ).isoformat()
 
-        session['retrait_data'] = {
+        session["retrait_data"] = {
             "montant": montant,
             "frais": FRAIS,
             "service_id": service_id,
@@ -2215,7 +2215,12 @@ def retrait_page():
         flash("Un code de vérification a été envoyé à votre email 📧", "success")
         return redirect(url_for("verify_page"))
 
-    return render_template("retrait.html", user=user, stats=stats, services=services)
+    return render_template(
+        "retrait.html",
+        user=user,
+        stats=stats,
+        services=services
+    )
 
 @app.route("/retrait-casino", methods=["GET", "POST"])
 def retrait_casino_page():
