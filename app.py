@@ -3071,7 +3071,7 @@ def instagram_complete():
 
 @app.route("/health")
 def health():
-    return "OK", 200
+    return {"status": "ok"}, 200
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))  # Render fournit le PORT
