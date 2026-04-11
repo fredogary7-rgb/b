@@ -731,24 +731,33 @@ def reset_password_request():
 from datetime import datetime, timedelta, timezone
 import uuid
 
+from datetime import datetime, timedelta, UTC
+import uuid
+
 @app.route('/verify', methods=['GET', 'POST'])
 def verify_page():
     if request.method == 'POST':
+
         code_saisi = request.form.get('code')
 
-        # 🔥 Vérification OTP
+        # ==========================
+        # 🔐 OTP CHECK
+        # ==========================
         if code_saisi != session.get('otp'):
             flash("Code incorrect.", "danger")
             return redirect(url_for('verify_page'))
 
-        # 🔥 Vérification expiration
+        # ==========================
+        # ⏳ EXPIRATION CHECK
+        # ==========================
         otp_exp = session.get('otp_expiration')
+
         if otp_exp and datetime.now(UTC) > datetime.fromisoformat(otp_exp):
             flash("Code expiré.", "danger")
             return redirect(url_for('retrait_page'))
 
         # ==========================
-        # ===== INSCRIPTION
+        # 🧾 INSCRIPTION
         # ==========================
         if session.get('mode') == 'inscription':
             data = session.get('temp_user')
@@ -767,7 +776,7 @@ def verify_page():
                     solde_depot=0,
                     solde_revenu=0,
                     solde_parrainage=0,
-                    date_creation=datetime.now(timezone.utc)
+                    date_creation=datetime.now(UTC)
                 )
 
                 db.session.add(new_user)
@@ -775,10 +784,11 @@ def verify_page():
 
                 session["user_id"] = new_user.id
 
-                # nettoyage session
+                # cleanup
                 session.pop('otp', None)
                 session.pop('temp_user', None)
                 session.pop('mode', None)
+                session.pop('otp_expiration', None)
 
                 flash("Inscription réussie !", "success")
                 return redirect(url_for("dashboard_bloque"))
@@ -786,33 +796,45 @@ def verify_page():
             except Exception as e:
                 db.session.rollback()
                 flash("Erreur création compte : " + str(e), "danger")
+                return redirect(url_for("inscription_page"))
 
         # ==========================
-        # ===== RESET PASSWORD
+        # 🔑 RESET PASSWORD
         # ==========================
         elif session.get('mode') == 'reset':
             return redirect(url_for('new_password_page'))
 
         # ==========================
-        # ===== RETRAIT (🔥 IMPORTANT)
+        # 💸 RETRAIT (FINAL FIX)
         # ==========================
         elif session.get('mode') == 'retrait':
+
             user = get_logged_in_user()
             data = session.get('retrait_data')
 
+            if not user or not data:
+                flash("Session expirée. Recommencez.", "danger")
+                return redirect(url_for("retrait_page"))
+
             try:
-                # 🔥 appel API après validation OTP
+                # ==========================
+                # 🔥 API CALL
+                # ==========================
                 response = envoyer_retrait_soleaspay(
                     data["service_id"],
                     data["wallet"],
                     data["montant"]
                 )
 
+                print("🔵 API RESPONSE :", response)
+
                 if not response or response.get("success") != True:
                     flash("Erreur API paiement.", "danger")
                     return redirect(url_for("retrait_page"))
 
-                # 🔥 enregistrer retrait
+                # ==========================
+                # 🧾 SAVE WITHDRAWAL
+                # ==========================
                 nouveau_retrait = Retrait(
                     user_id=user.id,
                     montant=data["montant"],
@@ -833,10 +855,13 @@ def verify_page():
 
                 db.session.commit()
 
-                # 🔥 nettoyage session
+                # ==========================
+                # 🧹 CLEAN SESSION
+                # ==========================
                 session.pop('otp', None)
                 session.pop('retrait_data', None)
                 session.pop('mode', None)
+                session.pop('otp_expiration', None)
 
                 flash("Retrait confirmé avec succès ✅", "success")
                 return redirect(url_for("mes_retraits"))
