@@ -313,6 +313,21 @@ import threading
 import requests
 import os
 
+def envoyer_retrait_soleaspay_debug(service_id, wallet, montant):
+    print("🧪 MODE DEBUG ACTIVÉ")
+
+    print("SERVICE ID :", service_id)
+    print("WALLET :", wallet)
+    print("MONTANT :", montant)
+
+    # simulation réponse API
+    response = {
+        "success": False,
+        "message": "SIMULATION ERREUR API (test debug)"
+    }
+
+    print("🔵 FAKE RESPONSE :", response)
+    return response
 
 API_KEY = os.getenv("RESEND_API_KEY")
 
@@ -547,7 +562,7 @@ def delete_msg(id):
     return redirect(url_for('admin_canal_edit'))
 
 from flask_mail import Mail, Message
-import random
+API_KEY = "re_QnDyJnmp_AjZaCUqiWGfrv5t3HxDfczLh"
 
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
@@ -560,56 +575,42 @@ mail = Mail(app)
 
 import requests
 
-import requests
-
-import requests
 
 def envoyer_retrait_soleaspay(service_id, wallet, montant):
 
     token, err = obtenir_token()
 
     if err:
-        print("❌ TOKEN ERROR :", err)
         return {"success": False, "message": "Erreur token SoleasPay"}
 
     url = "https://soleaspay.com/api/action/account/withdraw"
 
-    # 🔐 Headers (AUTH uniquement)
     headers = {
         "Authorization": f"Bearer {token}",
+        "operation": "4",
+        "service": str(service_id),
         "Content-Type": "application/json"
     }
 
-    # 📦 Payload correct
     payload = {
-        "operation": 4,
-        "service": service_id,
         "wallet": wallet,
         "amount": montant,
         "currency": "XOF"
     }
 
     try:
-        response = requests.post(url, headers=headers, json=payload, timeout=15)
-
-        print("🔵 STATUS CODE :", response.status_code)
-        print("🔵 RAW RESPONSE :", response.text)
+        response = requests.post(url, headers=headers, json=payload)
 
         if response.status_code != 200:
             return {
                 "success": False,
-                "message": f"HTTP {response.status_code}",
+                "message": f"Erreur HTTP {response.status_code}",
                 "content": response.text
             }
 
-        data = response.json()
-
-        print("🔵 JSON RESPONSE :", data)
-
-        return data
+        return response.json()
 
     except Exception as e:
-        print("❌ API EXCEPTION :", str(e))
         return {"success": False, "message": str(e)}
 
 @app.cli.command("init-db")
@@ -1121,6 +1122,7 @@ def apple_game():
             gain = MAX_GAIN - (user.bonus or 0)
 
         user.bonus = (user.bonus or 0.0) + gain
+        user.solde_revenu = (user.solde_revenu or 0.0) + gain
         user.last_play_date = now
         user.remaining_rounds -= 1
         
