@@ -21,3 +21,4 @@ Flask-Login==0.6.3
 python-dotenv==1.0.1
 requests==2.32.3
 flask-mail
+gevent==24.2.1
