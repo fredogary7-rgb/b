@@ -9,7 +9,6 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <style>
-
 *{
 margin:0;
 padding:0;
@@ -27,10 +26,7 @@ padding:20px;
 color:#444;
 }
 
-.container{
-max-width:550px;
-margin:0 auto;
-}
+.container{max-width:550px;margin:0 auto;}
 
 .page-header{
 text-align:center;
@@ -50,7 +46,6 @@ padding:30px;
 border-radius:25px;
 border:1px solid rgba(255,255,255,0.4);
 box-shadow:0 10px 30px rgba(0,0,0,0.05);
-margin-bottom:25px;
 }
 
 h2{
@@ -66,8 +61,8 @@ border-left:4px solid #5a57e3;
 padding:15px;
 border-radius:12px;
 font-size:13px;
-color:#475569;
 margin-bottom:25px;
+color:#475569;
 }
 
 label{
@@ -85,13 +80,8 @@ border-radius:15px;
 border:1px solid rgba(255,255,255,0.8);
 background:rgba(255,255,255,0.9);
 font-size:14px;
-margin-bottom:20px;
+margin-bottom:18px;
 outline:none;
-}
-
-input:focus,select:focus{
-border-color:#5a57e3;
-box-shadow:0 0 10px rgba(90,87,227,0.1);
 }
 
 button{
@@ -111,24 +101,30 @@ button:hover{
 transform:translateY(-2px);
 }
 
+/* FLASH */
 .flash{
-padding:12px 15px;
+padding:12px;
 border-radius:12px;
 font-size:13px;
-margin-bottom:15px;
+margin-bottom:12px;
+}
+.flash.success{background:#dcfce7;color:#166534;}
+.flash.danger{background:#fee2e2;color:#991b1b;}
+
+/* PIN BOX */
+.pin-box{
+margin-top:20px;
+padding:20px;
+border-radius:20px;
+background:rgba(255,255,255,0.7);
+border:1px solid rgba(255,255,255,0.5);
 }
 
-.flash.success{background:rgba(34,197,94,0.15);color:#166534;}
-.flash.danger{background:rgba(239,68,68,0.15);color:#991b1b;}
-
-/* ================= LOADER ================= */
-
+/* LOADER */
 .loader-bg{
 position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
+top:0;left:0;
+width:100%;height:100%;
 background:rgba(0,0,0,0.4);
 display:none;
 align-items:center;
@@ -137,7 +133,7 @@ z-index:9999;
 }
 
 .loader-box{
-background:white;
+background:#fff;
 padding:25px;
 border-radius:15px;
 text-align:center;
@@ -158,12 +154,6 @@ animation:spin 1s linear infinite;
 0%{transform:rotate(0deg);}
 100%{transform:rotate(360deg);}
 }
-
-.loader-text{
-font-size:13px;
-color:#333;
-}
-
 </style>
 </head>
 
@@ -173,7 +163,7 @@ color:#333;
 <div class="loader-bg" id="loader">
     <div class="loader-box">
         <div class="spinner"></div>
-        <div class="loader-text">Traitement du retrait...</div>
+        <div>Traitement en cours...</div>
     </div>
 </div>
 
@@ -188,24 +178,25 @@ color:#333;
 <h2>Demande de retrait</h2>
 
 <div class="notice">
-<i class="fa fa-info-circle"></i>
-<strong>Important :</strong><br>
-Vérifiez votre numéro avant validation.
+<i class="fa fa-lock"></i>
+Paiement sécurisé avec code PIN obligatoire
 </div>
 
+<!-- FLASH -->
 {% with messages = get_flashed_messages(with_categories=true) %}
-{% if messages %}
 {% for category, message in messages %}
 <div class="flash {{ category }}">{{ message }}</div>
 {% endfor %}
-{% endif %}
 {% endwith %}
 
+<!-- ===================== -->
+<!-- FORM RETRAIT -->
+<!-- ===================== -->
 <form method="POST" onsubmit="showLoader()">
 
 <label>Mode de paiement</label>
 <select name="payment_method" required>
-<option value="" disabled selected>Choisissez un mode</option>
+<option value="" disabled selected>Choisir un mode</option>
 {% for service in services %}
 <option value="{{ service.id }}">{{ service.name }}</option>
 {% endfor %}
@@ -217,6 +208,14 @@ Vérifiez votre numéro avant validation.
 <label>Numéro de paiement</label>
 <input type="tel" name="phone" value="{{ user.phone }}" required>
 
+<!-- PIN -->
+<label>Code PIN (6 chiffres)</label>
+<input type="password"
+       name="pin"
+       maxlength="6"
+       pattern="\d{6}"
+       required>
+
 <button type="submit" id="btn">
 Confirmer le retrait
 </button>
@@ -225,7 +224,7 @@ Confirmer le retrait
 
 </div>
 
-<footer style="text-align:center;opacity:0.6;font-size:12px;">
+<footer style="text-align:center;margin-top:20px;font-size:12px;opacity:0.6;">
 2026 © NovaTrade
 </footer>
 

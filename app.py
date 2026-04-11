@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime, timedelta, timezone, date, UTC
 from functools import wraps
 from urllib.parse import urlencode
-
+from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 from flask import Flask, render_template, request, redirect, url_for, flash, session, g, jsonify, send_from_directory, abort
 from flask_sqlalchemy import SQLAlchemy
@@ -130,7 +130,7 @@ class User(db.Model, UserMixin):
     is_admin = db.Column(db.Boolean, default=False)
     is_banned = db.Column(db.Boolean, default=False)
     is_verified = db.Column(db.Boolean, default=False)
-
+    pin_code = db.Column(db.String(255), nullable=True)
     has_frog_attempt = db.Column(db.Boolean, default=True)
     frog_game_done = db.Column(db.Boolean, default=False)
     country = db.Column(db.String(50), default='')
@@ -721,26 +721,6 @@ def test_mail():
 
     return "OK"
 
-# --- ROUTE DEMANDE DE RESET ---
-@app.route('/reset-password', methods=['GET', 'POST'])
-def reset_password_request():
-    if request.method == 'POST':
-        email = request.form.get('email', '').strip()
-        user = User.query.filter_by(email=email).first()
-        
-        if user:
-            otp = str(random.randint(100000, 999999))
-            if send_otp(email, otp):
-                session['otp'] = otp
-                session['mode'] = 'reset'
-                session['reset_email'] = email
-                flash("Un code de vérification a été envoyé à votre email.", "success")
-                return redirect(url_for('verify_page'))
-        else:
-            flash("Cet email n'existe pas dans notre base.", "danger")
-            
-    return render_template('reset_request.html')
-
 from datetime import datetime, timedelta, timezone
 import uuid
 
@@ -900,16 +880,48 @@ def new_password_page():
             return render_template('new_password.html')
 
         user = User.query.filter_by(email=session['reset_email']).first()
+
         if user:
             user.password = generate_password_hash(password)
             db.session.commit()
+
+            # nettoyage
             session.pop('reset_email', None)
-            session.pop('otp', None)
-            flash("Mot de passe modifié avec succès ! Connectez-vous.", "success")
+
+            flash("Mot de passe modifié avec succès !", "success")
             return redirect(url_for('connexion_page'))
 
     return render_template('new_password.html')
 
+from werkzeug.security import check_password_hash
+
+@app.route('/reset-password', methods=['GET', 'POST'])
+def reset_password_request():
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip()
+        pin = request.form.get('pin', '').strip()
+
+        user = User.query.filter_by(email=email).first()
+
+        if not user:
+            flash("Cet email n'existe pas.", "danger")
+            return render_template('reset_request.html')
+
+        # 🔐 Vérifier PIN
+        if not user.pin_code:
+            flash("Aucun code PIN défini pour ce compte.", "danger")
+            return render_template('reset_request.html')
+
+        if not check_password_hash(user.pin_code, pin):
+            flash("Code PIN incorrect.", "danger")
+            return render_template('reset_request.html')
+
+        # ✅ OK → autoriser reset
+        session['reset_email'] = email
+        flash("Vérification réussie. Vous pouvez changer votre mot de passe.", "success")
+        return redirect(url_for('new_password_page'))
+
+    return render_template('reset_request.html')
 
 from datetime import datetime
 
@@ -2132,29 +2144,51 @@ from datetime import datetime
 def profile_page():
     user = get_logged_in_user()
 
-    # Gestion du upload de photo
     if request.method == "POST":
-        if 'profile_photo' in request.files:
-            file = request.files['profile_photo']
-            if file.filename == '':
-                flash("Aucun fichier sélectionné.", "warning")
-            elif allowed_file(file.filename):
+
+        # ==========================
+        # 📸 PHOTO (upload)
+        # ==========================
+        if "profile_photo" in request.files:
+            file = request.files["profile_photo"]
+
+            if file.filename != "" and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
-                # Ajouter l'UID pour éviter conflits
                 filename = f"{user.uid}_{filename}"
                 filepath = os.path.join(app.config['UPLOAD_FOLDER_PROFILE'], filename)
+
                 file.save(filepath)
                 user.profile_image = filename
+
                 db.session.commit()
-                flash("Photo de profil mise à jour avec succès !", "success")
+                flash("Photo mise à jour !", "success")
+
+        # ==========================
+        # 🔐 PIN CODE
+        # ==========================
+        elif "update_pin" in request.form:
+
+            pin = request.form.get("pin")
+            confirm_pin = request.form.get("confirm_pin")
+
+            if not pin or not confirm_pin:
+                flash("Tous les champs PIN sont obligatoires.", "danger")
+
+            elif not pin.isdigit() or len(pin) != 6:
+                flash("Le code PIN doit contenir exactement 6 chiffres.", "danger")
+
+            elif pin != confirm_pin:
+                flash("Les PIN ne correspondent pas.", "danger")
+
             else:
-                flash("Format de fichier non autorisé.", "danger")
+                # 🔥 sécurisé (hash)
+                user.pin_code = generate_password_hash(pin)
+                db.session.commit()
+                flash("Code PIN mis à jour avec succès 🔐", "success")
+
         return redirect(url_for("profile_page"))
 
-    # Photo par défaut si l'utilisateur n'a pas uploadé
     profile_pic = user.profile_image if getattr(user, 'profile_image', None) else 'default.png'
-
-    # ✅ Calcul du total de la team
     team_total = get_team_total(user)
 
     return render_template(
@@ -2167,12 +2201,6 @@ def profile_page():
 
 PUBLIC_API_KEY = "SP_y7QKkaamPsVTlw8GDDGyzlJ7bmPUvdLorOQqWUXfRLI_AP"
 PRIVATE_SECRET_KEY = "SP_-YQFuI5M9B1H2bNSNycwI_YQBc_kXkGACp-mLoBdWqI"
-
-import random
-from datetime import datetime, timedelta, UTC
-
-
-
 @app.route("/retrait", methods=["GET", "POST"])
 def retrait_page():
     user = get_logged_in_user()
@@ -2191,6 +2219,7 @@ def retrait_page():
     services = SERVICES.get(country_code, [])
 
     if request.method == "POST":
+
         try:
             montant = float(request.form.get("montant", 0))
         except:
@@ -2198,20 +2227,21 @@ def retrait_page():
 
         service_id = int(request.form.get("payment_method", 0))
         wallet = request.form.get("phone", "").strip()
+        pin = request.form.get("pin", "").strip()
 
         # ==========================
         # VALIDATIONS
         # ==========================
         if montant <= 0:
-            flash("Veuillez saisir un montant valide.", "danger")
+            flash("Montant invalide.", "danger")
             return redirect(url_for("retrait_page"))
 
         if montant < MIN_RETRAIT:
-            flash(f"Le montant minimum est {MIN_RETRAIT} XOF.", "danger")
+            flash(f"Minimum {MIN_RETRAIT} XOF.", "danger")
             return redirect(url_for("retrait_page"))
 
         if montant > MAX_RETRAIT:
-            flash(f"Le montant maximum est {MAX_RETRAIT} XOF.", "danger")
+            flash(f"Maximum {MAX_RETRAIT} XOF.", "danger")
             return redirect(url_for("retrait_page"))
 
         montant_total = montant + FRAIS
@@ -2226,40 +2256,58 @@ def retrait_page():
             return redirect(url_for("retrait_page"))
 
         # ==========================
-        # 🔐 GENERATION OTP
+        # 🔐 PIN CHECK
         # ==========================
-        otp_code = str(random.randint(100000, 999999))
+        if not user.pin_code:
+            flash("Veuillez définir votre code PIN dans votre profil.", "danger")
+            return redirect(url_for("profile_page"))
 
-        session["otp"] = otp_code
-        session["mode"] = "retrait"
-
-        session["otp_expiration"] = (
-            datetime.now(UTC) + timedelta(minutes=10)
-        ).isoformat()
-
-        session["retrait_data"] = {
-            "montant": montant,
-            "frais": FRAIS,
-            "service_id": service_id,
-            "service_name": service["name"],
-            "wallet": wallet
-        }
-
-        # ==========================
-        # 📧 ENVOI EMAIL OTP
-        # ==========================
-        success = send_otp(user.email, otp_code)
-
-        print("EMAIL RETRAIT :", user.email)
-        print("OTP RETRAIT :", otp_code)
-        print("RESULTAT ENVOI :", success)
-
-        if not success:
-            flash("Erreur lors de l'envoi de l'email.", "danger")
+        if not pin:
+            flash("Veuillez entrer votre code PIN.", "danger")
             return redirect(url_for("retrait_page"))
 
-        flash("Un code de vérification a été envoyé à votre email 📧", "success")
-        return redirect(url_for("verify_page"))
+        if not check_password_hash(user.pin_code, pin):
+            flash("Code PIN incorrect.", "danger")
+            return redirect(url_for("retrait_page"))
+
+        # ==========================
+        # API RETRAIT
+        # ==========================
+        response = envoyer_retrait_soleaspay(
+            service_id,
+            wallet,
+            montant
+        )
+
+        print("🔵 API RESPONSE :", response)
+
+        if not response or response.get("success") != True:
+            flash("Erreur API paiement.", "danger")
+            return redirect(url_for("retrait_page"))
+
+        # ==========================
+        # SAVE DB
+        # ==========================
+        nouveau_retrait = Retrait(
+            user_id=user.id,
+            montant=montant,
+            frais=FRAIS,
+            payment_method=service["name"],
+            statut="successful",
+            phone=wallet,
+            pays=user.country,
+            date=datetime.utcnow()
+        )
+
+        db.session.add(nouveau_retrait)
+
+        user.solde_parrainage -= montant_total
+        user.total_retrait = (user.total_retrait or 0) + montant_total
+
+        db.session.commit()
+
+        flash("Retrait effectué avec succès ✅", "success")
+        return redirect(url_for("mes_retraits"))
 
     return render_template(
         "retrait.html",
