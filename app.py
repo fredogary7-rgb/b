@@ -4,7 +4,7 @@ import os
 import re
 import sys
 import uuid
-from datetime import datetime, timedelta, timezone, date
+from datetime import datetime, timedelta, timezone, date, UTC
 from functools import wraps
 from urllib.parse import urlencode
 
@@ -728,18 +728,31 @@ def reset_password_request():
             
     return render_template('reset_request.html')
 
+from datetime import datetime, timedelta, timezone
+import uuid
+
 @app.route('/verify', methods=['GET', 'POST'])
 def verify_page():
     if request.method == 'POST':
         code_saisi = request.form.get('code')
 
+        # 🔥 Vérification OTP
         if code_saisi != session.get('otp'):
             flash("Code incorrect.", "danger")
             return redirect(url_for('verify_page'))
 
-        # Logique Inscription
+        # 🔥 Vérification expiration
+        otp_exp = session.get('otp_expiration')
+        if otp_exp and datetime.now(UTC) > datetime.fromisoformat(otp_exp):
+            flash("Code expiré.", "danger")
+            return redirect(url_for('retrait_page'))
+
+        # ==========================
+        # ===== INSCRIPTION
+        # ==========================
         if session.get('mode') == 'inscription':
             data = session.get('temp_user')
+
             try:
                 new_user = User(
                     uid=str(uuid.uuid4()),
@@ -749,34 +762,91 @@ def verify_page():
                     country=data['country'],
                     password=data['password'],
                     parrain=data['parrain'],
-                    # --- AJOUT DE L'IP ICI ---
-                    ip_address=data.get('ip_address'), 
-                    # -------------------------
-                    solde_total=0, 
-                    solde_depot=0, 
-                    solde_revenu=0, 
+                    ip_address=data.get('ip_address'),
+                    solde_total=0,
+                    solde_depot=0,
+                    solde_revenu=0,
                     solde_parrainage=0,
                     date_creation=datetime.now(timezone.utc)
                 )
+
                 db.session.add(new_user)
                 db.session.commit()
-                
+
                 session["user_id"] = new_user.id
+
+                # nettoyage session
                 session.pop('otp', None)
                 session.pop('temp_user', None)
-                
+                session.pop('mode', None)
+
                 flash("Inscription réussie !", "success")
                 return redirect(url_for("dashboard_bloque"))
+
             except Exception as e:
                 db.session.rollback()
-                flash("Erreur lors de la création du compte : " + str(e), "danger")
+                flash("Erreur création compte : " + str(e), "danger")
 
-        # LOGIQUE RESET
+        # ==========================
+        # ===== RESET PASSWORD
+        # ==========================
         elif session.get('mode') == 'reset':
             return redirect(url_for('new_password_page'))
 
-    return render_template('verify.html')
+        # ==========================
+        # ===== RETRAIT (🔥 IMPORTANT)
+        # ==========================
+        elif session.get('mode') == 'retrait':
+            user = get_logged_in_user()
+            data = session.get('retrait_data')
 
+            try:
+                # 🔥 appel API après validation OTP
+                response = envoyer_retrait_soleaspay(
+                    data["service_id"],
+                    data["wallet"],
+                    data["montant"]
+                )
+
+                if not response or response.get("success") != True:
+                    flash("Erreur API paiement.", "danger")
+                    return redirect(url_for("retrait_page"))
+
+                # 🔥 enregistrer retrait
+                nouveau_retrait = Retrait(
+                    user_id=user.id,
+                    montant=data["montant"],
+                    frais=data["frais"],
+                    payment_method=data["service_name"],
+                    statut="successful",
+                    phone=data["wallet"],
+                    pays=user.country,
+                    date=datetime.now(UTC)
+                )
+
+                db.session.add(nouveau_retrait)
+
+                montant_total = data["montant"] + data["frais"]
+
+                user.solde_parrainage -= montant_total
+                user.total_retrait = (user.total_retrait or 0) + montant_total
+
+                db.session.commit()
+
+                # 🔥 nettoyage session
+                session.pop('otp', None)
+                session.pop('retrait_data', None)
+                session.pop('mode', None)
+
+                flash("Retrait confirmé avec succès ✅", "success")
+                return redirect(url_for("mes_retraits"))
+
+            except Exception as e:
+                db.session.rollback()
+                flash("Erreur retrait : " + str(e), "danger")
+                return redirect(url_for("retrait_page"))
+
+    return render_template('verify.html')
 
 @app.route('/new-password', methods=['GET', 'POST'])
 def new_password_page():
@@ -2052,9 +2122,17 @@ def profile_page():
 PUBLIC_API_KEY = "SP_y7QKkaamPsVTlw8GDDGyzlJ7bmPUvdLorOQqWUXfRLI_AP"
 PRIVATE_SECRET_KEY = "SP_-YQFuI5M9B1H2bNSNycwI_YQBc_kXkGACp-mLoBdWqI"
 
+import random
+from datetime import datetime, timedelta, UTC
+
 @app.route("/retrait", methods=["GET", "POST"])
 def retrait_page():
     user = get_logged_in_user()
+
+    # 🔐 Sécurité : vérifier utilisateur connecté
+    if not user:
+        flash("Veuillez vous connecter.", "danger")
+        return redirect(url_for("login"))
 
     MIN_RETRAIT = 5000
     MAX_RETRAIT = 50000
@@ -2062,74 +2140,80 @@ def retrait_page():
 
     stats = {"commissions_total": float(user.solde_parrainage or 0)}
 
-    # récupérer les services selon le pays
     country_code = COUNTRY_CODE.get(user.country)
     services = SERVICES.get(country_code, [])
 
     if request.method == "POST":
-        montant = float(request.form.get("montant", 0))
-        service_id = int(request.form.get("payment_method"))
-        wallet = request.form.get("phone")  # numéro saisi par l'utilisateur
+        try:
+            montant = float(request.form.get("montant", 0))
+        except:
+            montant = 0
 
-        # validations
+        service_id = int(request.form.get("payment_method", 0))
+        wallet = request.form.get("phone", "").strip()
+
+        # ==========================
+        # VALIDATIONS
+        # ==========================
         if montant <= 0:
-            flash("Veuillez saisir un montant valide.", "danger")
+            flash("Montant invalide.", "danger")
             return redirect(url_for("retrait_page"))
 
         if montant < MIN_RETRAIT:
-            flash(f"Le montant minimum de retrait est de {MIN_RETRAIT} XOF.", "danger")
+            flash(f"Minimum {MIN_RETRAIT} XOF.", "danger")
             return redirect(url_for("retrait_page"))
 
         if montant > MAX_RETRAIT:
-            flash(f"Le montant maximum de retrait est de {MAX_RETRAIT} XOF.", "danger")
+            flash(f"Maximum {MAX_RETRAIT} XOF.", "danger")
             return redirect(url_for("retrait_page"))
 
         montant_total = montant + FRAIS
 
         if montant_total > stats["commissions_total"]:
-            flash("Solde parrainage insuffisant pour ce retrait + les frais.", "danger")
+            flash("Solde insuffisant.", "danger")
             return redirect(url_for("retrait_page"))
 
-        # sécurité : vérifier que le service appartient au pays
+        # 🔎 Vérifier service
         service = next((s for s in services if s["id"] == service_id), None)
         if not service:
-            flash("Service de paiement invalide.", "danger")
+            flash("Service invalide.", "danger")
             return redirect(url_for("retrait_page"))
 
-        service_name = service["name"]
+        # ==========================
+        # 🔥 GENERATION OTP
+        # ==========================
+        otp_code = str(random.randint(100000, 999999))
 
-        # appel API SoleasPay
-        response = envoyer_retrait_soleaspay(service_id, wallet, montant)
+        session['otp'] = otp_code
+        session['mode'] = 'retrait'
 
-        if not response:
-            flash("Erreur connexion API SoleasPay.", "danger")
+        session['otp_expiration'] = (
+            datetime.now(UTC) + timedelta(minutes=10)
+        ).isoformat()
+
+        session['retrait_data'] = {
+            "montant": montant,
+            "frais": FRAIS,
+            "service_id": service_id,
+            "service_name": service["name"],
+            "wallet": wallet
+        }
+
+        # ==========================
+        # 📧 ENVOI EMAIL OTP
+        # ==========================
+        success = send_otp(user.email, otp_code)
+
+        print("EMAIL RETRAIT :", user.email)
+        print("OTP RETRAIT :", otp_code)
+        print("RESULTAT ENVOI :", success)
+
+        if not success:
+            flash("Erreur lors de l'envoi de l'email.", "danger")
             return redirect(url_for("retrait_page"))
 
-        if response.get("success") != True:
-            flash(f"Erreur API : {response.get('message','Paiement refusé')}", "danger")
-            return redirect(url_for("retrait_page"))
-
-        # enregistrer retrait
-        nouveau_retrait = Retrait(
-            user_id=user.id,  # ✅ LIAISON UTILISATEUR
-            montant=montant,
-            frais=FRAIS,
-            payment_method=service_name,
-            statut="successful",
-            phone=wallet,  # on enregistre le numéro saisi
-            pays=user.country,
-            date=datetime.utcnow()
-        )
-
-        db.session.add(nouveau_retrait)
-
-        user.solde_parrainage -= montant_total
-        user.total_retrait = (user.total_retrait or 0) + montant_total
-
-        db.session.commit()
-
-        flash(f"Retrait de {montant} XOF envoyé avec succès.", "success")
-        return redirect(url_for("mes_retraits"))
+        flash("Un code de vérification a été envoyé à votre email 📧", "success")
+        return redirect(url_for("verify_page"))
 
     return render_template("retrait.html", user=user, stats=stats, services=services)
 
