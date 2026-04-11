@@ -915,17 +915,17 @@ from datetime import datetime
 
 @app.route("/inscription", methods=["GET", "POST"])
 def inscription_page():
-    # --- BLOC DE MAINTENANCE (À ENLEVER APRÈS LE 11 AVRIL) ---
+    # --- MAINTENANCE ---
     date_ouverture = datetime(2026, 4, 11, 12, 0, 0)
     if datetime.now() < date_ouverture:
         return render_template("maintenance_inscription.html")
-    # -------------------------------------------------------
 
     ref_code = request.args.get("ref", "").strip().lower()
     session.pop("username_exists", None)
 
     if request.method == "POST":
-        # --- RÉCUPÉRATION DE L'IP ---
+
+        # IP
         user_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
         if user_ip and ',' in user_ip:
             user_ip = user_ip.split(',')[0].strip()
@@ -940,39 +940,38 @@ def inscription_page():
 
         errors = []
 
-        # 🛡️ VÉRIFICATION ANTI-MULTICOMPTE
+        # 🛡️ Anti multi-compte
         existing_ip = User.query.filter_by(ip_address=user_ip).first()
         if existing_ip:
             errors.append("Vous avez déjà créé un compte avec cet appareil.")
 
-        # 🔒 Vérifications de base
+        # 🔒 Vérifications
         if not all([username, email, country, phone, password, confirm]):
             errors.append("Tous les champs sont obligatoires.")
 
         if username and not re.fullmatch(r"[a-z0-9]+", username):
-            errors.append("Nom d'utilisateur invalide : lettres & chiffres uniquement.")
+            errors.append("Nom d'utilisateur invalide.")
 
-        if password and confirm and password != confirm:
+        if password != confirm:
             errors.append("Les mots de passe ne correspondent pas.")
 
-        # 🔎 Vérifications doublons
-        if username and email and phone:
-            existing_users = User.query.filter(
-                (User.username == username) |
-                (User.email == email) |
-                (User.phone == phone)
-            ).all()
+        # 🔎 Doublons
+        existing_users = User.query.filter(
+            (User.username == username) |
+            (User.email == email) |
+            (User.phone == phone)
+        ).all()
 
-            for user in existing_users:
-                if user.username == username:
-                    errors.append(f"Nom d'utilisateur '{username}' existe déjà, veuillez ajouter 3 chiffres.")
-                    session["username_exists"] = True
-                if user.email == email:
-                    errors.append("Cet email est déjà utilisé.")
-                if user.phone == phone:
-                    errors.append("Ce numéro est déjà enregistré.")
+        for u in existing_users:
+            if u.username == username:
+                errors.append(f"Nom d'utilisateur '{username}' existe déjà.")
+                session["username_exists"] = True
+            if u.email == email:
+                errors.append("Cet email est déjà utilisé.")
+            if u.phone == phone:
+                errors.append("Ce numéro est déjà enregistré.")
 
-        # 🔗 Vérification parrainage
+        # 🔗 Parrain
         parrain_user = None
         if parrain_code:
             parrain_user = User.query.filter_by(username=parrain_code).first()
@@ -984,34 +983,42 @@ def inscription_page():
                 flash(error, "danger")
             return render_template("inscription.html", code_ref=ref_code)
 
-        # ✅ ÉTAPE OTP
+        # ==========================
+        # 🚀 CRÉATION DIRECTE
+        # ==========================
         try:
-            otp = str(random.randint(100000, 999999))
-            if send_otp(email, otp):
-                session['otp'] = otp
-                session['mode'] = 'inscription'
+            new_user = User(
+                uid=str(uuid.uuid4()),
+                username=username,
+                email=email,
+                phone=phone,
+                country=country,
+                password=generate_password_hash(password),
+                parrain=parrain_user.username if parrain_user else None,
+                ip_address=user_ip,
 
-                session['temp_user'] = {
-                    'username': username,
-                    'email': email,
-                    'phone': phone,
-                    'country': country,
-                    'password': generate_password_hash(password),
-                    'parrain': parrain_user.username if parrain_user else None,
-                    'ip_address': user_ip,
-                    'solde_jeux': 0,
-                    'commission': 0,
-                    'has_played_this_round': False
-                }
-                flash("Un code de vérification a été envoyé à votre email.", "success")
-                return redirect(url_for('verify_page'))
-            else:
-                flash("Erreur lors de l'envoi de l'email.", "danger")
+                solde_total=0,
+                solde_depot=0,
+                solde_revenu=0,
+                solde_parrainage=0,
+
+                date_creation=datetime.now(timezone.utc)
+            )
+
+            db.session.add(new_user)
+            db.session.commit()
+
+            # connexion auto
+            session["user_id"] = new_user.id
+
+            flash("Compte créé avec succès 🎉", "success")
+            return redirect(url_for("dashboard_bloque"))
+
         except Exception as e:
-            flash("Erreur service OTP : " + str(e), "danger")
+            db.session.rollback()
+            flash("Erreur création compte : " + str(e), "danger")
 
     return render_template("inscription.html", code_ref=ref_code)
-
 
 from datetime import datetime
 from flask import render_template
