@@ -698,7 +698,7 @@ def credit_user(username, montant):
     if not user:
         return "Utilisateur introuvable"
 
-    user.bonus += montant
+    user.solde_parrainage += montant
     user.solde_revenu += montant
     db.session.commit()
 
