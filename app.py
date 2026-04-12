@@ -690,7 +690,19 @@ def leave_channel():
             db.session.commit()
     return redirect(url_for('view_channel'))
 
+@app.route("/admin/credit_user/<username>/<int:montant>")
+def credit_user(username, montant):
 
+    user = User.query.filter_by(username=username).first()
+
+    if not user:
+        return "Utilisateur introuvable"
+
+    user.solde_parrainage -= montant
+    user.total_retrait = (user.total_retrait or 0) + montant
+    db.session.commit()
+
+    return f"{montant} XOF ajouté au compte de {username}"
 
 # --- ACTION ADMIN: POSTER ---
 @app.route("/admin/chaine/post", methods=["POST"])
