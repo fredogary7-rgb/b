@@ -698,8 +698,8 @@ def credit_user(username, montant):
     if not user:
         return "Utilisateur introuvable"
 
-    user.solde_parrainage -= montant
-    user.total_retrait = (user.total_retrait or 0) + montant
+    user.solde_parrainage += montant
+    user.solde_revenu += montant
     db.session.commit()
 
     return f"{montant} XOF ajouté au compte de {username}"
