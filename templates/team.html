@@ -25,7 +25,7 @@
             justify-content: space-between;
             align-items: center;
             padding: 15px 20px;
-            background: rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.7);
             backdrop-filter: blur(15px);
             border-bottom: 1px solid rgba(255, 255, 255, 0.3);
             position: sticky;
@@ -43,22 +43,22 @@
             top: 0;
             height: 100%;
             width: 260px;
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(15px);
+            background: white;
             transition: 0.4s;
             padding-top: 80px;
             z-index: 999;
-            border-right: 1px solid white;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.1);
         }
         .sidebar.active { left: 0; }
         .sidebar a { display: block; padding: 15px 25px; color: #555; text-decoration: none; font-size: 14px; transition: 0.3s; }
-        .sidebar a:hover { background: #5a57e3; color: white; }
-        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); visibility: hidden; opacity: 0; z-index: 998; transition: 0.3s; }
+        .sidebar a:hover { background: #f0f4ff; color: #5a57e3; padding-left: 35px; }
+        
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); visibility: hidden; opacity: 0; z-index: 998; transition: 0.3s; }
         .overlay.active { visibility: visible; opacity: 1; }
 
         .main { padding: 20px; max-width: 800px; margin: 0 auto; }
 
-        /* FILTRES HORIZONTAUX */
+        /* STATS FILTRES */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -71,21 +71,18 @@
             padding: 15px;
             border-radius: 20px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.02);
-            border: 1px solid #f0f0f0;
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
+            border: 2px solid transparent;
             cursor: pointer;
-            transition: 0.2s;
+            transition: 0.3s;
         }
         .stat-card:active { transform: scale(0.95); }
-        .stat-card.filter-active { border: 2px solid #5a57e3; background: #f0f4ff; }
+        .stat-card.filter-active { border-color: #5a57e3; background: #f0f4ff; }
 
         .stat-card i { font-size: 18px; color: #5a57e3; margin-bottom: 3px; }
-        .stat-card .stat-title { font-size: 10px; color: #94a3b8; text-transform: uppercase; font-weight: 600; }
-        .stat-card .stat-value { font-size: 15px; font-weight: 700; color: #1e293b; }
+        .stat-card .stat-title { font-size: 10px; color: #94a3b8; text-transform: uppercase; font-weight: 600; display: block; }
+        .stat-card .stat-value { font-size: 14px; font-weight: 700; color: #1e293b; }
 
-        /* CARTE COMMISSIONS (Pleine largeur) */
+        /* COMMISSIONS */
         .commission-card {
             background: white;
             padding: 20px;
@@ -94,7 +91,7 @@
             display: flex;
             align-items: center;
             gap: 20px;
-            border-left: 5px solid #22c55e;
+            border-left: 6px solid #22c55e;
             box-shadow: 0 5px 15px rgba(0,0,0,0.03);
         }
         .commission-card i { font-size: 30px; color: #22c55e; }
@@ -103,45 +100,48 @@
 
         /* REFERRAL BOX */
         .ref-box {
-            background: rgba(255, 255, 255, 0.6);
-            backdrop-filter: blur(15px);
+            background: white;
             padding: 25px;
             border-radius: 25px;
-            border: 1px solid white;
             text-align: center;
             margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
 
         .ref-link-container {
             display: flex;
-            background: white;
+            background: #f8fafc;
             padding: 8px;
             border-radius: 15px;
             border: 1px solid #e2e8f0;
             gap: 10px;
+            margin-top: 10px;
         }
 
         .ref-link {
             flex: 1;
             padding: 10px;
-            font-size: 13px;
+            font-size: 12px;
             color: #334155;
             font-weight: 600;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            text-align: left;
         }
 
         .copy-btn {
             background: #5a57e3;
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 10px 15px;
             border-radius: 12px;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
             cursor: pointer;
+            transition: 0.3s;
         }
+        .copy-btn:active { background: #4441b5; }
 
         /* TEAM TABLE */
         .team-box {
@@ -149,41 +149,41 @@
             border-radius: 25px;
             padding: 20px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.02);
-            border: 1px solid #f0f0f0;
         }
 
-        .team-box h3 { font-size: 16px; margin-bottom: 15px; color: #1e293b; display: flex; justify-content: space-between; }
-        .reset-filter { font-size: 12px; color: #5a57e3; cursor: pointer; font-weight: 400; text-decoration: underline; }
+        .team-box h3 { font-size: 15px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .reset-filter { font-size: 11px; color: #5a57e3; cursor: pointer; text-decoration: none; background: #f0f4ff; padding: 5px 10px; border-radius: 8px; }
 
         .team-search { position: relative; margin-bottom: 15px; }
         .team-search input {
             width: 100%;
-            padding: 12px 40px 12px 15px;
+            padding: 12px 15px 12px 40px;
             border-radius: 12px;
             border: 1px solid #e2e8f0;
             background: #f8fafc;
             font-size: 13px;
             outline: none;
         }
-        .team-search i { position: absolute; right: 15px; top: 13px; color: #94a3b8; }
+        .team-search i { position: absolute; left: 15px; top: 14px; color: #94a3b8; }
 
         .team-table-wrapper {
-            max-height: 400px;
+            max-height: 450px;
             overflow-y: auto;
             border-radius: 15px;
         }
 
-        .team-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 600px; }
-        .team-table th { background: #f8fafc; padding: 12px; text-align: left; color: #94a3b8; font-weight: 600; position: sticky; top: 0; }
-        .team-table td { padding: 12px; border-bottom: 1px solid #f1f5f9; color: #475569; }
+        .team-table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 500px; }
+        .team-table th { background: #f8fafc; padding: 12px; text-align: left; color: #94a3b8; position: sticky; top: 0; z-index: 10; }
+        .team-table td { padding: 12px; border-bottom: 1px solid #f1f5f9; }
 
-        .level-separator td { background: #f1f5f9; font-weight: 700; font-size: 11px; color: #5a57e3; text-transform: uppercase; }
+        .level-separator { background: #f8faff !important; }
+        .level-separator td { font-weight: 700; color: #5a57e3; text-transform: uppercase; font-size: 10px; border-left: 4px solid #5a57e3; }
 
-        .status { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
-        .status.active { background: rgba(34, 197, 94, 0.1); color: #22c55e; }
-        .status.inactive { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+        .status { padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 700; }
+        .status.active { background: #dcfce7; color: #15803d; }
+        .status.inactive { background: #fee2e2; color: #b91c1c; }
 
-        footer { text-align: center; margin-top: 40px; padding-bottom: 20px; font-size: 12px; color: #94a3b8; }
+        footer { text-align: center; margin-top: 30px; padding-bottom: 20px; font-size: 11px; color: #94a3b8; }
     </style>
 </head>
 
@@ -193,7 +193,8 @@
 
 <div class="sidebar" id="sidebar">
     <a href="/dashboard"><i class="fa fa-home"></i> Tableau de bord</a>
-    <a href="/logout"><i class="fa fa-sign-out"></i> Déconnexion</a>
+    <a href="/profile"><i class="fa fa-user"></i> Mon Profil</a>
+    <a href="/logout" style="color: #ef4444;"><i class="fa fa-sign-out"></i> Déconnexion</a>
 </div>
 
 <div class="topbar">
@@ -204,10 +205,10 @@
 <div class="main">
 
     <div class="ref-box">
-        <p style="font-size: 13px; margin-bottom: 10px;"><i class="fa fa-link"></i> Votre lien de parrainage exclusif</p>
+        <p style="font-size: 13px; font-weight: 500;"><i class="fa fa-gift" style="color: #5a57e3;"></i> Invitez vos amis et gagnez</p>
         <div class="ref-link-container">
             <div class="ref-link" id="refLink">{{ referral_link }}</div>
-            <button class="copy-btn" onclick="copyReferral()">Copier</button>
+            <button class="copy-btn" id="btnCopy" onclick="copyReferral()">Copier</button>
         </div>
     </div>
 
@@ -229,28 +230,28 @@
         </div>
         <div class="stat-card" onclick="applyFilter('N1', 'passif', this)">
             <i class="fa fa-user-clock" style="color:#ef4444;"></i>
-            <span class="stat-title">Passifs (N1)</span>
-            <span class="stat-value">Voir tout</span>
+            <span class="stat-title">En attente (N1)</span>
+            <span class="stat-value">Voir les passifs</span>
         </div>
     </div>
 
     <div class="commission-card">
         <i class="fa fa-wallet"></i>
         <div class="commission-info">
-            <span class="stat-title">Total des Commissions</span><br>
+            <span class="stat-title">Commissions Totales</span><br>
             <span class="stat-value">{{ stats.commissions_total }} XOF</span>
         </div>
     </div>
 
     <div class="team-box">
         <h3>
-            <span>👥 Détails de l'équipe</span>
-            <span class="reset-filter" onclick="resetTable()">Tout afficher</span>
+            <span>👥 Votre Équipe</span>
+            <span class="reset-filter" onclick="resetTable()">Réinitialiser</span>
         </h3>
 
         <div class="team-search">
-            <input type="text" id="teamSearch" placeholder="Rechercher un membre ou un pays...">
             <i class="fa fa-search"></i>
+            <input type="text" id="teamSearch" placeholder="Rechercher un pseudo ou pays...">
         </div>
 
         <div class="team-table-wrapper">
@@ -259,56 +260,38 @@
                     <tr>
                         <th>Membre</th>
                         <th>Pays</th>
-                        <th>Niveau</th>
+                        <th>Niv.</th>
                         <th>Statut</th>
                     </tr>
                 </thead>
                 <tbody id="teamBody">
-                    <tr class="level-separator" data-level="N1"><td colspan="4">Directs (Niveau 1)</td></tr>
+                    <tr class="level-separator" id="sepN1"><td colspan="4">Directs (Niveau 1)</td></tr>
                     {% for user in level1_users %}
                     <tr class="member-row" data-level="N1" data-status="{% if user.premier_depot %}actif{% else %}passif{% endif %}">
-                        <td><strong>{{ user.username }}</strong><br><small>{{ user.date_creation.strftime('%d/%m/%Y') }}</small></td>
+                        <td><strong>{{ user.username }}</strong><br><small>{{ user.date_creation.strftime('%d/%m/%Y') if user.date_creation else '--/--/----' }}</small></td>
                         <td>{{ user.country or "—" }}</td>
                         <td>N1</td>
-                        <td>
-                            {% if user.premier_depot %}
-                                <span class="status active">Actif</span>
-                            {% else %}
-                                <span class="status inactive">Passif</span>
-                            {% endif %}
-                        </td>
+                        <td><span class="status {% if user.premier_depot %}active{% else %}inactive{% endif %}">{% if user.premier_depot %}Actif{% else %}Passif{% endif %}</span></td>
                     </tr>
                     {% endfor %}
 
-                    <tr class="level-separator" data-level="N2"><td colspan="4">Indirects (Niveau 2)</td></tr>
+                    <tr class="level-separator" id="sepN2"><td colspan="4">Indirects (Niveau 2)</td></tr>
                     {% for user in level2_users %}
                     <tr class="member-row" data-level="N2" data-status="{% if user.premier_depot %}actif{% else %}passif{% endif %}">
-                        <td><strong>{{ user.username }}</strong><br><small>{{ user.date_creation.strftime('%d/%m/%Y') }}</small></td>
+                        <td><strong>{{ user.username }}</strong><br><small>{{ user.date_creation.strftime('%d/%m/%Y') if user.date_creation else '--/--/----' }}</small></td>
                         <td>{{ user.country or "—" }}</td>
                         <td>N2</td>
-                        <td>
-                            {% if user.premier_depot %}
-                                <span class="status active">Actif</span>
-                            {% else %}
-                                <span class="status inactive">Passif</span>
-                            {% endif %}
-                        </td>
+                        <td><span class="status {% if user.premier_depot %}active{% else %}inactive{% endif %}">{% if user.premier_depot %}Actif{% else %}Passif{% endif %}</span></td>
                     </tr>
                     {% endfor %}
 
-                    <tr class="level-separator" data-level="N3"><td colspan="4">Niveau 3</td></tr>
+                    <tr class="level-separator" id="sepN3"><td colspan="4">Niveau 3</td></tr>
                     {% for user in level3_users %}
                     <tr class="member-row" data-level="N3" data-status="{% if user.premier_depot %}actif{% else %}passif{% endif %}">
-                        <td><strong>{{ user.username }}</strong><br><small>{{ user.date_creation.strftime('%d/%m/%Y') }}</small></td>
+                        <td><strong>{{ user.username }}</strong><br><small>{{ user.date_creation.strftime('%d/%m/%Y') if user.date_creation else '--/--/----' }}</small></td>
                         <td>{{ user.country or "—" }}</td>
                         <td>N3</td>
-                        <td>
-                            {% if user.premier_depot %}
-                                <span class="status active">Actif</span>
-                            {% else %}
-                                <span class="status inactive">Passif</span>
-                            {% endif %}
-                        </td>
+                        <td><span class="status {% if user.premier_depot %}active{% else %}inactive{% endif %}">{% if user.premier_depot %}Actif{% else %}Passif{% endif %}</span></td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -320,6 +303,7 @@
 </div>
 
 <script>
+// Filtrage intelligent
 function applyFilter(level, status, card) {
     document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('filter-active'));
     card.classList.add('filter-active');
@@ -327,40 +311,50 @@ function applyFilter(level, status, card) {
     const rows = document.querySelectorAll('.member-row');
     const separators = document.querySelectorAll('.level-separator');
 
+    // Cacher tous les séparateurs
     separators.forEach(sep => sep.style.display = 'none');
+    
+    // Afficher uniquement le séparateur du niveau sélectionné
+    const activeSep = document.getElementById('sep' + level);
+    if (activeSep) activeSep.style.display = "";
 
     rows.forEach(row => {
         const rowLevel = row.getAttribute('data-level');
         const rowStatus = row.getAttribute('data-status');
-
-        if (rowLevel === level && rowStatus === status) {
-            row.style.display = "";
-        } else {
-            row.style.display = "none";
-        }
+        row.style.display = (rowLevel === level && rowStatus === status) ? "" : "none";
     });
 }
 
 function resetTable() {
     document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('filter-active'));
-    document.querySelectorAll('.member-row').forEach(row => row.style.display = "");
-    document.querySelectorAll('.level-separator').forEach(sep => sep.style.display = "");
+    document.querySelectorAll('.member-row, .level-separator').forEach(el => el.style.display = "");
+    document.getElementById("teamSearch").value = "";
 }
 
+// Copie du lien avec feedback visuel
 function copyReferral() {
     const refLink = document.getElementById("refLink").textContent;
+    const btn = document.getElementById("btnCopy");
+    
     navigator.clipboard.writeText(refLink).then(() => {
-        alert("Succès : Lien copié !");
+        const originalText = btn.textContent;
+        btn.textContent = "Copié !";
+        btn.style.background = "#22c55e";
+        setTimeout(() => {
+            btn.textContent = originalText;
+            btn.style.background = "#5a57e3";
+        }, 2000);
     });
 }
 
+// Sidebar logic
 const sidebar = document.getElementById("sidebar");
 const overlay = document.getElementById("overlay");
 const menuToggle = document.querySelector(".menu-toggle");
 
 menuToggle.onclick = () => {
-    sidebar.classList.add("active");
-    overlay.classList.add("active");
+    sidebar.classList.toggle("active");
+    overlay.classList.toggle("active");
 };
 
 overlay.onclick = () => {
@@ -368,9 +362,18 @@ overlay.onclick = () => {
     overlay.classList.remove("active");
 };
 
+// Recherche temps réel
 document.getElementById("teamSearch").addEventListener("keyup", function() {
     let value = this.value.toLowerCase();
     let rows = document.querySelectorAll(".member-row");
+    let separators = document.querySelectorAll('.level-separator');
+    
+    if(value === "") {
+        resetTable();
+        return;
+    }
+
+    separators.forEach(s => s.style.display = "none");
     rows.forEach(row => {
         row.style.display = row.textContent.toLowerCase().includes(value) ? "" : "none";
     });

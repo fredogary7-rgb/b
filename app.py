@@ -95,7 +95,7 @@ def load_logged_in_user():
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     uid = db.Column(db.String(50), unique=True, nullable=False, default=lambda: str(uuid.uuid4()))
-
+    profile_image = db.Column(db.String(255), nullable=True, default='default.png')
     # Informations principales
     username = db.Column(db.String(50), unique=True, nullable=False, index=True)
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
@@ -2167,63 +2167,6 @@ import os
 from werkzeug.utils import secure_filename
 from datetime import datetime
 
-@app.route("/profile", methods=["GET", "POST"])
-def profile_page():
-    user = get_logged_in_user()
-
-    if request.method == "POST":
-
-        # ==========================
-        # 📸 PHOTO (upload)
-        # ==========================
-        if "profile_photo" in request.files:
-            file = request.files["profile_photo"]
-
-            if file.filename != "" and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                filename = f"{user.uid}_{filename}"
-                filepath = os.path.join(app.config['UPLOAD_FOLDER_PROFILE'], filename)
-
-                file.save(filepath)
-                user.profile_image = filename
-
-                db.session.commit()
-                flash("Photo mise à jour !", "success")
-
-        # ==========================
-        # 🔐 PIN CODE
-        # ==========================
-        elif "update_pin" in request.form:
-
-            pin = request.form.get("pin")
-            confirm_pin = request.form.get("confirm_pin")
-
-            if not pin or not confirm_pin:
-                flash("Tous les champs PIN sont obligatoires.", "danger")
-
-            elif not pin.isdigit() or len(pin) != 6:
-                flash("Le code PIN doit contenir exactement 6 chiffres.", "danger")
-
-            elif pin != confirm_pin:
-                flash("Les PIN ne correspondent pas.", "danger")
-
-            else:
-                # 🔥 sécurisé (hash)
-                user.pin_code = generate_password_hash(pin)
-                db.session.commit()
-                flash("Code PIN mis à jour avec succès 🔐", "success")
-
-        return redirect(url_for("profile_page"))
-
-    profile_pic = user.profile_image if getattr(user, 'profile_image', None) else 'default.png'
-    team_total = get_team_total(user)
-
-    return render_template(
-        "profile.html",
-        user=user,
-        profile_pic=profile_pic,
-        team_total=team_total
-    )
 
 
 PUBLIC_API_KEY = "SP_y7QKkaamPsVTlw8GDDGyzlJ7bmPUvdLorOQqWUXfRLI_AP"
@@ -2506,26 +2449,67 @@ def retrait_jeux_page():
     )
 
 def get_team_total(user):
-    # 1. Niveau 1 : Une seule requête
-    niveau1 = User.query.filter_by(parrain=user.username).all()
-    if not niveau1:
+    # 1. Niveau 1 : On ne récupère que les usernames pour économiser la RAM
+    niveau1_data = User.query.with_entities(User.username).filter_by(parrain=user.username).all()
+    if not niveau1_data:
         return 0
-    
-    total = len(niveau1)
-    # On récupère tous les usernames du N1 pour la prochaine étape
-    usernames_n1 = [u.username for u in niveau1]
 
-    # 2. Niveau 2 : Une seule requête pour TOUT le niveau d'un coup
-    niveau2 = User.query.filter(User.parrain.in_(usernames_n1)).all()
-    total += len(niveau2)
-    
-    if niveau2:
-        # 3. Niveau 3 : Une seule requête pour tout le niveau d'un coup
-        usernames_n2 = [u.username for u in niveau2]
-        niveau3_count = User.query.filter(User.parrain.in_(usernames_n2)).count() # .count() est plus rapide que .all()
+    usernames_n1 = [u.username for u in niveau1_data]
+    total = len(usernames_n1)
+
+    # 2. Niveau 2 : On récupère aussi uniquement les usernames
+    niveau2_data = User.query.with_entities(User.username).filter(User.parrain.in_(usernames_n1)).all()
+    total += len(niveau2_data)
+
+    if niveau2_data:
+        # 3. Niveau 3 : Ici ta logique .count() est déjà parfaite
+        usernames_n2 = [u.username for u in niveau2_data]
+        niveau3_count = User.query.filter(User.parrain.in_(usernames_n2)).count()
         total += niveau3_count
 
     return total
+
+@app.route("/profile", methods=["GET", "POST"])
+def profile_page():
+    user = get_logged_in_user()
+
+    if request.method == "POST":
+        # ... (Ta logique photo et PIN reste strictement identique)
+        if "profile_photo" in request.files:
+            file = request.files["profile_photo"]
+            if file.filename != "" and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                filename = f"{user.uid}_{filename}"
+                filepath = os.path.join(app.config['UPLOAD_FOLDER_PROFILE'], filename)
+                file.save(filepath)
+                user.profile_image = filename
+                db.session.commit()
+                flash("Photo mise à jour !", "success")
+
+        elif "update_pin" in request.form:
+            pin = request.form.get("pin")
+            confirm_pin = request.form.get("confirm_pin")
+            if not pin or not confirm_pin:
+                flash("Champs obligatoires.", "danger")
+            elif not pin.isdigit() or len(pin) != 6:
+                flash("PIN : 6 chiffres requis.", "danger")
+            elif pin != confirm_pin:
+                flash("Les PIN ne correspondent pas.", "danger")
+            else:
+                user.pin_code = generate_password_hash(pin)
+                db.session.commit()
+                flash("Code PIN mis à jour ! 🔐", "success")
+        return redirect(url_for("profile_page"))
+
+    profile_pic = user.profile_image if user.profile_image else 'default.png'
+    team_total = get_team_total(user)
+
+    return render_template(
+        "profile.html",
+        user=user,
+        profile_pic=profile_pic,
+        team_total=team_total
+    )
 
 
 @app.route("/revenus")
@@ -2660,18 +2644,32 @@ def spin_wheel():
 def team_page():
     user = get_logged_in_user()
 
-    # 🔗 lien de parrainage basé sur username
     referral_code = user.username
     referral_link = url_for("inscription_page", _external=True) + f"?ref={referral_code}"
 
-    # 🔍 Niveaux basés sur username
-    level1 = User.query.filter_by(parrain=user.username).all()
+    # On ne récupère que les infos nécessaires pour l'affichage (Username, Phone, Pays, Premier_depot)
+    # Niveau 1
+    level1 = User.query.with_entities(
+        User.username, User.phone, User.country, User.premier_depot, User.date_creation
+    ).filter_by(parrain=user.username).all()
+    
     level1_usernames = [u.username for u in level1]
 
-    level2 = User.query.filter(User.parrain.in_(level1_usernames)).all() if level1_usernames else []
-    level2_usernames = [u.username for u in level2]
+    # Niveau 2
+    level2 = []
+    level2_usernames = []
+    if level1_usernames:
+        level2 = User.query.with_entities(
+            User.username, User.phone, User.country, User.premier_depot, User.date_creation
+        ).filter(User.parrain.in_(level1_usernames)).all()
+        level2_usernames = [u.username for u in level2]
 
-    level3 = User.query.filter(User.parrain.in_(level2_usernames)).all() if level2_usernames else []
+    # Niveau 3
+    level3 = []
+    if level2_usernames:
+        level3 = User.query.with_entities(
+            User.username, User.phone, User.country, User.premier_depot, User.date_creation
+        ).filter(User.parrain.in_(level2_usernames)).all()
 
     stats = {
         "level1": len(level1),
@@ -2682,7 +2680,6 @@ def team_page():
 
     return render_template(
         "team.html",
-        referral_code=referral_code,
         referral_link=referral_link,
         stats=stats,
         level1_users=level1,

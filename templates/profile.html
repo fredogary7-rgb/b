@@ -1,265 +1,254 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mon Profil - NovaTrade</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Profil - NovaTrade</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-<style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
 
-body{
-background:#e1e9ff;
-background-image:
-radial-gradient(at 0% 0%, rgba(197,202,255,0.5) 0px, transparent 50%),
-radial-gradient(at 100% 100%, rgba(225,200,255,0.4) 0px, transparent 50%);
-min-height:100vh;
-color:#444;
-}
+        body {
+            background: #e1e9ff;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(197,202,255,0.5) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(225,200,255,0.4) 0px, transparent 50%);
+            min-height: 100vh;
+            color: #444;
+        }
 
-.topbar{
-display:flex;
-justify-content:space-between;
-align-items:center;
-padding:15px 20px;
-background:rgba(255,255,255,0.4);
-backdrop-filter:blur(15px);
-border-bottom:1px solid rgba(255,255,255,0.3);
-position:sticky;
-top:0;
-z-index:1000;
-}
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: rgba(255,255,255,0.4);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(255,255,255,0.3);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
 
-.topbar .menu-toggle{font-size:24px;cursor:pointer;color:#5a57e3;}
-.topbar .user{font-weight:700;font-size:16px;color:#333;}
+        .topbar .menu-toggle { font-size: 24px; cursor: pointer; color: #5a57e3; }
+        .topbar .user { font-weight: 700; font-size: 16px; color: #333; }
 
-.main{padding:20px;max-width:600px;margin:0 auto;}
+        .main { padding: 20px; max-width: 600px; margin: 0 auto; }
 
-.profile-card{
-background:rgba(255,255,255,0.6);
-backdrop-filter:blur(15px);
-padding:30px 20px;
-border-radius:30px;
-text-align:center;
-border:1px solid rgba(255,255,255,0.4);
-box-shadow:0 10px 30px rgba(0,0,0,0.05);
-margin-bottom:25px;
-}
+        /* CARD PROFIL */
+        .profile-card {
+            background: rgba(255,255,255,0.6);
+            backdrop-filter: blur(15px);
+            padding: 30px 20px;
+            border-radius: 30px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.4);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+            position: relative;
+        }
 
-.profile-image-container{
-width:120px;
-height:120px;
-margin:0 auto 15px;
-}
+        .profile-image-container {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 15px;
+            position: relative;
+        }
 
-.profile-image-container img{
-width:100%;
-height:100%;
-border-radius:50%;
-object-fit:cover;
-border:4px solid #fff;
-box-shadow:0 5px 15px rgba(0,0,0,0.1);
-}
+        .profile-image-container img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #fff;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
 
-.profile-card h2{font-size:22px;color:#1e293b;font-weight:700;}
+        /* Bouton photo flottant */
+        .cam-overlay {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            background: #5a57e3;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid #fff;
+            cursor: pointer;
+            transition: 0.3s;
+        }
 
-.profile-card p.badge{
-display:inline-block;
-background:linear-gradient(135deg,#8e54e9,#4776e6);
-color:white;
-padding:4px 15px;
-border-radius:20px;
-font-size:12px;
-font-weight:600;
-margin-top:5px;
-}
+        .profile-card h2 { font-size: 22px; color: #1e293b; font-weight: 700; }
 
-.upload-form{margin-top:15px;}
+        .badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #8e54e9, #4776e6);
+            color: white;
+            padding: 4px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 5px;
+        }
 
-.btn-upload{
-background:#5a57e3;
-color:white;
-padding:10px 20px;
-border-radius:12px;
-font-size:13px;
-font-weight:600;
-border:none;
-cursor:pointer;
-box-shadow:0 4px 12px rgba(90,87,227,0.2);
-}
+        /* GRILLE D'INFO */
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
 
-input[type="file"]{font-size:11px;margin-bottom:10px;color:#666;}
+        .info-item {
+            background: white;
+            padding: 15px;
+            border-radius: 20px;
+            border: 1px solid #f0f0f0;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+        }
 
-.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;}
+        .info-item h4 {
+            font-size: 11px;
+            font-weight: 600;
+            color: #94a3b8;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
 
-.info-item{
-background:white;
-padding:15px;
-border-radius:20px;
-border:1px solid #f0f0f0;
-box-shadow:0 4px 10px rgba(0,0,0,0.02);
-}
+        .info-item p { font-size: 13px; font-weight: 700; color: #334155; word-wrap: break-word; }
 
-.info-item h4{
-font-size:11px;
-font-weight:600;
-color:#94a3b8;
-text-transform:uppercase;
-margin-bottom:5px;
-}
+        /* PIN CARD */
+        .pin-card {
+            margin-top: 25px;
+            background: white;
+            padding: 25px;
+            border-radius: 25px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.03);
+        }
 
-.info-item p{
-font-size:13px;
-font-weight:700;
-color:#334155;
-word-wrap:break-word;
-}
+        .pin-card h3 { text-align: center; margin-bottom: 15px; color: #1e293b; font-size: 16px; }
 
-/* 🔐 PIN CARD */
-.pin-card{
-margin-top:25px;
-background:rgba(255,255,255,0.6);
-padding:20px;
-border-radius:25px;
-border:1px solid rgba(255,255,255,0.4);
-box-shadow:0 10px 20px rgba(0,0,0,0.03);
-}
+        .pin-input {
+            width: 100%;
+            padding: 14px;
+            border-radius: 15px;
+            border: 1px solid #e2e8f0;
+            text-align: center;
+            font-size: 18px;
+            margin-bottom: 12px;
+            background: #f8fafc;
+            outline: none;
+        }
+        .pin-input:focus { border-color: #5a57e3; }
 
-.pin-card h3{
-text-align:center;
-margin-bottom:15px;
-color:#1e293b;
-}
+        .pin-btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 15px;
+            border: none;
+            background: #5a57e3;
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .pin-btn:active { transform: scale(0.98); }
 
-.pin-input{
-width:100%;
-padding:14px;
-border-radius:15px;
-border:1px solid #ddd;
-text-align:center;
-font-size:20px;
-letter-spacing:8px;
-margin-bottom:15px;
-}
+        /* FLASH MESSAGES */
+        .flash { padding: 12px; border-radius: 12px; font-size: 13px; margin-bottom: 15px; text-align: center; }
+        .success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .danger { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
 
-.pin-btn{
-width:100%;
-padding:14px;
-border-radius:15px;
-border:none;
-background:#5a57e3;
-color:white;
-font-weight:600;
-cursor:pointer;
-}
-
-/* FLASH */
-.flash{
-padding:12px;
-border-radius:12px;
-font-size:13px;
-margin-bottom:10px;
-}
-
-.flash.success{background:#dcfce7;color:#166534;}
-.flash.danger{background:#fee2e2;color:#991b1b;}
-
-footer{
-text-align:center;
-margin-top:40px;
-padding-bottom:20px;
-font-size:12px;
-color:#94a3b8;
-}
-</style>
+        footer { text-align: center; margin-top: 40px; padding-bottom: 20px; font-size: 11px; color: #94a3b8; }
+    </style>
 </head>
 
 <body>
 
 <div class="topbar">
-<div class="menu-toggle"><i class="fa fa-bars"></i></div>
-<div class="user"><span style="color:#8e54e9;">Nova</span>Trade</div>
+    <div class="menu-toggle" onclick="window.history.back()"><i class="fa fa-arrow-left"></i></div>
+    <div class="user"><span style="color:#8e54e9;">Nova</span>Trade</div>
 </div>
 
 <div class="main">
 
-<div class="profile-card">
-<div class="profile-image-container">
-<img src="{{ user.profile_photo_url or '/static/images/default-avatar.png' }}">
-</div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
 
-<h2>{{ user.username }}</h2>
-<p class="badge">{{ user.membership or 'Membre Standard' }}</p>
+    <div class="profile-card">
+        <div class="profile-image-container">
+            <img src="{{ url_for('static', filename='uploads/profiles/' + profile_pic) }}" id="preview">
+            
+            <label for="file-upload" class="cam-overlay">
+                <i class="fa fa-camera"></i>
+            </label>
+        </div>
 
-<form method="POST" enctype="multipart/form-data" class="upload-form">
-<input type="file" name="profile_photo" accept="image/*">
-<button type="submit" class="btn-upload">
-<i class="fa fa-camera"></i> Changer la photo
-</button>
-</form>
-</div>
+        <h2>{{ user.username }}</h2>
+        <p class="badge">Membre Officiel</p>
 
-<!-- FLASH -->
-{% with messages = get_flashed_messages(with_categories=true) %}
-{% for category, message in messages %}
-<div class="flash {{ category }}">{{ message }}</div>
-{% endfor %}
-{% endwith %}
+        <form method="POST" enctype="multipart/form-data" id="uploadForm" style="display:none;">
+            <input type="file" name="profile_photo" id="file-upload" accept="image/*" onchange="this.form.submit()">
+        </form>
+    </div>
 
-<div class="info-grid">
-<div class="info-item"><h4>Solde</h4><p>XOF {{ user.solde_total or 0 }}</p></div>
-<div class="info-item"><h4>Team</h4><p>{{ team_total or 0 }}</p></div>
-<div class="info-item"><h4>Téléphone</h4><p>{{ user.phone }}</p></div>
-<div class="info-item"><h4>ID</h4><p>@{{ user.username }}</p></div>
-<div class="info-item" style="grid-column: span 2;"><h4>Email</h4><p>{{ user.email }}</p></div>
-<div class="info-item"><h4>Pays</h4><p>{{ user.country }}</p></div>
-<div class="info-item"><h4>Parrain</h4><p>{{ user.parrain or 'Aucun' }}</p></div>
-<div class="info-item" style="grid-column: span 2;">
-<h4>Inscription</h4>
-<p>{{ user.date_creation.strftime('%d %B %Y') }}</p>
-</div>
-</div>
+    <div class="info-grid">
+        <div class="info-item"><h4>Solde Revenu</h4><p>{{ user.solde_revenu or 0 }} XOF</p></div>
+        <div class="info-item"><h4>Mon Équipe</h4><p>{{ team_total or 0 }} Membres</p></div>
+        <div class="info-item"><h4>Téléphone</h4><p>{{ user.phone }}</p></div>
+        <div class="info-item"><h4>Pseudo</h4><p>@{{ user.username }}</p></div>
+        <div class="info-item" style="grid-column: span 2;"><h4>E-mail</h4><p>{{ user.email }}</p></div>
+        <div class="info-item"><h4>Pays</h4><p>{{ user.country or 'Togo' }}</p></div>
+        <div class="info-item"><h4>Parrain</h4><p>{{ user.parrain or 'Direct' }}</p></div>
+        <div class="info-item" style="grid-column: span 2;">
+            <h4>Date d'inscription</h4>
+            <p>{{ user.date_creation.strftime('%d %B %Y') if user.date_creation else 'Récemment' }}</p>
+        </div>
+    </div>
 
-<!-- 🔐 PIN -->
-<div class="pin-card">
-<h3><i class="fa fa-lock"></i> Code PIN Sécurité</h3>
+    <div class="pin-card">
+        <h3><i class="fa fa-shield-halved"></i> Sécurité des Retraits</h3>
 
-<form method="POST">
+        <form method="POST">
+            <input type="hidden" name="update_pin" value="1">
+            
+            <input type="password" 
+                   name="pin" 
+                   maxlength="6" 
+                   inputmode="numeric"
+                   placeholder="Nouveau PIN (6 chiffres)" 
+                   class="pin-input" 
+                   required>
 
-<input type="password"
-       name="pin"
-       maxlength="6"
-       pattern="\d{6}"
-       placeholder="Nouveau PIN (6 chiffres)"
-       class="pin-input"
-       required>
+            <input type="password" 
+                   name="confirm_pin" 
+                   maxlength="6" 
+                   inputmode="numeric"
+                   placeholder="Confirmer le PIN" 
+                   class="pin-input" 
+                   required>
 
-<input type="password"
-       name="confirm_pin"
-       maxlength="6"
-       pattern="\d{6}"
-       placeholder="Confirmer le PIN"
-       class="pin-input"
-       required>
+            <button type="submit" class="pin-btn">Sauvegarder mon PIN</button>
+        </form>
 
-<button type="submit" name="update_pin" class="pin-btn">
-Enregistrer / Modifier le PIN
-</button>
+        <p style="text-align:center; font-size:11px; color:#94a3b8; margin-top:12px;">
+            Ce code vous sera demandé lors de chaque demande de retrait.
+        </p>
+    </div>
 
-</form>
-
-<small style="display:block;text-align:center;margin-top:10px;color:#666;">
-Code à 6 chiffres pour sécuriser vos retraits
-</small>
-</div>
-<footer>
-2026 © NovaTrade • Propulsion par l'excellence
-</footer>
+    <footer>
+        2026 © NovaTrade • Propulsion par l'excellence
+    </footer>
 
 </div>
 
 </body>
 </html>
+
