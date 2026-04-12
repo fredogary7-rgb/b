@@ -97,9 +97,9 @@ class User(db.Model, UserMixin):
     uid = db.Column(db.String(50), unique=True, nullable=False, default=lambda: str(uuid.uuid4()))
 
     # Informations principales
-    username = db.Column(db.String(50), unique=True, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    phone = db.Column(db.String(30), unique=True, nullable=False)
+    username = db.Column(db.String(50), unique=True, nullable=False, index=True)
+    email = db.Column(db.String(120), unique=True, nullable=False, index=True)
+    phone = db.Column(db.String(30), unique=True, nullable=False, index=True)
     password = db.Column(db.String(300), nullable=False)
     last_play_date = db.Column(db.DateTime, nullable=True) # Date précise du dernier clic
     # Parrainage — maintenant basé sur le username
@@ -121,7 +121,7 @@ class User(db.Model, UserMixin):
     solde_total = db.Column(db.Float, default=0.0)
     solde_depot = db.Column(db.Float, default=0.0)
     solde_parrainage = db.Column(db.Float, default=0.0)
-    solde_revenu = db.Column(db.Float, default=0.0)
+    solde_revenu = db.Column(db.Float, default=0.0, index=True)
     total_retrait = db.Column(db.Float, default=0.0)
 
     premier_depot = db.Column(db.Boolean, default=False)
@@ -698,13 +698,28 @@ def credit_user(username, montant):
     if not user:
         return "Utilisateur introuvable"
 
-    user.solde_parrainage += montant
+    user.bonus += montant
     user.solde_revenu += montant
     db.session.commit()
 
     return f"{montant} XOF ajouté au compte de {username}"
 
-# --- ACTION ADMIN: POSTER ---
+@app.route("/admin/classement-soldes")
+def classement_soldes():
+    # On retire le filtre "premier_depot" pour voir tout le monde
+    # On garde le tri desc() pour avoir les plus gros soldes en haut
+    utilisateurs = User.query.with_entities(
+        User.username, 
+        User.phone, 
+        User.solde_revenu, 
+        User.email, 
+        User.parrain,
+        User.premier_depot # On l'ajoute pour pouvoir mettre un badge "Actif/Passif" si tu veux
+    ).order_by(User.solde_revenu.desc()).all()
+
+    return render_template("classement.html", utilisateurs=utilisateurs)
+
+
 @app.route("/admin/chaine/post", methods=["POST"])
 def admin_post_channel():
     content = request.form.get("content")
@@ -2490,26 +2505,28 @@ def retrait_jeux_page():
         frais=FRAIS
     )
 
-
 def get_team_total(user):
-    # Niveau 1 : filleuls directs
+    # 1. Niveau 1 : Une seule requête
     niveau1 = User.query.filter_by(parrain=user.username).all()
+    if not niveau1:
+        return 0
+    
     total = len(niveau1)
-    niveau2, niveau3 = [], []
+    # On récupère tous les usernames du N1 pour la prochaine étape
+    usernames_n1 = [u.username for u in niveau1]
 
-    # Niveau 2 : filleuls des filleuls
-    for u1 in niveau1:
-        f2 = User.query.filter_by(parrain=u1.username).all()  # 👈 username au lieu de uid
-        total += len(f2)
-        niveau2.extend(f2)
-
-    # Niveau 3 : filleuls du niveau 2
-    for u2 in niveau2:
-        f3 = User.query.filter_by(parrain=u2.username).all()  # 👈 username au lieu de uid
-        total += len(f3)
-        niveau3.extend(f3)
+    # 2. Niveau 2 : Une seule requête pour TOUT le niveau d'un coup
+    niveau2 = User.query.filter(User.parrain.in_(usernames_n1)).all()
+    total += len(niveau2)
+    
+    if niveau2:
+        # 3. Niveau 3 : Une seule requête pour tout le niveau d'un coup
+        usernames_n2 = [u.username for u in niveau2]
+        niveau3_count = User.query.filter(User.parrain.in_(usernames_n2)).count() # .count() est plus rapide que .all()
+        total += niveau3_count
 
     return total
+
 
 @app.route("/revenus")
 def revenus_page():

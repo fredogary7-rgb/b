@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classement Général - NovaTrade</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        /* STYLE GLOBAL */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        
+        body { 
+            background: #e1e9ff; 
+            background-image: radial-gradient(at 0% 0%, rgba(197, 202, 255, 0.5) 0px, transparent 50%),
+                              radial-gradient(at 100% 100%, rgba(225, 200, 255, 0.4) 0px, transparent 50%);
+            min-height: 100vh;
+            color: #444; 
+            padding: 15px; 
+        }
+
+        .container { max-width: 1000px; margin: 0 auto; }
+
+        /* ENTÊTE */
+        .header-box {
+            background: white;
+            padding: 20px;
+            border-radius: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.8);
+        }
+
+        .header-top { display: flex; align-items: center; justify-content: space-between; }
+        .header-title { display: flex; align-items: center; gap: 12px; color: #5a57e3; }
+        .header-title h2 { font-size: 18px; font-weight: 700; }
+
+        /* RECHERCHE */
+        .search-container { position: relative; }
+        .search-container input {
+            width: 100%;
+            padding: 12px 15px 12px 45px;
+            border-radius: 15px;
+            border: 1px solid #e2e8f0;
+            outline: none;
+            font-size: 14px;
+            transition: 0.3s;
+            background: #f8fafc;
+        }
+        .search-container input:focus { border-color: #5a57e3; background: white; box-shadow: 0 0 0 4px rgba(90, 87, 227, 0.1); }
+        .search-container i { position: absolute; left: 18px; top: 14px; color: #94a3b8; }
+
+        /* TABLEAU */
+        .table-card {
+            background: white;
+            border-radius: 25px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+            border: 1px solid white;
+        }
+
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 700px; }
+        
+        th { background: #f8fafc; padding: 18px 15px; text-align: left; color: #5a57e3; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+        td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 13px; vertical-align: middle; }
+
+        /* BADGES ET RANGS */
+        .rank-badge {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+            text-align: center;
+            background: #f1f5f9;
+            border-radius: 10px;
+            font-weight: 700;
+            color: #475569;
+        }
+
+        tr:nth-child(1) .rank-badge { background: #ffd700; color: white; }
+        tr:nth-child(2) .rank-badge { background: #c0c0c0; color: white; }
+        tr:nth-child(3) .rank-badge { background: #cd7f32; color: white; }
+
+        .status-pill {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+        .status-active { background: rgba(34, 197, 94, 0.1); color: #22c55e; }
+        .status-passive { background: rgba(148, 163, 184, 0.1); color: #94a3b8; }
+
+        .solde-badge {
+            background: #5a57e3;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+            box-shadow: 0 4px 10px rgba(90, 87, 227, 0.2);
+        }
+
+        .contact-info { color: #475569; line-height: 1.4; }
+        .contact-info small { color: #94a3b8; display: block; }
+        
+        .parrain-cell { color: #64748b; font-weight: 500; }
+
+        tr:hover { background: #fcfcff; }
+        
+        .empty-state { text-align: center; padding: 60px; color: #94a3b8; }
+        .empty-state i { font-size: 40px; margin-bottom: 10px; opacity: 0.5; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-box">
+        <div class="header-top">
+            <div class="header-title">
+                <i class="fa fa-users-gear fa-lg"></i>
+                <h2>Gestion & Classement des Soldes</h2>
+            </div>
+            <a href="/dashboard" style="text-decoration:none; color:#5a57e3; font-size:12px; font-weight:600;">Retour</a>
+        </div>
+        <div class="search-container">
+            <i class="fa fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Rechercher par nom, téléphone, email ou parrain...">
+        </div>
+    </div>
+
+    <div class="table-card">
+        <div class="table-wrapper">
+            <table id="userTable">
+                <thead>
+                    <tr>
+                        <th style="width: 60px;">Rang</th>
+                        <th>Utilisateur</th>
+                        <th>Contact & Email</th>
+                        <th>Parrain</th>
+                        <th>Solde Actuel</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in utilisateurs %}
+                    <tr class="user-row">
+                        <td><span class="rank-badge">{{ loop.index }}</span></td>
+                        <td>
+                            <strong>{{ u.username }}</strong>
+                            {% if u.premier_depot %}
+                                <br><span class="status-pill status-active">Actif</span>
+                            {% else %}
+                                <br><span class="status-pill status-passive">Passif</span>
+                            {% endif %}
+                        </td>
+                        <td class="contact-info">
+                            {{ u.phone }}
+                            <small>{{ u.email }}</small>
+                        </td>
+                        <td class="parrain-cell">
+                            <i class="fa fa-share-nodes" style="font-size: 10px; margin-right: 5px;"></i>
+                            {{ u.parrain or 'Direct' }}
+                        </td>
+                        <td>
+                            <span class="solde-badge">{{ u.solde_revenu }} XOF</span>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="empty-state">
+                            <i class="fa fa-folder-open"></i>
+                            <p>Aucun utilisateur trouvé dans la base de données.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Système de recherche instantanée
+    document.getElementById('searchInput').addEventListener('keyup', function() {
+        const query = this.value.toLowerCase();
+        const rows = document.querySelectorAll('.user-row');
+        
+        rows.forEach(row => {
+            const textContent = row.textContent.toLowerCase();
+            if (textContent.includes(query)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+</script>
+
+</body>
+</html>
+
