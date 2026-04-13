@@ -269,7 +269,7 @@ class RetraitPoints(db.Model):
     montant_xof = db.Column(db.Float, nullable=False)
     statut = db.Column(db.String(20), default='en_attente')  # en_attente / valide / refusé
     date_creation = db.Column(db.DateTime, default=datetime.utcnow)
-
+    type_retrait = db.Column(db.String(20), nullable=True) # Ajoute ceci
     user = db.relationship('User', backref=db.backref('retraits_points', lazy='dynamic'))
 
 # Dans ton fichier models.py ou app.py
@@ -698,7 +698,7 @@ def credit_user(username, montant):
     if not user:
         return "Utilisateur introuvable"
 
-    user.solde_parrainage += montant
+    user.solde_jeux += montant
     user.solde_revenu += montant
     db.session.commit()
 
@@ -2427,8 +2427,7 @@ def retrait_jeux_page():
             payment_method=service_id,
             statut="successful",
             phone=user.phone,
-            pays=user.country,
-            type_retrait="jeux"
+            pays=user.country
         )
         db.session.add(nouveau_retrait)
         
