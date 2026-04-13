@@ -1125,14 +1125,11 @@ def connexion_page():
             flash("Votre compte a été suspendu. Contactez le support.", "danger")
             return redirect(url_for("connexion_page"))
 
-        # --- ENREGISTRER POSITION À LA CONNEXION ---
-        enregistrer_position(user)
-        db.session.commit()
-
+        # --- POSITION SUPPRIMÉE ICI ---
         session.clear()
         session["user_id"] = user.id
         session["username"] = user.username
-        session.permanent = True 
+        session.permanent = True
 
         flash(f"Connexion réussie ! Bienvenue {user.username}.", "success")
         return redirect(url_for("dashboard_page"))
@@ -2310,6 +2307,9 @@ from datetime import datetime
 
 PUBLIC_API_KEY = "SP_y7QKkaamPsVTlw8GDDGyzlJ7bmPUvdLorOQqWUXfRLI_AP"
 PRIVATE_SECRET_KEY = "SP_-YQFuI5M9B1H2bNSNycwI_YQBc_kXkGACp-mLoBdWqI"
+
+from datetime import datetime
+
 @app.route("/retrait", methods=["GET", "POST"])
 def retrait_page():
     user = get_logged_in_user()
@@ -2322,46 +2322,40 @@ def retrait_page():
     MAX_RETRAIT = 50000
     FRAIS = 500
 
-    stats = {"commissions_total": float(user.solde_parrainage or 0)}
+    # On s'assure que c'est bien un float
+    solde_actuel = float(user.solde_parrainage or 0)
+    stats = {"commissions_total": solde_actuel}
 
     country_code = COUNTRY_CODE.get(user.country)
     services = SERVICES.get(country_code, [])
 
     if request.method == "POST":
-
         try:
             montant = float(request.form.get("montant", 0))
-        except:
-            montant = 0
+            service_id = int(request.form.get("payment_method", 0))
+        except (ValueError, TypeError):
+            flash("Données de formulaire invalides.", "danger")
+            return redirect(url_for("retrait_page"))
 
-        service_id = int(request.form.get("payment_method", 0))
         wallet = request.form.get("phone", "").strip()
         pin = request.form.get("pin", "").strip()
 
         # ==========================
         # VALIDATIONS
         # ==========================
-        if montant <= 0:
-            flash("Montant invalide.", "danger")
-            return redirect(url_for("retrait_page"))
-
-        if montant < MIN_RETRAIT:
-            flash(f"Minimum {MIN_RETRAIT} XOF.", "danger")
-            return redirect(url_for("retrait_page"))
-
-        if montant > MAX_RETRAIT:
-            flash(f"Maximum {MAX_RETRAIT} XOF.", "danger")
+        if montant < MIN_RETRAIT or montant > MAX_RETRAIT:
+            flash(f"Le montant doit être entre {MIN_RETRAIT} et {MAX_RETRAIT} XOF.", "danger")
             return redirect(url_for("retrait_page"))
 
         montant_total = montant + FRAIS
 
-        if montant_total > stats["commissions_total"]:
-            flash("Solde insuffisant.", "danger")
+        if montant_total > solde_actuel:
+            flash("Solde insuffisant pour couvrir le montant et les frais (500 XOF).", "danger")
             return redirect(url_for("retrait_page"))
 
         service = next((s for s in services if s["id"] == service_id), None)
         if not service:
-            flash("Service invalide.", "danger")
+            flash("Service de paiement invalide.", "danger")
             return redirect(url_for("retrait_page"))
 
         # ==========================
@@ -2371,10 +2365,7 @@ def retrait_page():
             flash("Veuillez définir votre code PIN dans votre profil.", "danger")
             return redirect(url_for("profile_page"))
 
-        if not pin:
-            flash("Veuillez entrer votre code PIN.", "danger")
-            return redirect(url_for("retrait_page"))
-
+        # On utilise check_password_hash pour comparer le PIN haché
         if not check_password_hash(user.pin_code, pin):
             flash("Code PIN incorrect.", "danger")
             return redirect(url_for("retrait_page"))
@@ -2382,48 +2373,47 @@ def retrait_page():
         # ==========================
         # API RETRAIT
         # ==========================
-        response = envoyer_retrait_soleaspay(
-            service_id,
-            wallet,
-            montant
-        )
-
-        print("🔵 API RESPONSE :", response)
+        response = envoyer_retrait_soleaspay(service_id, wallet, montant)
 
         if not response or response.get("success") != True:
-            flash("Erreur API paiement.", "danger")
+            # On affiche le message d'erreur de l'API s'il existe
+            error_msg = response.get('message', 'Erreur API paiement.') if response else 'Erreur de connexion API.'
+            flash(error_msg, "danger")
             return redirect(url_for("retrait_page"))
 
         # ==========================
-        # SAVE DB
+        # SAVE DB (Sécurisé)
         # ==========================
-        nouveau_retrait = Retrait(
-            user_id=user.id,
-            montant=montant,
-            frais=FRAIS,
-            payment_method=service["name"],
-            statut="successful",
-            phone=wallet,
-            pays=user.country,
-            date=datetime.utcnow()
-        )
+        try:
+            nouveau_retrait = Retrait(
+                user_id=user.id,
+                montant=montant,
+                frais=FRAIS,
+                payment_method=service["name"],
+                statut="successful",
+                phone=wallet,
+                pays=user.country,
+                date=datetime.utcnow() # Utilisation de datetime.utcnow()
+            )
 
-        db.session.add(nouveau_retrait)
+            db.session.add(nouveau_retrait)
 
-        user.solde_parrainage -= montant_total
-        user.total_retrait = (user.total_retrait or 0) + montant_total
+            # Mise à jour des soldes
+            user.solde_parrainage = float(user.solde_parrainage) - montant_total
+            user.total_retrait = (float(user.total_retrait or 0)) + montant
 
-        db.session.commit()
+            db.session.commit()
+            flash("Retrait effectué avec succès ✅", "success")
+            return redirect(url_for("mes_retraits"))
 
-        flash("Retrait effectué avec succès ✅", "success")
-        return redirect(url_for("mes_retraits"))
+        except Exception as e:
+            db.session.rollback()
+            print(f"❌ ERREUR STOCKAGE : {str(e)}")
+            flash("Erreur lors de l'enregistrement du retrait.", "danger")
+            return redirect(url_for("retrait_page"))
 
-    return render_template(
-        "retrait.html",
-        user=user,
-        stats=stats,
-        services=services
-    )
+    return render_template("retrait.html", user=user, stats=stats, services=services)
+
 
 @app.route("/retrait-casino", methods=["GET", "POST"])
 def retrait_casino_page():
