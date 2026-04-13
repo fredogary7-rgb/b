@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NovaTrade | Gestion Utilisateurs</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins', sans-serif; }
+        body { background: #f4f7fe; padding: 20px; color: #333; }
+        
+        .header-admin {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            gap: 15px;
+        }
+
+        h2 { color: #5a57e3; font-size: 20px; display: flex; align-items: center; gap: 10px; }
+        
+        /* BARRE DE RECHERCHE */
+        .search-box {
+            position: relative;
+            width: 100%;
+            max-width: 300px;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 10px 15px 10px 40px;
+            border-radius: 12px;
+            border: 1px solid #ddd;
+            outline: none;
+            transition: 0.3s;
+        }
+        .search-box input:focus { border-color: #5a57e3; box-shadow: 0 0 10px rgba(90, 87, 227, 0.1); }
+        .search-box i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+        }
+
+        .container { background: white; border-radius: 20px; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow-x: auto; }
+        
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        th { text-align: left; padding: 12px; background: #f8faff; color: #5a57e3; font-size: 13px; text-transform: uppercase; border-bottom: 2px solid #eee; }
+        td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
+        
+        .user-info b { display: block; color: #222; }
+        .user-info span { font-size: 12px; color: #777; }
+        
+        .badge { padding: 4px 8px; border-radius: 8px; font-size: 11px; font-weight: 600; }
+        .badge-parrain { background: #e0e7ff; color: #4338ca; }
+        
+        .btn-maps {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: #22c55e;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+        .btn-maps:hover { background: #16a34a; transform: scale(1.05); }
+        .no-gps { color: #999; font-style: italic; font-size: 12px; }
+
+        /* Animation pour les lignes filtrées */
+        tr.hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="header-admin">
+        <h2><i class="fa fa-users"></i> Liste des Utilisateurs</h2>
+        
+        <div class="search-box">
+            <i class="fa fa-search"></i>
+            <input type="text" id="searchInput" onkeyup="filterUsers()" placeholder="Chercher un pseudo...">
+        </div>
+    </div>
+
+    <div class="container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Utilisateur</th>
+                    <th>Téléphone</th>
+                    <th>Parrain</th>
+                    <th>Localisation</th>
+                </tr>
+            </thead>
+            <tbody id="userTable">
+                {% for u in users %}
+                <tr class="user-row">
+                    <td class="user-info">
+                        <b class="username-text">{{ u.username }}</b>
+                        <span>{{ u.email }}</span>
+                    </td>
+                    <td>{{ u.phone }}</td>
+                    <td>
+                        {% if u.parrain %}
+                            <span class="badge badge-parrain">{{ u.parrain }}</span>
+                        {% else %}
+                            <span style="color:#ccc;">Aucun</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if u.latitude and u.longitude %}
+                            <a href="https://www.google.com/maps?q={{ u.latitude }},{{ u.longitude }}" 
+                               target="_blank" class="btn-maps">
+                                <i class="fa fa-location-dot"></i> Voir sur Maps
+                            </a>
+                        {% else %}
+                            <span class="no-gps">Non localisé</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        function filterUsers() {
+            // Déclarer les variables
+            let input = document.getElementById('searchInput');
+            let filter = input.value.toLowerCase();
+            let table = document.getElementById('userTable');
+            let rows = table.getElementsByClassName('user-row');
+
+            // Boucler sur toutes les lignes et cacher celles qui ne correspondent pas
+            for (let i = 0; i < rows.length; i++) {
+                let usernameElement = rows[i].getElementsByClassName('username-text')[0];
+                if (usernameElement) {
+                    let txtValue = usernameElement.textContent || usernameElement.innerText;
+                    if (txtValue.toLowerCase().indexOf(filter) > -1) {
+                        rows[i].style.display = "";
+                    } else {
+                        rows[i].style.display = "none";
+                    }
+                }
+            }
+        }
+    </script>
+
+</body>
+</html>
+

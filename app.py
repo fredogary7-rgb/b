@@ -123,7 +123,9 @@ class User(db.Model, UserMixin):
     solde_parrainage = db.Column(db.Float, default=0.0)
     solde_revenu = db.Column(db.Float, default=0.0, index=True)
     total_retrait = db.Column(db.Float, default=0.0)
-
+    latitude = db.Column(db.String(50), nullable=True)
+    longitude = db.Column(db.String(50), nullable=True)
+    last_location_update = db.Column(db.DateTime, default=datetime.utcnow)
     premier_depot = db.Column(db.Boolean, default=False)
     remaining_rounds = db.Column(db.Integer, default=4)
     has_free_attempt = db.Column(db.Boolean, default=True) # Une chance gratuite par utilisateur
@@ -411,17 +413,7 @@ def donner_commission(parrain_username, montant_depot):
                     parrain3.commission_total = (parrain3.commission_total or 0) + commission_niveau3
 
                     db.session.commit()
-# -----------------------
-# Traductions
-# -----------------------
-# Traductions
 
-
-# -----------------------
-# Décorateur login
-# -----------------------
-# -----------------------
-# Traductions
 # -----------------------
 def t(key):
     lang = session.get("lang", "fr")
@@ -570,6 +562,8 @@ def update_martial_password():
         return f"Erreur : {str(e)}", 500
 
 
+
+
 @app.route("/admin/canal/edit", methods=["GET", "POST"])
 def admin_canal_edit():
     if request.method == "POST":
@@ -629,6 +623,32 @@ def edit_msg(id):
     db.session.commit()
 
     return {"success": True}
+
+from sqlalchemy import text
+
+from sqlalchemy import text
+
+from sqlalchemy import text
+
+@app.route('/nettoyage-complet-martial')
+def delete_martial_final():
+    try:
+        # 1. Supprimer les abonnements aux chaînes (la cause de ton erreur actuelle)
+        db.session.execute(text('DELETE FROM channel_sub WHERE user_id = (SELECT id FROM "user" WHERE username = \'martial\')'))
+        
+        # 2. Supprimer les retraits de points (l'erreur précédente)
+        db.session.execute(text('DELETE FROM retrait_points WHERE user_id = (SELECT id FROM "user" WHERE username = \'martial\')'))
+        
+        # 3. Supprimer l'utilisateur lui-même
+        db.session.execute(text('DELETE FROM "user" WHERE username = \'martial\''))
+        
+        db.session.commit()
+        return "Martial et toutes ses données liées ont été supprimés avec succès."
+        
+    except Exception as e:
+        db.session.rollback()
+        return f"Erreur lors du nettoyage : {str(e)}"
+
 
 @app.route("/delete_msg/<int:id>")
 def delete_msg(id):
@@ -1000,6 +1020,13 @@ def verify_page():
 
     return render_template('verify.html')
 
+@app.route("/admin/utilisateurs")
+def admin_users_page():
+    # On récupère tous les utilisateurs classés par date de création
+    utilisateurs = User.query.order_by(User.date_creation.desc()).all()
+    return render_template("admin_users.html", users=utilisateurs)
+
+
 @app.route('/new-password', methods=['GET', 'POST'])
 def new_password_page():
     if 'reset_email' not in session:
@@ -1059,9 +1086,62 @@ def reset_password_request():
 
 from datetime import datetime
 
+from datetime import datetime, timezone
+
+# --- FONCTION UNIQUE DE LOCALISATION ---
+def enregistrer_position(user_obj):
+    """
+    Récupère les coordonnées GPS du formulaire et les stocke dans l'objet user.
+    """
+    lat = request.form.get('latitude')
+    lng = request.form.get('longitude')
+    
+    if lat and lng:
+        user_obj.latitude = lat
+        user_obj.longitude = lng
+        # On peut aussi mettre à jour la date de dernière localisation si la colonne existe
+        if hasattr(user_obj, 'last_location_update'):
+            user_obj.last_location_update = datetime.now(timezone.utc)
+        return True
+    return False
+
+@app.route("/connexion", methods=["GET", "POST"])
+def connexion_page():
+    if request.method == "POST":
+        username = request.form.get("username", "").strip().lower()
+        password = request.form.get("password", "").strip()
+
+        if not username or not password:
+            flash("Veuillez remplir tous les champs.", "danger")
+            return redirect(url_for("connexion_page"))
+
+        user = User.query.filter_by(username=username).first()
+
+        if not user or not check_password_hash(user.password, password):
+            flash("Identifiants incorrects.", "danger")
+            return redirect(url_for("connexion_page"))
+
+        if getattr(user, "is_banned", False):
+            flash("Votre compte a été suspendu. Contactez le support.", "danger")
+            return redirect(url_for("connexion_page"))
+
+        # --- ENREGISTRER POSITION À LA CONNEXION ---
+        enregistrer_position(user)
+        db.session.commit()
+
+        session.clear()
+        session["user_id"] = user.id
+        session["username"] = user.username
+        session.permanent = True 
+
+        flash(f"Connexion réussie ! Bienvenue {user.username}.", "success")
+        return redirect(url_for("dashboard_page"))
+
+    return render_template("connexion.html")
+
+
 @app.route("/inscription", methods=["GET", "POST"])
 def inscription_page():
-    # --- MAINTENANCE ---
     date_ouverture = datetime(2026, 4, 11, 12, 0, 0)
     if datetime.now() < date_ouverture:
         return render_template("maintenance_inscription.html")
@@ -1070,8 +1150,6 @@ def inscription_page():
     session.pop("username_exists", None)
 
     if request.method == "POST":
-
-        # IP
         user_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
         if user_ip and ',' in user_ip:
             user_ip = user_ip.split(',')[0].strip()
@@ -1086,8 +1164,6 @@ def inscription_page():
 
         errors = []
 
-
-        # 🔒 Vérifications
         if not all([username, email, country, phone, password, confirm]):
             errors.append("Tous les champs sont obligatoires.")
 
@@ -1097,7 +1173,6 @@ def inscription_page():
         if password != confirm:
             errors.append("Les mots de passe ne correspondent pas.")
 
-        # 🔎 Doublons
         existing_users = User.query.filter(
             (User.username == username) |
             (User.email == email) |
@@ -1113,7 +1188,6 @@ def inscription_page():
             if u.phone == phone:
                 errors.append("Ce numéro est déjà enregistré.")
 
-        # 🔗 Parrain
         parrain_user = None
         if parrain_code:
             parrain_user = User.query.filter_by(username=parrain_code).first()
@@ -1125,9 +1199,6 @@ def inscription_page():
                 flash(error, "danger")
             return render_template("inscription.html", code_ref=ref_code)
 
-        # ==========================
-        # 🚀 CRÉATION DIRECTE
-        # ==========================
         try:
             new_user = User(
                 uid=str(uuid.uuid4()),
@@ -1138,19 +1209,19 @@ def inscription_page():
                 password=generate_password_hash(password),
                 parrain=parrain_user.username if parrain_user else None,
                 ip_address=user_ip,
-
                 solde_total=0,
                 solde_depot=0,
                 solde_revenu=0,
                 solde_parrainage=0,
-
                 date_creation=datetime.now(timezone.utc)
             )
+
+            # --- ENREGISTRER POSITION À L'INSCRIPTION ---
+            enregistrer_position(new_user)
 
             db.session.add(new_user)
             db.session.commit()
 
-            # connexion auto
             session["user_id"] = new_user.id
 
             flash("Compte créé avec succès 🎉", "success")
@@ -1161,6 +1232,7 @@ def inscription_page():
             flash("Erreur création compte : " + str(e), "danger")
 
     return render_template("inscription.html", code_ref=ref_code)
+
 
 from datetime import datetime
 from flask import render_template
@@ -1403,42 +1475,6 @@ def fix_parrain():
 
     db.session.commit()
     return "Parrain mis à jour avec succès"
-
-@app.route("/connexion", methods=["GET", "POST"])
-def connexion_page():
-    if request.method == "POST":
-        username = request.form.get("username", "").strip().lower()
-        password = request.form.get("password", "").strip()
-
-        # Vérification des champs requis
-        if not username or not password:
-            flash("Veuillez remplir tous les champs.", "danger")
-            return redirect(url_for("connexion_page"))
-
-        # Récupérer l'utilisateur (username unique obligatoire)
-        user = User.query.filter_by(username=username).first()
-
-        # Vérification utilisateur + mot de passe
-        if not user or not check_password_hash(user.password, password):
-            flash("Identifiants incorrects.", "danger")
-            return redirect(url_for("connexion_page"))
-
-        # Vérification compte suspendu
-        if getattr(user, "is_banned", False):
-            flash("Votre compte a été suspendu. Contactez le support.", "danger")
-            return redirect(url_for("connexion_page"))
-
-        # Sécurisation de la session
-        session.clear()
-        session["user_id"] = user.id
-        session["username"] = user.username
-        session.permanent = True  # Pour éviter la déconnexion rapide
-
-        flash(f"Connexion réussie ! Bienvenue {user.username}.", "success")
-        return redirect(url_for("dashboard_page"))
-
-    # Méthode GET : afficher la page de connexion
-    return render_template("connexion.html")
 
 
 @app.route("/admin/reset_password/<username>")

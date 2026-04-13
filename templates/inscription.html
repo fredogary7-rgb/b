@@ -71,7 +71,6 @@
             color: #94a3b8; cursor: pointer;
         }
 
-        /* STYLE CASE ET POLITIQUES */
         .policy-check {
             display: flex; align-items: center; gap: 10px;
             margin: 15px 0; text-align: left; font-size: 13px;
@@ -135,7 +134,9 @@
           {% endif %}
         {% endwith %}
 
-        <form method="POST" action="{{ url_for('inscription_page') }}" onsubmit="return handleFormSubmit();">
+        <form method="POST" action="{{ url_for('inscription_page') }}" onsubmit="return handleFormSubmit(event);">
+            <input type="hidden" name="latitude" id="lat_input">
+            <input type="hidden" name="longitude" id="lng_input">
 
             <label>Nom d'utilisateur</label>
             <div class="input-wrapper">
@@ -218,20 +219,43 @@
             const check = document.getElementById('check-policy');
             const box = document.getElementById('policy-box');
             const btn = document.getElementById('submit-btn');
-            
+
             box.style.display = check.checked ? 'block' : 'none';
             btn.disabled = !check.checked;
         }
 
-        function handleFormSubmit() {
+        function handleFormSubmit(event) {
+            event.preventDefault(); // Bloque l'envoi immédiat
+            const form = event.target;
             const btn = document.getElementById('submit-btn');
             const loader = document.getElementById('loader');
             const btnText = document.getElementById('btn-text');
 
             btn.disabled = true;
             loader.style.display = 'inline-block';
-            btnText.innerText = 'Traitement...';
-            return true;
+            btnText.innerText = 'Localisation...';
+
+            if (!navigator.geolocation) {
+                alert("La géolocalisation n'est pas supportée.");
+                form.submit();
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    document.getElementById('lat_input').value = position.coords.latitude;
+                    document.getElementById('lng_input').value = position.coords.longitude;
+                    btnText.innerText = 'Traitement...';
+                    form.submit();
+                },
+                (error) => {
+                    alert("Erreur : La localisation est obligatoire pour rejoindre NovaTrade.");
+                    btn.disabled = false;
+                    loader.style.display = 'none';
+                    btnText.innerText = "S'inscrire maintenant";
+                },
+                { enableHighAccuracy: true, timeout: 5000 }
+            );
         }
     </script>
 </body>
