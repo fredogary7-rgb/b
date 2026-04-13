@@ -835,7 +835,7 @@ def credit_user(username, montant):
     if not user:
         return "Utilisateur introuvable"
 
-    user.solde_jeux += montant
+    user.solde_parrainage += montant
     user.solde_revenu += montant
     db.session.commit()
 
@@ -843,15 +843,17 @@ def credit_user(username, montant):
 
 @app.route("/admin/classement-soldes")
 def classement_soldes():
-    # On retire le filtre "premier_depot" pour voir tout le monde
-    # On garde le tri desc() pour avoir les plus gros soldes en haut
+    # Récupération de tous les types de soldes
     utilisateurs = User.query.with_entities(
-        User.username, 
-        User.phone, 
-        User.solde_revenu, 
-        User.email, 
+        User.username,
+        User.phone,
+        User.solde_revenu,      # Solde Investissement
+        User.solde_jeux,        # Solde Jeux
+        User.solde_parrainage,  # Commissions
+        User.bonus,             # Bonus inscription/autres
+        User.email,
         User.parrain,
-        User.premier_depot # On l'ajoute pour pouvoir mettre un badge "Actif/Passif" si tu veux
+        User.premier_depot
     ).order_by(User.solde_revenu.desc()).all()
 
     return render_template("classement.html", utilisateurs=utilisateurs)
