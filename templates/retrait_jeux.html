@@ -94,6 +94,7 @@
     <div class="input-group">
         <label class="label">Méthode de paiement</label>
         <select name="payment_method" required>
+            <option value="" disabled selected>Choisir un service</option>
             {% for service in services %}
                 <option value="{{ service.id }}">{{ service.name }}</option>
             {% endfor %}
@@ -101,12 +102,12 @@
     </div>
 
     <div class="input-group">
-        <label class="label">Numéro de réception (Modifiable)</label>
-        <input type="text" name="wallet" value="{{ user.phone }}" required 
-               style="background: #ffffff; border: 1px solid #5a57e3; color: #333;"
-               placeholder="Entrez le numéro de retrait">
+        <label class="label">Numéro de réception Momo/Tmoney</label>
+        <input type="tel" name="wallet" value="{{ user.phone }}" required
+               style="background: #ffffff; border: 2px solid #5a57e3; color: #333; font-weight: bold;"
+               placeholder="Ex: 0022890000000">
         <p style="font-size: 11px; color: #5a57e3; margin-top: 5px;">
-            <i class="fa fa-edit"></i> Vous pouvez modifier ce numéro pour ce retrait.
+            <i class="fa fa-info-circle"></i> Vérifiez bien le numéro avant de valider.
         </p>
     </div>
 

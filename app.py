@@ -2516,14 +2516,11 @@ def retrait_casino_page():
 @app.route("/retrait-jeux", methods=["GET", "POST"])
 def retrait_jeux_page():
     user = get_logged_in_user()
-    
+
     MIN_RETRAIT = 4000
     FRAIS = 500
-
-    # Solde disponible pour les jeux
     solde_dispo = float(user.solde_jeux or 0)
 
-    # Récupérer les services selon le pays
     country_code = COUNTRY_CODE.get(user.country)
     services = SERVICES.get(country_code, [])
 
@@ -2531,8 +2528,14 @@ def retrait_jeux_page():
         try:
             montant = float(request.form.get("montant", 0))
             service_id = int(request.form.get("payment_method"))
+            # ON RÉCUPÈRE LE NUMÉRO SAISI PAR L'UTILISATEUR
+            numero_retrait = request.form.get("wallet", "").strip()
         except:
             flash("Données invalides.", "danger")
+            return redirect(url_for("retrait_jeux_page"))
+
+        if not numero_retrait:
+            flash("Veuillez saisir un numéro de réception.", "danger")
             return redirect(url_for("retrait_jeux_page"))
 
         if montant < MIN_RETRAIT:
@@ -2542,39 +2545,37 @@ def retrait_jeux_page():
         montant_total = montant + FRAIS
 
         if montant_total > solde_dispo:
-            flash(f"Solde jeux insuffisant. Minimum requis: {montant_total} XOF (incluant frais).", "danger")
+            flash(f"Solde jeux insuffisant. Requis: {montant_total} XOF (avec frais).", "danger")
             return redirect(url_for("retrait_jeux_page"))
 
-        # Vérification du service
         valid_services = [s["id"] for s in services]
         if service_id not in valid_services:
             flash("Service de paiement invalide.", "danger")
             return redirect(url_for("retrait_jeux_page"))
 
-        # Appel API SoleasPay
-        response = envoyer_retrait_soleaspay(service_id, user.phone, montant)
+        # APPEL API AVEC LE NOUVEAU NUMÉRO
+        response = envoyer_retrait_soleaspay(service_id, numero_retrait, montant)
 
         if not response or response.get("success") != True:
             flash(f"Erreur API : {response.get('message', 'Paiement refusé')}", "danger")
             return redirect(url_for("retrait_jeux_page"))
 
-        # Enregistrement
+        # Enregistrement avec le numéro saisi
         nouveau_retrait = Retrait(
             user_id=user.id,
             montant=montant,
             frais=FRAIS,
             payment_method=service_id,
             statut="successful",
-            phone=user.phone,
+            phone=numero_retrait, # On enregistre le numéro utilisé
             pays=user.country
         )
         db.session.add(nouveau_retrait)
-        
-        # Déduction
+
         user.solde_jeux -= montant_total
         db.session.commit()
 
-        flash(f"Retrait de {montant} XOF traité avec succès.", "success")
+        flash(f"Retrait de {montant} XOF vers {numero_retrait} réussi.", "success")
         return redirect(url_for("dashboard_page"))
 
     return render_template(
@@ -2585,6 +2586,7 @@ def retrait_jeux_page():
         min_retrait=MIN_RETRAIT,
         frais=FRAIS
     )
+
 
 def get_team_total(user):
     # 1. Niveau 1 : On ne récupère que les usernames pour économiser la RAM
