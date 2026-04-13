@@ -5,28 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NovaTrade | Plateforme d'affiliation</title>
 
-    <meta property="og:title" content="Inscription gratuite | NovaTrade">
-    <meta property="og:description" content="Créez votre compte NovaTrade et rejoignez notre programme d’affiliation pour commencer à gagner dès aujourd’hui.">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://nova-trade.cc/inscription">
-    <meta property="og:image" content="https://nova-trade.cc/static/images/lu.jpg">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="NovaTrade Inscription">
-
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Inscription gratuite | NovaTrade">
-    <meta name="twitter:description" content="Rejoignez NovaTrade et commencez à gagner grâce à notre programme d’affiliation.">
-    <meta name="twitter:image" content="https://nova-trade.cc/static/images/lu.jpg">
-
-    <link rel="manifest" href="/static/manifest.json">
-    <meta name="theme-color" content="#5a57e3">
-
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
-    <link rel="icon" href="/static/images/favicon-48.png" sizes="48x48" type="image/png">
-    <link rel="icon" href="/static/images/icon-192.png" sizes="192x192" type="image/png">
 
     <style>
         /* STYLE NOVATRADE - GLASSMORPHISM */
@@ -67,79 +47,66 @@
         }
 
         .header-box img {
-            width: 45px;
-            height: 45px;
-            border-radius: 12px;
-            margin-right: 15px;
-            background: white;
-            padding: 4px;
+            width: 45px; height: 45px; border-radius: 12px;
+            margin-right: 15px; background: white; padding: 4px;
         }
 
-        .header-box h2 { font-size: 22px; font-weight: 600; letter-spacing: 0.5px; }
+        .header-box h2 { font-size: 22px; font-weight: 600; }
 
         .title-section { text-align: center; margin-bottom: 20px; }
         .title-section h1 { font-size: 20px; color: #444; margin-bottom: 5px; font-weight: 700; }
-        .title-section p { font-size: 13px; color: #666; line-height: 1.4; }
+        .title-section p { font-size: 13px; color: #666; }
 
-        label { display: block; font-size: 12px; font-weight: 700; color: #5a57e3; text-transform: uppercase; margin-bottom: 6px; margin-left: 5px; opacity: 0.8; }
+        label { display: block; font-size: 12px; font-weight: 700; color: #5a57e3; text-transform: uppercase; margin-bottom: 6px; margin-left: 5px; }
 
         .input-wrapper { position: relative; margin-bottom: 15px; }
-
         .input-wrapper input, .input-wrapper select {
-            width: 100%;
-            padding: 12px 15px;
-            border-radius: 15px;
-            border: 1px solid white;
-            background: rgba(255, 255, 255, 0.8);
-            font-size: 14px;
-            color: #333;
-            outline: none;
-            transition: 0.3s ease;
+            width: 100%; padding: 12px 15px; border-radius: 15px;
+            border: 1px solid white; background: rgba(255, 255, 255, 0.8);
+            font-size: 14px; color: #333; outline: none; transition: 0.3s ease;
         }
-
-        .input-wrapper input:focus { border-color: #5a57e3; background: #fff; }
 
         .password-toggle {
             position: absolute; right: 15px; top: 50%; transform: translateY(-50%);
-            color: #94a3b8; cursor: pointer; font-size: 16px;
+            color: #94a3b8; cursor: pointer;
         }
+
+        /* STYLE CASE ET POLITIQUES */
+        .policy-check {
+            display: flex; align-items: center; gap: 10px;
+            margin: 15px 0; text-align: left; font-size: 13px;
+            color: #444; cursor: pointer;
+        }
+        .policy-check input { width: 18px; height: 18px; accent-color: #5a57e3; }
+
+        #policy-box {
+            display: none; background: rgba(255, 255, 255, 0.8);
+            border-radius: 15px; padding: 15px; margin-bottom: 20px;
+            border: 1px dashed #5a57e3; text-align: left;
+            animation: slideDown 0.4s ease-out;
+        }
+
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; } }
+
+        #policy-box ul { list-style: none; font-size: 11px; color: #555; line-height: 1.4; }
+        #policy-box ul li { margin-bottom: 5px; display: flex; gap: 8px; }
+        #policy-box ul li i { color: #22c55e; }
 
         .btn-submit {
             width: 100%; padding: 14px; border: none; border-radius: 15px;
             background: #5a57e3; color: white; font-weight: 700; font-size: 16px;
-            cursor: pointer; transition: 0.3s ease;
-            box-shadow: 0 6px 20px rgba(90, 87, 227, 0.2);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
+            cursor: pointer; transition: 0.3s ease; display: flex;
+            justify-content: center; align-items: center; gap: 10px;
         }
+        .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        .btn-submit:hover { transform: translateY(-2px); filter: brightness(1.1); }
-        
-        /* Style du Loader */
         .loader {
-            display: none;
-            width: 18px;
-            height: 18px;
-            border: 2px solid #ffffff;
-            border-bottom-color: transparent;
-            border-radius: 50%;
-            animation: rotation 0.8s linear infinite;
+            display: none; width: 18px; height: 18px; border: 2px solid #ffffff;
+            border-bottom-color: transparent; border-radius: 50%; animation: rotation 0.8s linear infinite;
         }
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        @keyframes rotation {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .btn-submit:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .alert { padding: 12px; border-radius: 12px; margin-bottom: 15px; font-size: 13px; font-weight: 600; text-align: center; }
+        .alert { padding: 12px; border-radius: 12px; margin-bottom: 15px; font-size: 13px; text-align: center; }
         .flash.danger { background: #fee2e2; color: #dc2626; }
         .flash.success { background: #dcfce7; color: #16a34a; }
 
@@ -157,7 +124,7 @@
 
         <div class="title-section">
             <h1>Inscription gratuite</h1>
-            <p>Rejoignez Novatrade et commencez à gagner dès aujourd'hui.</p>
+            <p>Rejoignez Novatrade et commencez à gagner.</p>
         </div>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -168,12 +135,11 @@
           {% endif %}
         {% endwith %}
 
-        <form method="POST" action="{{ url_for('inscription_page') }}" onsubmit="return handleFormSubmit(this);">
+        <form method="POST" action="{{ url_for('inscription_page') }}" onsubmit="return handleFormSubmit();">
 
             <label>Nom d'utilisateur</label>
             <div class="input-wrapper">
-                <input type="text" name="username" placeholder="Choisissez un pseudo" required
-                       value="{{ '' if session.get('username_exists') else request.form.get('username','') }}">
+                <input type="text" name="username" placeholder="Pseudo" required value="{{ request.form.get('username','') }}">
             </div>
 
             <label>Adresse email</label>
@@ -181,25 +147,24 @@
                 <input type="email" name="email" placeholder="votre@email.com" required value="{{ request.form.get('email','') }}">
             </div>
 
-            <label>Sélectionner votre pays</label>
+            <label>Pays</label>
             <div class="input-wrapper">
                 <select name="country" required>
                     <option value="" disabled selected>Choisir un pays</option>
                     {% for c in ["Togo","Bénin","Côte d'Ivoire","Cameroun","Sénégal","Burkina Faso","Congo Brazzaville","Congo Kinshasa","Niger","Gabon","Mali"] %}
-                        <option value="{{ c }}" {% if request.form.get('country') == c %}selected{% endif %}>{{ c }}</option>
+                        <option value="{{ c }}">{{ c }}</option>
                     {% endfor %}
                 </select>
             </div>
 
-            <label>Numéro de téléphone</label>
+            <label>Téléphone</label>
             <div class="input-wrapper">
-                <input type="tel" name="phone" placeholder="Numéro sans indicatif" required value="{{ request.form.get('phone','') }}">
+                <input type="tel" name="phone" placeholder="Numéro sans indicatif" required>
             </div>
 
             <label>Parrain</label>
             <div class="input-wrapper">
-                <input type="text" name="parrain" value="{{ request.form.get('parrain', code_ref) }}" readonly
-                       style="background: rgba(0,0,0,0.05); color: #64748b; cursor: not-allowed;">
+                <input type="text" name="parrain" value="{{ request.form.get('parrain', code_ref) }}" readonly style="background:rgba(0,0,0,0.05);">
             </div>
 
             <label>Mot de passe</label>
@@ -214,16 +179,25 @@
                 <i class="fa fa-eye password-toggle" onclick="togglePass('conf')"></i>
             </div>
 
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
-                <input type="checkbox" required id="terms" name="terms" {% if request.form.get('terms') %}checked{% endif %}>
-                <label for="terms" style="margin:0; text-transform: none; font-weight: 500; font-size: 12px; color: #666;">J'accepte les conditions</label>
+            <label class="policy-check">
+                <input type="checkbox" id="check-policy" onchange="togglePolicies()">
+                <span>J'accepte les politiques d'utilisation</span>
+            </label>
+
+            <div id="policy-box">
+                <h4 style="font-size: 13px; color: #5a57e3; margin-bottom: 8px;">Engagement de l'utilisateur :</h4>
+                <ul>
+                    <li><i class="fa fa-check-circle"></i> <b>Compte Unique :</b> Un seul compte autorisé par IP/Utilisateur.</li>
+                    <li><i class="fa fa-check-circle"></i> <b>Fraude :</b> Tout multi-compte entraîne un bannissement définitif.</li>
+                    <li><i class="fa fa-check-circle"></i> <b>Affiliation :</b> Interdiction de spammer des liens ou de mentir.</li>
+                    <li><i class="fa fa-check-circle"></i> <b>Contrôle :</b> Les gains sont vérifiés avant chaque retrait.</li>
+                </ul>
             </div>
 
-            <button type="submit" class="btn-submit" id="submit-btn">
-                <span id="btn-text">Recevoir le code de vérification</span>
+            <button type="submit" class="btn-submit" id="submit-btn" disabled>
+                <span id="btn-text">S'inscrire maintenant</span>
                 <div class="loader" id="loader"></div>
             </button>
-
         </form>
 
         <div class="login-footer">
@@ -235,25 +209,28 @@
         function togglePass(id) {
             const input = document.getElementById(id);
             const icon = input.nextElementSibling;
-            if (input.type === "password") {
-                input.type = "text";
-                icon.classList.replace("fa-eye", "fa-eye-slash");
-            } else {
-                input.type = "password";
-                icon.classList.replace("fa-eye-slash", "fa-eye");
-            }
+            input.type = input.type === "password" ? "text" : "password";
+            icon.classList.toggle("fa-eye");
+            icon.classList.toggle("fa-eye-slash");
         }
 
-        function handleFormSubmit(form) {
+        function togglePolicies() {
+            const check = document.getElementById('check-policy');
+            const box = document.getElementById('policy-box');
+            const btn = document.getElementById('submit-btn');
+            
+            box.style.display = check.checked ? 'block' : 'none';
+            btn.disabled = !check.checked;
+        }
+
+        function handleFormSubmit() {
             const btn = document.getElementById('submit-btn');
             const loader = document.getElementById('loader');
             const btnText = document.getElementById('btn-text');
 
-            // On active le loader et on désactive le bouton
             btn.disabled = true;
             loader.style.display = 'inline-block';
-            btnText.innerText = 'Envoi en cours...';
-            
+            btnText.innerText = 'Traitement...';
             return true;
         }
     </script>
