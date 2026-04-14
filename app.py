@@ -841,6 +841,26 @@ def credit_user(username, montant):
 
     return f"{montant} XOF ajouté au compte de {username}"
 
+@app.route("/admin/update-solde", methods=["POST"])
+def update_solde():
+    data = request.get_json()
+    username = data.get("username")
+    field = data.get("field")  # ex: solde_revenu, solde_jeux...
+    value = data.get("value")
+
+    user = User.query.filter_by(username=username).first()
+    if user:
+        try:
+            # On met à jour le champ dynamiquement
+            setattr(user, field, float(value))
+            db.session.commit()
+            return jsonify({"success": True})
+        except Exception as e:
+            return jsonify({"success": False, "error": str(e)})
+    
+    return jsonify({"success": False, "error": "Utilisateur non trouvé"})
+
+
 @app.route("/admin/classement-soldes")
 def classement_soldes():
     # Récupération de tous les types de soldes
