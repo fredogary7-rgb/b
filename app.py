@@ -1158,7 +1158,6 @@ def connexion_page():
 
     return render_template("connexion.html")
 
-
 @app.route("/inscription", methods=["GET", "POST"])
 def inscription_page():
     date_ouverture = datetime(2026, 4, 11, 12, 0, 0)
@@ -1235,9 +1234,7 @@ def inscription_page():
                 date_creation=datetime.now(timezone.utc)
             )
 
-            # --- ENREGISTRER POSITION À L'INSCRIPTION ---
-            enregistrer_position(new_user)
-
+            # --- POSITION SUPPRIMÉE ICI ---
             db.session.add(new_user)
             db.session.commit()
 
@@ -1251,6 +1248,7 @@ def inscription_page():
             flash("Erreur création compte : " + str(e), "danger")
 
     return render_template("inscription.html", code_ref=ref_code)
+
 
 
 from datetime import datetime

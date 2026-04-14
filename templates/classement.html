@@ -18,9 +18,8 @@
             padding: 15px;
         }
 
-        .container { max-width: 1200px; margin: 0 auto; }
+        .container { max-width: 1100px; margin: 0 auto; }
 
-        /* ENTÊTE */
         .header-box {
             background: white;
             padding: 20px;
@@ -34,7 +33,6 @@
         .header-title { display: flex; align-items: center; gap: 12px; color: #5a57e3; }
         .header-title h2 { font-size: 18px; font-weight: 700; }
 
-        /* RECHERCHE */
         .search-container { position: relative; }
         .search-container input {
             width: 100%;
@@ -47,7 +45,6 @@
         }
         .search-container i { position: absolute; left: 18px; top: 14px; color: #94a3b8; }
 
-        /* TABLEAU */
         .table-card {
             background: white;
             border-radius: 25px;
@@ -56,12 +53,11 @@
         }
 
         .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+        table { width: 100%; border-collapse: collapse; min-width: 850px; }
 
         th { background: #f8fafc; padding: 15px; text-align: left; color: #5a57e3; font-weight: 700; font-size: 11px; text-transform: uppercase; }
         td { padding: 12px 15px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
 
-        /* INPUTS D'ÉDITION */
         .edit-input {
             width: 110px;
             padding: 8px;
@@ -76,7 +72,6 @@
         .edit-input:focus { border-color: #5a57e3; background: white; box-shadow: 0 0 8px rgba(90, 87, 227, 0.1); }
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
-        /* BADGES */
         .rank-badge {
             display: inline-block; width: 28px; height: 28px; line-height: 28px;
             text-align: center; background: #f1f5f9; border-radius: 8px;
@@ -87,12 +82,6 @@
         .status-active { background: #dcfce7; color: #166534; }
         .status-passive { background: #f1f5f9; color: #64748b; }
 
-        .total-badge {
-            background: #333; color: white; padding: 8px 12px; border-radius: 10px;
-            font-weight: 700; font-size: 13px; white-space: nowrap;
-        }
-
-        /* NOTIFICATIONS */
         #toast {
             position: fixed; bottom: 20px; right: 20px; background: #22c55e; color: white;
             padding: 12px 25px; border-radius: 15px; display: none; z-index: 9999;
@@ -103,14 +92,14 @@
 </head>
 <body>
 
-<div id="toast">✅ Modifié avec succès</div>
+<div id="toast">✅ Enregistré</div>
 
 <div class="container">
     <div class="header-box">
         <div class="header-top">
             <div class="header-title">
                 <i class="fa fa-users-gear fa-lg"></i>
-                <h2>Gestion & Classement des Soldes</h2>
+                <h2>Gestion des Soldes</h2>
             </div>
             <a href="/dashboard" style="text-decoration:none; color:#5a57e3; font-size:13px; font-weight:600;">
                 <i class="fa fa-arrow-left"></i> Retour
@@ -118,7 +107,7 @@
         </div>
         <div class="search-container">
             <i class="fa fa-search"></i>
-            <input type="text" id="searchInput" placeholder="Rechercher un utilisateur (pseudo, téléphone)...">
+            <input type="text" id="searchInput" placeholder="Chercher un pseudo ou téléphone...">
         </div>
     </div>
 
@@ -133,13 +122,11 @@
                         <th>Solde Jeux</th>
                         <th>Commissions</th>
                         <th>Bonus</th>
-                        <th style="background: #f0f3ff;">Total Global</th>
                     </tr>
                 </thead>
                 <tbody id="userTableBody">
                     {% for u in utilisateurs %}
-                    {% set total_global = (u.solde_revenu or 0) + (u.solde_jeux or 0) + (u.solde_parrainage or 0) + (u.bonus or 0) %}
-                    <tr class="user-row" data-username="{{ u.username }}">
+                    <tr class="user-row">
                         <td><span class="rank-badge">{{ loop.index }}</span></td>
                         <td>
                             <strong class="username-text">{{ u.username }}</strong>
@@ -153,33 +140,27 @@
                         </td>
 
                         <td>
-                            <input type="number" class="edit-input" data-field="solde_revenu"
-                                   onchange="saveData('{{ u.username }}', 'solde_revenu', this)" 
+                            <input type="number" class="edit-input" 
+                                   onchange="saveData('{{ u.username }}', 'solde_revenu', this)"
                                    value="{{ u.solde_revenu or 0 }}" style="color: #5a57e3;">
                         </td>
 
                         <td>
-                            <input type="number" class="edit-input" data-field="solde_jeux"
-                                   onchange="saveData('{{ u.username }}', 'solde_jeux', this)" 
+                            <input type="number" class="edit-input" 
+                                   onchange="saveData('{{ u.username }}', 'solde_jeux', this)"
                                    value="{{ u.solde_jeux or 0 }}" style="color: #e67e22;">
                         </td>
 
                         <td>
-                            <input type="number" class="edit-input" data-field="solde_parrainage"
-                                   onchange="saveData('{{ u.username }}', 'solde_parrainage', this)" 
+                            <input type="number" class="edit-input" 
+                                   onchange="saveData('{{ u.username }}', 'solde_parrainage', this)"
                                    value="{{ u.solde_parrainage or 0 }}" style="color: #27ae60;">
                         </td>
 
                         <td>
-                            <input type="number" class="edit-input" data-field="bonus"
-                                   onchange="saveData('{{ u.username }}', 'bonus', this)" 
+                            <input type="number" class="edit-input" 
+                                   onchange="saveData('{{ u.username }}', 'bonus', this)"
                                    value="{{ u.bonus or 0 }}" style="color: #9b59b6;">
-                        </td>
-
-                        <td style="background: #f8faff; border-left: 2px solid #e1e9ff; text-align: center;">
-                            <span class="total-badge">
-                                <span class="total-val">{{ "{:,}".format(total_global) }}</span> XOF
-                            </span>
                         </td>
                     </tr>
                     {% endfor %}
@@ -190,58 +171,41 @@
 </div>
 
 <script>
-    // RECHERCHE INSTANTANÉE
+    // RECHERCHE
     document.getElementById('searchInput').addEventListener('keyup', function() {
         let filter = this.value.toLowerCase();
         let rows = document.querySelectorAll('.user-row');
         rows.forEach(row => {
-            let text = row.querySelector('.username-text').innerText.toLowerCase();
-            let phone = row.innerText.toLowerCase();
-            row.style.display = (text.includes(filter) || phone.includes(filter)) ? "" : "none";
+            let text = row.innerText.toLowerCase();
+            row.style.display = text.includes(filter) ? "" : "none";
         });
     });
 
-    // SAUVEGARDE AJAX
+    // SAUVEGARDE DIRECTE
     function saveData(username, field, inputElement) {
-        let newValue = inputElement.value;
-
         fetch('/admin/update-solde', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 username: username,
                 field: field,
-                value: newValue
+                value: inputElement.value
             })
         })
         .then(res => res.json())
         .then(data => {
             if(data.success) {
                 showToast();
-                updateRowTotal(inputElement.closest('.user-row'));
             } else {
                 alert("Erreur: " + data.error);
             }
-        })
-        .catch(err => console.error("Erreur réseau:", err));
-    }
-
-    // MISE À JOUR VISUELLE DU TOTAL
-    function updateRowTotal(row) {
-        let inputs = row.querySelectorAll('.edit-input');
-        let total = 0;
-        inputs.forEach(input => {
-            total += parseFloat(input.value || 0);
         });
-        // Formatage avec espaces pour les milliers
-        row.querySelector('.total-val').innerText = total.toLocaleString('fr-FR');
     }
 
-    // PETITE NOTIFICATION
     function showToast() {
         let t = document.getElementById('toast');
         t.style.display = 'block';
-        setTimeout(() => { t.style.display = 'none'; }, 2000);
+        setTimeout(() => { t.style.display = 'none'; }, 1500);
     }
 </script>
 
