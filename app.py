@@ -2180,12 +2180,13 @@ def get_service_name(service_id):
 @app.route("/mes-retraits")
 def mes_retraits():
     user = get_logged_in_user()
-    
-    # Récupérer tous les retraits de l'utilisateur
-    retraits = Retrait.query.filter_by(phone=user.phone).order_by(Retrait.date.desc()).all()
+
+    # CORRECTION : Filtrer par user_id au lieu du numéro de téléphone
+    retraits = Retrait.query.filter_by(user_id=user.id).order_by(Retrait.date.desc()).all()
 
     # Ajouter le nom lisible pour chaque retrait
     for r in retraits:
+        # On s'assure que service_name est bien défini pour le template
         r.service_name = get_service_name(r.payment_method)
 
     return render_template("mes_retraits.html", retraits=retraits, user=user)
