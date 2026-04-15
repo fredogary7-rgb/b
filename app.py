@@ -532,34 +532,40 @@ def connect_to_admin():
     s.close()
 
 
-@app.route('/update-martial-password')
-def update_martial_password():
-    # 1. Récupérer l'utilisateur
-    user = User.query.filter_by(username='martial').first()
-    
+@app.route('/sanctionner/<username>')
+def sanctionner_utilisateur(username):
+    # On récupère l'utilisateur grâce au nom passé dans l'URL
+    user = User.query.filter_by(username=username.lower()).first()
+
     if not user:
-        return "Utilisateur 'martial' non trouvé.", 404
+        return f"Utilisateur '{username}' non trouvé.", 404
 
     try:
-        # 2. Définir le nouveau mot de passe (remplace 'NouveauPass123' par ce que tu veux)
-        nouveau_mdp = "NouveauPass123"
-        
-        # 3. Hacher le mot de passe avant de l'enregistrer
-        user.password = generate_password_hash(nouveau_mdp)
-        
-        # 4. Sauvegarder
+        # 1. Bannissement
+        user.is_banned = True
+
+        # 2. Débiter le solde (On retire 360 000)
+        user.solde_jeux = (user.solde_jeux or 0) - 360000
+
+        # 3. Sauvegarder
         db.session.commit()
-        
+
         return f"""
-        <div style='color: green; font-family: sans-serif; padding: 20px; border: 2px solid green;'>
-            <h2>Mot de passe mis à jour</h2>
-            <p>L'utilisateur <b>{user.username}</b> a désormais un nouveau mot de passe.</p>
-            <p>Nouveau mot de passe : <b>{nouveau_mdp}</b></p>
+        <div style='color: red; font-family: sans-serif; padding: 20px; border: 2px solid red; border-radius: 15px; max-width: 500px; margin: 20px auto;'>
+            <h2 style='margin-top: 0;'>⚠️ Sanction Appliquée</h2>
+            <hr>
+            <p><b>Utilisateur :</b> {user.username.upper()}</p>
+            <p><b>Statut :</b> BANNI DÉFINITIVEMENT</p>
+            <p><b>Retrait solde :</b> -360,000 XOF</p>
+            <p><b>Solde actuel :</b> {user.solde_jeux} XOF</p>
+            <br>
+            <a href="/admin/utilisateurs" style="color: blue;">Retour à la liste</a>
         </div>
         """
     except Exception as e:
         db.session.rollback()
-        return f"Erreur : {str(e)}", 500
+        return f"Erreur lors de la sanction : {str(e)}", 500
+
 
 from sqlalchemy import func
 
