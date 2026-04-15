@@ -888,19 +888,16 @@ def update_solde():
     
     return jsonify({"success": False, "error": "Utilisateur non trouvé"})
 
-
 @app.route("/admin/classement-soldes")
 def classement_soldes():
-    # Récupération de tous les types de soldes
+    # On ne récupère que le strict nécessaire pour la mémoire vive
     utilisateurs = User.query.with_entities(
         User.username,
         User.phone,
-        User.solde_revenu,      # Solde Investissement
-        User.solde_jeux,        # Solde Jeux
-        User.solde_parrainage,  # Commissions
-        User.bonus,             # Bonus inscription/autres
-        User.email,
-        User.parrain,
+        User.solde_revenu,
+        User.solde_jeux,
+        User.solde_parrainage,
+        User.bonus,
         User.premier_depot
     ).order_by(User.solde_revenu.desc()).all()
 

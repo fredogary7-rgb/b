@@ -3,69 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Consultation des Soldes - NovaTrade Admin</title>
+    <title>NovaTrade | Gestion Soldes</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-
-        body {
-            background: #e1e9ff;
-            background-image: radial-gradient(at 0% 0%, rgba(197, 202, 255, 0.5) 0px, transparent 50%),
-                              radial-gradient(at 100% 100%, rgba(225, 200, 255, 0.4) 0px, transparent 50%);
-            min-height: 100vh;
-            color: #444;
-            padding: 15px;
-        }
-
+        body { background: #e1e9ff; color: #444; padding: 15px; min-height: 100vh; }
         .container { max-width: 1100px; margin: 0 auto; }
 
+        /* ENTÊTE */
         .header-box {
-            background: white;
-            padding: 20px;
-            border-radius: 25px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-            border: 1px solid rgba(255, 255, 255, 0.8);
+            background: white; padding: 20px; border-radius: 25px;
+            margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05);
         }
-
         .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
         .header-title { display: flex; align-items: center; gap: 12px; color: #5a57e3; }
         .header-title h2 { font-size: 18px; font-weight: 700; }
 
+        /* BARRE DE RECHERCHE */
         .search-container { position: relative; }
         .search-container input {
-            width: 100%;
-            padding: 12px 15px 12px 45px;
-            border-radius: 15px;
-            border: 1px solid #e2e8f0;
-            outline: none;
-            font-size: 14px;
-            background: #f8fafc;
+            width: 100%; padding: 12px 15px 12px 45px; border-radius: 15px;
+            border: 1px solid #e2e8f0; outline: none; background: #f8fafc;
         }
         .search-container i { position: absolute; left: 18px; top: 14px; color: #94a3b8; }
 
-        .table-card {
-            background: white;
-            border-radius: 25px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.03);
-        }
-
+        /* TABLEAU */
+        .table-card { background: white; border-radius: 25px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.03); }
         .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        table { width: 100%; border-collapse: collapse; min-width: 800px; }
-
+        table { width: 100%; border-collapse: collapse; min-width: 850px; }
         th { background: #f8fafc; padding: 15px; text-align: left; color: #5a57e3; font-weight: 700; font-size: 11px; text-transform: uppercase; }
         td { padding: 15px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
 
+        /* STYLES DES VALEURS */
         .solde-val { font-weight: 700; font-size: 14px; }
-
         .rank-badge {
             display: inline-block; width: 28px; height: 28px; line-height: 28px;
             text-align: center; background: #f1f5f9; border-radius: 8px;
             font-weight: 700; color: #475569; font-size: 12px;
         }
-
         .status-pill { padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
         .status-active { background: #dcfce7; color: #166534; }
         .status-passive { background: #f1f5f9; color: #64748b; }
@@ -77,8 +53,8 @@
     <div class="header-box">
         <div class="header-top">
             <div class="header-title">
-                <i class="fa fa-eye fa-lg"></i>
-                <h2>Consultation des Soldes</h2>
+                <i class="fa fa-chart-line fa-lg"></i>
+                <h2>Classement & Soldes</h2>
             </div>
             <a href="/dashboard" style="text-decoration:none; color:#5a57e3; font-size:13px; font-weight:600;">
                 <i class="fa fa-arrow-left"></i> Retour
@@ -86,7 +62,7 @@
         </div>
         <div class="search-container">
             <i class="fa fa-search"></i>
-            <input type="text" id="searchInput" placeholder="Rechercher un utilisateur...">
+            <input type="text" id="searchInput" placeholder="Rechercher par pseudo ou téléphone...">
         </div>
     </div>
 
@@ -109,7 +85,7 @@
                         <td><span class="rank-badge">{{ loop.index }}</span></td>
                         <td>
                             <strong class="username-text">{{ u.username }}</strong>
-                            <br><small style="color:#888;">{{ u.phone }}</small>
+                            <br><small class="phone-text" style="color:#888;">{{ u.phone }}</small>
                             <br>
                             {% if u.premier_depot %}
                                 <span class="status-pill status-active">Actif</span>
@@ -117,22 +93,10 @@
                                 <span class="status-pill status-passive">Passif</span>
                             {% endif %}
                         </td>
-
-                        <td>
-                            <span class="solde-val" style="color: #5a57e3;">{{ "{:,}".format(u.solde_revenu or 0) }}</span>
-                        </td>
-
-                        <td>
-                            <span class="solde-val" style="color: #e67e22;">{{ "{:,}".format(u.solde_jeux or 0) }}</span>
-                        </td>
-
-                        <td>
-                            <span class="solde-val" style="color: #27ae60;">{{ "{:,}".format(u.solde_parrainage or 0) }}</span>
-                        </td>
-
-                        <td>
-                            <span class="solde-val" style="color: #9b59b6;">{{ "{:,}".format(u.bonus or 0) }}</span>
-                        </td>
+                        <td><span class="solde-val" style="color: #5a57e3;">{{ "{:,}".format(u.solde_revenu or 0) }}</span></td>
+                        <td><span class="solde-val" style="color: #e67e22;">{{ "{:,}".format(u.solde_jeux or 0) }}</span></td>
+                        <td><span class="solde-val" style="color: #27ae60;">{{ "{:,}".format(u.solde_parrainage or 0) }}</span></td>
+                        <td><span class="solde-val" style="color: #9b59b6;">{{ "{:,}".format(u.bonus or 0) }}</span></td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -142,12 +106,26 @@
 </div>
 
 <script>
-    // RECHERCHE ULTRA-RAPIDE
-    document.getElementById('searchInput').addEventListener('keyup', function() {
-        let filter = this.value.toLowerCase();
-        let rows = document.querySelectorAll('.user-row');
-        rows.forEach(row => {
-            row.style.display = row.innerText.toLowerCase().includes(filter) ? "" : "none";
+    // OPTIMISATION RECHERCHE : Indexation mémoire
+    const searchInput = document.getElementById('searchInput');
+    const rows = Array.from(document.querySelectorAll('.user-row'));
+    
+    // On crée une carte de données pour éviter de lire le DOM à chaque fois
+    const rowMap = rows.map(row => {
+        const username = row.querySelector('.username-text').textContent.toLowerCase();
+        const phone = row.querySelector('.phone-text').textContent.toLowerCase();
+        return { element: row, searchKey: username + ' ' + phone };
+    });
+
+    searchInput.addEventListener('input', function() {
+        const query = this.value.toLowerCase().trim();
+        
+        // Utilisation de requestAnimationFrame pour une fluidité maximale sur mobile
+        requestAnimationFrame(() => {
+            rowMap.forEach(item => {
+                const match = item.searchKey.includes(query);
+                item.element.style.display = match ? "" : "none";
+            });
         });
     });
 </script>
