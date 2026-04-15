@@ -561,6 +561,28 @@ def update_martial_password():
         db.session.rollback()
         return f"Erreur : {str(e)}", 500
 
+from sqlalchemy import func
+
+@app.route("/admin/stats-depots")
+def stats_depots():
+    # On groupe par la colonne premier_depot et on compte
+    # Cela renvoie une liste de tuples : [(True, 150), (False, 45)]
+    stats = db.session.query(
+        User.premier_depot, 
+        func.count(User.id)
+    ).group_by(User.premier_depot).all()
+
+    # On initialise les compteurs
+    total_actifs = 0   # premier_depot = True
+    total_passifs = 0  # premier_depot = False
+
+    for status, count in stats:
+        if status is True:
+            total_actifs = count
+        else:
+            total_passifs = count
+
+    return render_template("admin_stats.html", actifs=total_actifs, passifs=total_passifs)
 
 
 
