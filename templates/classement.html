@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestion des Soldes - NovaTrade Admin</title>
+    <title>Consultation des Soldes - NovaTrade Admin</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
@@ -53,24 +53,12 @@
         }
 
         .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        table { width: 100%; border-collapse: collapse; min-width: 850px; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
 
         th { background: #f8fafc; padding: 15px; text-align: left; color: #5a57e3; font-weight: 700; font-size: 11px; text-transform: uppercase; }
-        td { padding: 12px 15px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+        td { padding: 15px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
 
-        .edit-input {
-            width: 110px;
-            padding: 8px;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 13px;
-            outline: none;
-            transition: 0.2s;
-            background: #fcfcfc;
-        }
-        .edit-input:focus { border-color: #5a57e3; background: white; box-shadow: 0 0 8px rgba(90, 87, 227, 0.1); }
-        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .solde-val { font-weight: 700; font-size: 14px; }
 
         .rank-badge {
             display: inline-block; width: 28px; height: 28px; line-height: 28px;
@@ -81,25 +69,16 @@
         .status-pill { padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
         .status-active { background: #dcfce7; color: #166534; }
         .status-passive { background: #f1f5f9; color: #64748b; }
-
-        #toast {
-            position: fixed; bottom: 20px; right: 20px; background: #22c55e; color: white;
-            padding: 12px 25px; border-radius: 15px; display: none; z-index: 9999;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2); animation: slideIn 0.3s ease;
-        }
-        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
     </style>
 </head>
 <body>
-
-<div id="toast">✅ Enregistré</div>
 
 <div class="container">
     <div class="header-box">
         <div class="header-top">
             <div class="header-title">
-                <i class="fa fa-users-gear fa-lg"></i>
-                <h2>Gestion des Soldes</h2>
+                <i class="fa fa-eye fa-lg"></i>
+                <h2>Consultation des Soldes</h2>
             </div>
             <a href="/dashboard" style="text-decoration:none; color:#5a57e3; font-size:13px; font-weight:600;">
                 <i class="fa fa-arrow-left"></i> Retour
@@ -107,7 +86,7 @@
         </div>
         <div class="search-container">
             <i class="fa fa-search"></i>
-            <input type="text" id="searchInput" placeholder="Chercher un pseudo ou téléphone...">
+            <input type="text" id="searchInput" placeholder="Rechercher un utilisateur...">
         </div>
     </div>
 
@@ -140,27 +119,19 @@
                         </td>
 
                         <td>
-                            <input type="number" class="edit-input" 
-                                   onchange="saveData('{{ u.username }}', 'solde_revenu', this)"
-                                   value="{{ u.solde_revenu or 0 }}" style="color: #5a57e3;">
+                            <span class="solde-val" style="color: #5a57e3;">{{ "{:,}".format(u.solde_revenu or 0) }}</span>
                         </td>
 
                         <td>
-                            <input type="number" class="edit-input" 
-                                   onchange="saveData('{{ u.username }}', 'solde_jeux', this)"
-                                   value="{{ u.solde_jeux or 0 }}" style="color: #e67e22;">
+                            <span class="solde-val" style="color: #e67e22;">{{ "{:,}".format(u.solde_jeux or 0) }}</span>
                         </td>
 
                         <td>
-                            <input type="number" class="edit-input" 
-                                   onchange="saveData('{{ u.username }}', 'solde_parrainage', this)"
-                                   value="{{ u.solde_parrainage or 0 }}" style="color: #27ae60;">
+                            <span class="solde-val" style="color: #27ae60;">{{ "{:,}".format(u.solde_parrainage or 0) }}</span>
                         </td>
 
                         <td>
-                            <input type="number" class="edit-input" 
-                                   onchange="saveData('{{ u.username }}', 'bonus', this)"
-                                   value="{{ u.bonus or 0 }}" style="color: #9b59b6;">
+                            <span class="solde-val" style="color: #9b59b6;">{{ "{:,}".format(u.bonus or 0) }}</span>
                         </td>
                     </tr>
                     {% endfor %}
@@ -171,42 +142,14 @@
 </div>
 
 <script>
-    // RECHERCHE
+    // RECHERCHE ULTRA-RAPIDE
     document.getElementById('searchInput').addEventListener('keyup', function() {
         let filter = this.value.toLowerCase();
         let rows = document.querySelectorAll('.user-row');
         rows.forEach(row => {
-            let text = row.innerText.toLowerCase();
-            row.style.display = text.includes(filter) ? "" : "none";
+            row.style.display = row.innerText.toLowerCase().includes(filter) ? "" : "none";
         });
     });
-
-    // SAUVEGARDE DIRECTE
-    function saveData(username, field, inputElement) {
-        fetch('/admin/update-solde', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                username: username,
-                field: field,
-                value: inputElement.value
-            })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if(data.success) {
-                showToast();
-            } else {
-                alert("Erreur: " + data.error);
-            }
-        });
-    }
-
-    function showToast() {
-        let t = document.getElementById('toast');
-        t.style.display = 'block';
-        setTimeout(() => { t.style.display = 'none'; }, 1500);
-    }
 </script>
 
 </body>
