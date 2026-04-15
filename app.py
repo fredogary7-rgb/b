@@ -2918,84 +2918,52 @@ def admin_deposits():
         return redirect(url_for("admin_finance"))
 
     page = request.args.get("page", 1, type=int)
+    PER_PAGE = 50
 
-    # ==========================
-    # ===== UTILISATEURS (LIGHT)
-    # ==========================
-    users_query = User.query.order_by(User.date_creation.desc())
-    users_paginated = users_query.paginate(page=page, per_page=PER_PAGE, error_out=False)
+    # 1. UTILISATEURS PAGINÉS
+    users_paginated = User.query.order_by(User.date_creation.desc()).paginate(page=page, per_page=PER_PAGE, error_out=False)
+    
+    # Séparation Actifs/Inactifs de la page courante
+    actifs = [u for u in users_paginated.items if u.premier_depot]
+    inactifs = [u for u in users_paginated.items if not u.premier_depot]
 
-    users_data = []
-    for u in users_paginated.items:
-        users_data.append({
-            "username": u.username,
-            "email": u.email,
-            "phone": u.phone,
-            "parrain": u.parrain if u.parrain else "—",
-            "niveau1": "-",
-            "niveau2": "-",
-            "niveau3": "-",
-            "date_creation": u.date_creation,
-            "premier_depot": bool(u.premier_depot)
-        })
+    # Stats Globales (Rapide)
+    total_actifs = User.query.filter_by(premier_depot=True).count()
+    total_inactifs = User.query.filter_by(premier_depot=False).count()
 
-    actifs = [u for u in users_data if u["premier_depot"]]
-    inactifs = [u for u in users_data if not u["premier_depot"]]
-
-    total_actifs = User.query.filter(User.premier_depot == True).count()
-    total_inactifs = User.query.filter(User.premier_depot == False).count()
-
-    # ==========================
-    # ===== DEPOTS (INCHANGÉ)
-    # ==========================
+    # 2. DÉPOTS EN ATTENTE (Filtrage sur les nouveaux utilisateurs)
     subquery = (
         db.session.query(func.max(Depot.id).label("last_id"))
         .join(User, Depot.user_name == User.username)
         .filter(Depot.statut == "en_attente", User.premier_depot == False)
-        .group_by(Depot.phone)
-        .subquery()
+        .group_by(Depot.phone).subquery()
     )
 
     depots = (
-        Depot.query
-        .filter(Depot.id.in_(db.session.query(subquery.c.last_id)))
+        Depot.query.filter(Depot.id.in_(db.session.query(subquery.c.last_id)))
         .join(User, Depot.user_name == User.username)
-        .order_by(User.username.asc(), Depot.date.desc())
-        .all()
+        .order_by(Depot.date.desc()).all()
     )
 
-    # (optionnel mais safe)
-    for d in depots:
-        d.username_display = d.user_name or d.phone
-
-    # ==========================
-    # ===== RETRAITS (FIX FINAL)
-    # ==========================
-    retraits_query = (
+    # 3. RETRAITS (Version corrigée avec jointure)
+    retraits_paginated = (
         db.session.query(Retrait, User.username)
         .join(User, Retrait.user_id == User.id)
-        .filter(Retrait.statut == "successful")
         .order_by(Retrait.date.desc())
+        .paginate(page=page, per_page=PER_PAGE, error_out=False)
     )
 
-    retraits_paginated = retraits_query.paginate(
-        page=page,
-        per_page=PER_PAGE,
-        error_out=False
-    )
-
-    # ✅ On renvoie UNIQUEMENT des objets Retrait au template
-    retraits = []
-    for retrait, username in retraits_paginated.items:
-        retrait.username_display = username  # 👈 affichable dans Jinja
-        retraits.append(retrait)
+    retraits_list = []
+    for r, uname in retraits_paginated.items:
+        r.username_display = uname
+        retraits_list.append(r)
 
     return render_template(
         "admin_deposits.html",
         user=user,
-        users=users_data,
+        users=users_paginated.items,
         depots=depots,
-        retraits=retraits,
+        retraits=retraits_list,
         actifs=actifs,
         inactifs=inactifs,
         total_actifs=total_actifs,
@@ -3003,6 +2971,7 @@ def admin_deposits():
         users_paginated=users_paginated,
         retraits_paginated=retraits_paginated
     )
+
 
 @app.route("/admin/deposits/valider/<int:depot_id>")
 def valider_depot(depot_id):
