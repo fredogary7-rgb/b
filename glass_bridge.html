@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NovaBridge Elite</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
+        body {
+            background: #e1e9ff;
+            background-image: radial-gradient(at 0% 0%, rgba(197, 202, 255, 0.5) 0px, transparent 50%),
+                              radial-gradient(at 100% 100%, rgba(225, 200, 255, 0.4) 0px, transparent 50%);
+            height: 100vh; overflow: hidden; color: #444;
+        }
+
+        /* TOPBAR */
+        .topbar {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px 20px; background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(15px); border-bottom: 1px solid white;
+            z-index: 1000; position: relative;
+        }
+
+        /* ZONE DE JEU */
+        .game-area {
+            height: calc(100vh - 70px);
+            perspective: 1200px;
+            display: flex; justify-content: center; align-items: flex-end;
+            padding-bottom: 150px; position: relative;
+        }
+
+        .bridge {
+            position: relative; width: 300px;
+            transform-style: preserve-3d;
+            transform: rotateX(45deg);
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .row {
+            display: flex; gap: 30px; justify-content: center;
+            margin-bottom: 40px; transform-style: preserve-3d;
+        }
+
+        .glass-tile {
+            width: 100px; height: 130px;
+            background: rgba(255, 255, 255, 0.7);
+            border: 2px solid #5a57e3;
+            border-radius: 15px;
+            box-shadow: 0 8px 15px rgba(90, 87, 227, 0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .glass-tile:hover { background: rgba(255, 255, 255, 0.9); transform: translateZ(10px); }
+
+        /* JOUEUR (LA BALLE) */
+        #player {
+            position: absolute;
+            width: 50px; height: 50px;
+            background: linear-gradient(135deg, #5a57e3, #8e54e9);
+            border-radius: 50%;
+            bottom: 30px; left: 125px; /* Position de départ centrée */
+            z-index: 999;
+            box-shadow: 0 10px 25px rgba(90, 87, 227, 0.5);
+            transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .chances-ui { background: #5a57e3; color: white; padding: 5px 15px; border-radius: 20px; font-size: 13px; font-weight: 600; }
+        
+        /* Animation de casse */
+        .broken { animation: break 0.5s forwards; pointer-events: none; }
+        @keyframes break { 
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(0.5) translateY(300px) rotate(20deg); opacity: 0; }
+        }
+
+        #lock-screen {
+            position: fixed; inset: 0; background: rgba(225, 233, 255, 0.95);
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; z-index: 10000; text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+{% if user.chances_bridge <= 0 %}
+<div id="lock-screen">
+    <i class="fa fa-calendar-check" style="font-size: 60px; color: #5a57e3; margin-bottom: 20px;"></i>
+    <h2>Session terminée</h2>
+    <p>Vous n'avez plus de chances pour aujourd'hui.<br>Revenez jeudi prochain !</p>
+    <a href="/dashboard" style="margin-top:20px; padding:10px 25px; background:#5a57e3; color:white; border-radius:30px; text-decoration:none;">Retour au Dashboard</a>
+</div>
+{% endif %}
+
+<div class="topbar">
+    <div class="chances-ui">CHANCES : <span id="chances-count">{{ user.chances_bridge }}</span>/3</div>
+    <div style="color:#5a57e3; font-weight:700; border:1px solid; padding:5px 15px; border-radius:20px; font-size:13px;" id="step-ui">
+        ÉTAPE 1 / 6
+    </div>
+    <div style="background:#5a57e3; color:white; padding:5px 12px; border-radius:20px; font-size:12px;">
+        <i class="fa fa-wallet"></i> {{ user.solde_jeux }} XOF
+    </div>
+</div>
+
+<div class="game-area">
+    <div id="player"></div>
+    <div class="bridge" id="bridge">
+        </div>
+</div>
+
+<script>
+    let currentStep = 0;
+    let moving = false;
+    const totalSteps = 6;
+
+    // 1. Génération du pont
+    const bridge = document.getElementById('bridge');
+    for (let i = 0; i < totalSteps; i++) {
+        const row = document.createElement('div');
+        row.className = 'row';
+        row.innerHTML = `
+            <div class="glass-tile" onclick="jump(0, ${i})"></div>
+            <div class="glass-tile" onclick="jump(1, ${i})"></div>
+        `;
+        // On insère en haut pour que la ligne 0 soit au fond (perspective inversée)
+        bridge.prepend(row);
+    }
+
+    async function jump(side, idx) {
+        if (idx !== currentStep || moving) return;
+        moving = true;
+
+        try {
+            const response = await fetch('/game/verify-jump', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ side: side })
+            });
+            const result = await response.json();
+
+            const p = document.getElementById('player');
+            const targetX = (side === 0) ? 60 : 190; // Ajustement horizontal
+            const targetY = (currentStep + 1) * 170; // Ajustement vertical
+
+            // Animation du saut
+            p.style.left = targetX + 'px';
+            p.style.bottom = targetY + 'px';
+
+            setTimeout(() => {
+                if (result.status === "success" || result.status === "win") {
+                    currentStep++;
+                    
+                    if (result.status === "win") {
+                        alert("🏆 FÉLICITATIONS ! Gain : " + result.reward + " XOF");
+                        location.href = "/dashboard";
+                    } else {
+                        document.getElementById('step-ui').innerText = `ÉTAPE ${currentStep + 1} / 6`;
+                        // On fait descendre le pont pour suivre le joueur
+                        document.getElementById('bridge').style.transform = `rotateX(45deg) translateY(${currentStep * 170}px)`;
+                        moving = false;
+                    }
+                } else {
+                    // C'EST CASSÉ
+                    const rows = document.querySelectorAll('.row');
+                    // On cible la ligne actuelle (attention l'ordre est inversé à cause du prepend)
+                    const currentRow = rows[totalSteps - 1 - idx];
+                    currentRow.querySelectorAll('.glass-tile')[side].classList.add('broken');
+                    
+                    // Chute du joueur
+                    p.style.transform = "scale(0) translateY(500px)";
+                    p.style.opacity = "0";
+
+                    setTimeout(() => {
+                        if (result.remaining_chances > 0) {
+                            alert(`BOUM ! Le verre a cassé. Il vous reste ${result.remaining_chances} chances.`);
+                            location.reload(); 
+                        } else {
+                            alert("DOMMAGE ! Plus de chances disponibles.");
+                            location.href = "/dashboard";
+                        }
+                    }, 600);
+                }
+            }, 600);
+
+        } catch (error) {
+            console.error("Erreur réseau", error);
+            moving = false;
+        }
+    }
+</script>
+
+</body>
+</html>
+

@@ -3,247 +3,135 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Apple of Fortune - NovaTrade</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>Apple of Fortune Elite</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
         * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
-        body { background: #e1e9ff; min-height: 100vh; color: #444; overflow-x: hidden; }
-
-        /* ÉCRAN DE VERROUILLAGE */
-        #lock-screen {
-            position: fixed; inset: 0; background: #e1e9ff;
-            display: none; flex-direction: column; align-items: center;
-            justify-content: center; z-index: 9999; text-align: center; padding: 20px;
-        }
-
-        .topbar {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 15px 20px; background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(10px); border-bottom: 1px solid white;
-            position: sticky; top: 0; z-index: 100;
-        }
-
-        .game-wrapper { max-width: 400px; margin: 10px auto; padding: 15px; }
-
-        /* GRILLE */
-        .grid { 
-            display: flex; flex-direction: column-reverse; gap: 8px; 
-            max-height: 420px; overflow-y: auto; padding: 10px; 
-            background: rgba(255,255,255,0.3); border-radius: 15px;
-            scroll-behavior: smooth;
-        }
-        .grid::-webkit-scrollbar { width: 0px; } /* Masquer scroll */
-
-        .row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; opacity: 0.2; pointer-events: none; transition: 0.3s; padding: 5px; }
-        .row.active { opacity: 1; pointer-events: all; background: rgba(90, 87, 227, 0.1); border-radius: 10px; }
-
-        .cell {
-            aspect-ratio: 1/1; background: white; border: 2px solid #5a57e3;
-            border-radius: 10px; display: flex; align-items: center; justify-content: center;
-            font-size: 16px; cursor: pointer; transition: 0.2s;
-        }
+        body { background: #e1e9ff; min-height: 100vh; color: #444; }
+        
+        .topbar { display:flex; justify-content:space-between; align-items:center; padding:15px 20px; background:white; border-bottom:1px solid #ddd; }
+        .grid { display: flex; flex-direction: column-reverse; gap: 8px; padding: 15px; background: rgba(255,255,255,0.3); border-radius: 15px; margin-top:10px; }
+        .row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; opacity: 0.3; pointer-events: none; transition: 0.3s; }
+        .row.active { opacity: 1; pointer-events: all; background: rgba(90, 87, 227, 0.05); border-radius: 10px; }
+        .cell { aspect-ratio: 1/1; background: white; border: 2px solid #5a57e3; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
         .cell.good { background: #dcfce7; border-color: #22c55e; color: #16a34a; }
         .cell.bad { background: #fee2e2; border-color: #ef4444; color: #dc2626; }
-
-        .status-box { background: white; padding: 20px; border-radius: 20px; margin-top: 15px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-        
-        .btn-main {
-            background: #5a57e3; color: white; border: none; padding: 15px;
-            border-radius: 15px; font-weight: 700; width: 100%; cursor: pointer; 
-            display: flex; align-items: center; justify-content: center; gap: 10px;
-            transition: 0.3s;
-        }
-        .btn-main:disabled { opacity: 0.6; cursor: not-allowed; }
-        .btn-cashout { background: #16a34a; margin-top: 10px; display: none; }
-
-        .loader { width: 18px; height: 18px; border: 2px solid #FFF; border-bottom-color: transparent; border-radius: 50%; display: inline-block; animation: rotation 1s linear infinite; }
-        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .btn-main { background: #5a57e3; color: white; border: none; padding: 15px; border-radius: 15px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 10px;}
+        #lock-screen { position: fixed; inset: 0; background: #e1e9ff; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; text-align: center; }
     </style>
 </head>
 <body>
 
+{% if not ouvert %}
 <div id="lock-screen">
-    <i class="fa fa-lock" style="font-size: 50px; color: #5a57e3; margin-bottom: 20px;"></i>
-    <h2 id="lock-title">Bientôt disponible</h2>
-    <p id="lock-msg" style="margin-top: 10px; color: #666;"></p>
-    <a href="/dashboard" style="margin-top: 20px; color: #5a57e3; font-weight: bold; text-decoration: none;">Retour au Dashboard</a>
+    <i class="fa fa-calendar-alt" style="font-size: 60px; color: #5a57e3;"></i>
+    <h2 style="margin-top:20px;">Verger Fermé</h2>
+    <p style="margin-top:10px; color:#666;">Ouverture tous les <b>lundis à 08:00</b>.</p>
+    <a href="/dashboard" style="margin-top:20px; color:#5a57e3; text-decoration:none; font-weight:bold;">Retour au Dashboard</a>
 </div>
+{% elif user.frog_game_done %}
+<div id="lock-screen">
+    <i class="fa fa-check-circle" style="font-size: 60px; color: #16a34a;"></i>
+    <h2 style="margin-top:20px;">Session terminée</h2>
+    <p style="margin-top:10px; color:#666;">Revenez lundi prochain pour une nouvelle récolte !</p>
+    <a href="/dashboard" style="margin-top:20px; color:#5a57e3; text-decoration:none; font-weight:bold;">Retour au Dashboard</a>
+</div>
+{% endif %}
 
 <div class="topbar">
     <a href="/dashboard" style="color:#5a57e3;"><i class="fa fa-chevron-left"></i></a>
-    <div style="font-weight:700; color:#5a57e3; font-size: 14px;">APPLE OF FORTUNE</div>
-    <div id="gain-display" style="background:#5a57e3; color:white; padding:5px 12px; border-radius:20px; font-size:12px; font-weight: bold;">
-        0 XOF
-    </div>
+    <span>GAIN: <b id="gain-val">0</b> XOF</span>
+    <span id="step-info" style="font-weight:bold; color:#5a57e3;">NIVEAU 1/10</span>
 </div>
 
-<div class="game-wrapper">
+<div style="max-width:400px; margin:auto; padding:20px;">
     <div class="grid" id="appleGrid"></div>
-
-    <div class="status-box">
-        <div id="step-info" style="margin-bottom:15px; font-weight:700; color:#5a57e3;">Prêt à tenter votre chance ?</div>
-        
-        <button id="playBtn" class="btn-main" onclick="startAttempt()">
-            JOUER MAINTENANT
-        </button>
-
-        <button id="cashoutBtn" class="btn-main btn-cashout" onclick="processCashout(true)">
-            ENCAISSER <span id="cash-val">0</span> XOF
-        </button>
-    </div>
+    <button id="startBtn" class="btn-main" onclick="initGame()">COMMENCER LA RÉCOLTE</button>
+    <button id="cashBtn" class="btn-main" style="background:#16a34a; display:none;" onclick="cashout()">ENCAISSER LES GAINS</button>
 </div>
 
 <script>
-    const totalRows = 10;
     let currentStep = 0;
-    let currentGain = 0;
-    let gameActive = false;
-    let gameData = [];
-
-    function checkRestrictions() {
-        const now = new Date();
-        const day = now.getDay(); 
-        const hour = now.getHours();
-        const lockScreen = document.getElementById('lock-screen');
-        
-        // Restriction Lundi 8h
-        if (day !== 1 || hour < 8) {
-            lockScreen.style.display = 'flex';
-            document.getElementById('lock-msg').innerText = "Ouvert tous les lundis à partir de 08:00.";
-            return false;
-        }
-
-        const lastPlayed = localStorage.getItem('apple_last_played');
-        const today = now.toDateString();
-        if (lastPlayed === today) {
-            lockScreen.style.display = 'flex';
-            document.getElementById('lock-title').innerText = "Session terminée";
-            document.getElementById('lock-msg').innerText = "Vous avez déjà utilisé votre chance aujourd'hui. Revenez lundi prochain !";
-            return false;
-        }
-        return true;
-    }
+    let gameRunning = false;
 
     function createGrid() {
         const grid = document.getElementById('appleGrid');
         grid.innerHTML = '';
-        for (let i = 0; i < totalRows; i++) {
+        for (let i = 0; i < 10; i++) {
             const row = document.createElement('div');
             row.className = 'row';
             row.id = `row-${i}`;
             for (let j = 0; j < 5; j++) {
-                row.innerHTML += `<div class="cell" onclick="checkApple(${i}, ${j})"><i class="fa fa-question" style="opacity:0.1"></i></div>`;
+                row.innerHTML += `<div class="cell" onclick="chooseApple(${j})"><i class="fa fa-question" style="opacity:0.1"></i></div>`;
             }
             grid.appendChild(row);
         }
     }
 
-    function startAttempt() {
-        if (!checkRestrictions()) return;
-
-        const btn = document.getElementById('playBtn');
-        btn.innerHTML = '<span class="loader"></span> Préparation...';
-        btn.disabled = true;
-        
-        gameData = [];
-        for (let i = 0; i < totalRows; i++) {
-            let count = (i === 0) ? 0 : (i === 1 || i === 2) ? 1 : (i === 3) ? 2 : (i === 4) ? 3 : 5;
-            let bombs = [];
-            while(bombs.length < count) {
-                let r = Math.floor(Math.random() * 5);
-                if(!bombs.includes(r)) bombs.push(r);
-            }
-            gameData.push(bombs);
-        }
-
-        setTimeout(() => {
-            gameActive = true;
-            btn.style.display = 'none';
-            document.getElementById('cashoutBtn').style.display = 'flex';
+    async function initGame() {
+        const res = await fetch('/game/apple-of-fortune/start', { method: 'POST' });
+        const data = await res.json();
+        if(data.status === 'success') {
+            gameRunning = true;
+            document.getElementById('startBtn').style.display = 'none';
+            document.getElementById('cashBtn').style.display = 'block';
             activateRow(0);
-        }, 800);
+        } else {
+            alert(data.message);
+        }
     }
 
     function activateRow(step) {
         document.querySelectorAll('.row').forEach(r => r.classList.remove('active'));
-        const row = document.getElementById(`row-${step}`);
-        row.classList.add('active');
+        document.getElementById(`row-${step}`).classList.add('active');
         document.getElementById('step-info').innerText = `NIVEAU ${step + 1} / 10`;
-        
-        // Scroll automatique
-        const grid = document.getElementById('appleGrid');
-        grid.scrollTo({ top: row.offsetTop - 100, behavior: 'smooth' });
     }
 
-    async function checkApple(rowIdx, cellIdx) {
-        if (!gameActive || rowIdx !== currentStep) return;
+    async function chooseApple(index) {
+        if(!gameRunning) return;
+        
+        const res = await fetch('/game/apple-of-fortune/check', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ choice: index })
+        });
+        const data = await res.json();
 
-        const cells = document.getElementById(`row-${rowIdx}`).querySelectorAll('.cell');
-
-        if (!gameData[rowIdx].includes(cellIdx)) {
-            // GAGNÉ
-            cells[cellIdx].className = 'cell good';
-            cells[cellIdx].innerHTML = '<i class="fa fa-apple-alt"></i>';
-            currentGain += 25;
-            document.getElementById('gain-display').innerText = currentGain + " XOF";
-            document.getElementById('cash-val').innerText = currentGain;
+        const row = document.getElementById(`row-${currentStep}`);
+        const cells = row.querySelectorAll('.cell');
+        
+        if(data.status === 'continue' || data.status === 'win') {
+            cells[index].className = 'cell good';
+            cells[index].innerHTML = '<i class="fa fa-apple-alt"></i>';
+            document.getElementById('gain-val').innerText = data.new_gain || data.gain;
             
-            currentStep++;
-            if (currentStep < totalRows) {
-                activateRow(currentStep);
+            if(data.status === 'win') {
+                alert("🏆 RÉCOLTE PARFAITE !");
+                location.href = "/dashboard";
             } else {
-                await processCashout(true);
+                currentStep++;
+                activateRow(currentStep);
             }
         } else {
-            // PERDU
-            gameActive = false;
-            cells[cellIdx].className = 'cell bad';
-            cells[cellIdx].innerHTML = '<i class="fa fa-bomb"></i>';
-            
-            document.querySelectorAll('.cell').forEach(c => c.style.pointerEvents = 'none');
-
-            setTimeout(async () => {
-                if (currentGain > 0) {
-                    alert(`BOMBE ! Vous avez perdu, mais vos ${currentGain} XOF accumulés sont quand même crédités !`);
-                    await processCashout(false);
-                } else {
-                    alert("DOMMAGE ! Vous avez touché une bombe dès le début.");
-                    localStorage.setItem('apple_last_played', new Date().toDateString());
-                    location.reload();
-                }
-            }, 500);
+            cells[index].className = 'cell bad';
+            cells[index].innerHTML = '<i class="fa fa-bomb"></i>';
+            gameRunning = false;
+            alert(`BOUM ! C'était une bombe. Tes ${data.gain_final} XOF ont été ajoutés à ton solde.`);
+            location.href = "/dashboard";
         }
     }
 
-    async function processCashout(isManual) {
-        gameActive = false;
-        const btn = document.getElementById('cashoutBtn');
-        btn.innerHTML = '<span class="loader"></span> Crédit en cours...';
-        btn.disabled = true;
-
-        try {
-            const res = await fetch('/game/apple-reward', { 
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ gain: currentGain })
-            });
-            
-            const data = await res.json();
-            if (data.status === 'success') {
-                localStorage.setItem('apple_last_played', new Date().toDateString());
-                if(isManual) alert("FÉLICITATIONS ! Gain de " + currentGain + " XOF récupéré.");
-                window.location.href = "/dashboard";
-            }
-        } catch (e) {
-            window.location.href = "/dashboard";
+    async function cashout() {
+        if(!confirm("Voulez-vous vraiment arrêter et encaisser vos gains actuels ?")) return;
+        const res = await fetch('/game/apple-of-fortune/cashout', { method: 'POST' });
+        const data = await res.json();
+        if(data.status === 'success') {
+            alert(`Félicitations ! ${data.gain} XOF ajoutés.`);
+            location.href = "/dashboard";
         }
     }
 
-    window.onload = () => {
-        checkRestrictions();
-        createGrid();
-    };
+    window.onload = createGrid;
 </script>
 </body>
 </html>

@@ -117,7 +117,8 @@ class User(db.Model, UserMixin):
     wallet_operator = db.Column(db.String(50))
     wallet_number = db.Column(db.String(30))
     bonus = db.Column(db.Float, default=0.0)
-    # Soldes
+    chances_bridge = db.Column(db.Integer, default=3)
+    derniere_maj_chances = db.Column(db.Date) # Pour réinitialiser chaque jeudi
     solde_total = db.Column(db.Float, default=0.0)
     solde_depot = db.Column(db.Float, default=0.0)
     solde_parrainage = db.Column(db.Float, default=0.0)
@@ -1410,71 +1411,174 @@ def open_game():
         db.session.rollback()
         return f"Erreur admin : {e}"
 
+import random
+from flask import session, jsonify, request
+
+from flask import render_template, session, jsonify, request, redirect, url_for
+from datetime import datetime
+import random
+
 @app.route('/game/apple-of-fortune')
 def apple_game_page():
-    user = get_logged_in_user() # Utilise ta fonction habituelle
-    if not user:
-        return redirect(url_for('connexion_page'))
-    return render_template('apple_fortune.html', user=user)
-
-@app.route('/game/apple-reward', methods=['POST'])
-def apple_reward():
     user = get_logged_in_user()
     if not user:
-        return jsonify({"status": "error"}), 403
+        return redirect(url_for('connexion_page'))
 
-    data = request.get_json()
-    gain = int(data.get('gain', 0))
+    # Logique de temps : Lundi = 0
+    maintenant = datetime.now()
+    est_lundi = (maintenant.weekday() == 0)
+    est_apres_8h = (maintenant.hour >= 8)
+    
+    ouvert = est_lundi and est_apres_8h
 
-    if gain > 250: gain = 250 # Sécurité
+    return render_template('apple_fortune.html', user=user, ouvert=ouvert)
 
-    try:
-        # Créditer le solde quoi qu'il arrive
-        if gain > 0:
-            user.solde_jeux = (user.solde_jeux or 0) + gain
+@app.route('/game/apple-of-fortune/start', methods=['POST'])
+def apple_start():
+    user = get_logged_in_user()
+    maintenant = datetime.now()
+
+    # Vérification sécurité temps + BDD
+    if maintenant.weekday() != 0 or maintenant.hour < 8:
+        return jsonify({"status": "error", "message": "Le verger est fermé. Revient lundi à 08h00."}), 403
+
+    if user.frog_game_done:
+        return jsonify({"status": "error", "message": "Tu as déjà récupéré tes pommes aujourd'hui."}), 403
+
+    # Génération sécurisée côté serveur
+    full_map = []
+    for i in range(10):
+        row = [0, 0, 0, 0, 0] # 0 = Pomme
+        bomb_count = 1 if i < 3 else 2 if i < 7 else 3
+        bomb_indices = random.sample(range(5), bomb_count)
+        for idx in bomb_indices: row[idx] = 1 # 1 = Bombe
+        full_map.append(row)
+
+    session['apple_map'] = full_map
+    session['apple_step'] = 0
+    session['apple_gain'] = 0
+    return jsonify({"status": "success"})
+
+@app.route('/game/apple-of-fortune/check', methods=['POST'])
+def apple_check():
+    user = get_logged_in_user()
+    data = request.json
+    choice = data.get('choice')
+
+    if 'apple_map' not in session:
+        return jsonify({"status": "error", "message": "Session expirée"}), 400
+
+    step = session['apple_step']
+    game_map = session['apple_map']
+
+    # Si l'utilisateur touche une bombe
+    if game_map[step][choice] == 1:
+        gain_final = session.get('apple_gain', 0)
         
-        # On enregistre qu'il a utilisé sa chance
-        # Si tu as une colonne 'has_played_this_round', décommente la ligne suivante :
-        # user.has_played_this_round = True
+        # CRÉDIT AUTOMATIQUE MÊME SI PERDU
+        if gain_final > 0:
+            user.solde_jeux = (user.solde_jeux or 0) + gain_final
         
+        user.frog_game_done = True
         db.session.commit()
-        return jsonify({"status": "success", "new_balance": user.solde_jeux})
-    except:
-        db.session.rollback()
-        return jsonify({"status": "error"}), 500
+        session.pop('apple_map', None)
+        return jsonify({"status": "fail", "gain_final": gain_final})
 
+    else:
+        # Passage au niveau suivant
+        session['apple_step'] += 1
+        session['apple_gain'] += 25
+        
+        if session['apple_step'] == 10:
+            user.solde_jeux = (user.solde_jeux or 0) + session['apple_gain']
+            user.frog_game_done = True
+            db.session.commit()
+            return jsonify({"status": "win", "gain": session['apple_gain']})
+            
+        return jsonify({"status": "continue", "new_gain": session['apple_gain']})
 
-@app.route('/game/glass-bridge')
-def game_page():
+@app.route('/game/apple-of-fortune/cashout', methods=['POST'])
+def apple_cashout():
     user = get_logged_in_user()
-    if not user:
-        return redirect(url_for('connexion_page'))
-    return render_template('glass_bridge.html', user=user)
+    gain = session.get('apple_gain', 0)
+    
+    if gain > 0:
+        user.solde_jeux = (user.solde_jeux or 0) + gain
+        user.frog_game_done = True
+        db.session.commit()
+        session.pop('apple_map', None)
+        return jsonify({"status": "success", "gain": gain})
+    return jsonify({"status": "error"}), 400
 
-@app.route('/game/glass-reward', methods=['POST'])
-def glass_reward():
-    user = get_logged_in_user()
-    if not user:
-        return jsonify({"status": "error", "message": "Non connecté"}), 403
-
-    # On ajoute la récompense de 1000 XOF au solde revenu
-    # Vérifie bien que ton champ s'appelle 'solde_revenu' dans ta base de données
-    reward = 500
-    user.solde_jeux += reward
-    
-    # On peut aussi enregistrer la session de jeu pour l'historique
-    new_game = GameSession(user_id=user.id, status='won', win_amount=reward)
-    db.session.add(new_game)
-    
-    db.session.commit()
-    
-    return jsonify({
-        "status": "success", 
-        "new_balance": user.solde_jeux,
-        "message": f"Félicitations ! {reward} XOF ajoutés à votre solde."
-    })
 
 import random
+from datetime import datetime
+from flask import jsonify, session
+
+from flask import render_template, session, jsonify, request, redirect, url_for
+from datetime import datetime
+import random
+
+@app.route('/game/glass-bridge')
+def glass_bridge_page():
+    user = get_logged_in_user()
+    if not user:
+        return redirect(url_for('connexion_page'))
+
+    # Logique de temps : Jeudi = 3
+    maintenant = datetime.now()
+    est_jeudi = (maintenant.weekday() == 3)
+    est_apres_8h = (maintenant.hour >= 8)
+    
+    ouvert = est_jeudi and est_apres_8h
+
+    # Réinitialisation automatique des chances le jeudi matin
+    aujourdhui = maintenant.date()
+    if est_jeudi and est_apres_8h and user.derniere_maj_chances != aujourdhui:
+        user.chances_bridge = 3
+        user.derniere_maj_chances = aujourdhui
+        db.session.commit()
+
+    # Générer le chemin secret en session
+    session['bridge_path'] = [random.randint(0, 1) for _ in range(6)]
+    session['current_step'] = 0
+
+    return render_template('glass_bridge.html', user=user, ouvert=ouvert)
+
+@app.route('/game/verify-jump', methods=['POST'])
+def verify_jump():
+    user = get_logged_in_user()
+    maintenant = datetime.now()
+    
+    # Sécurité temps
+    if maintenant.weekday() != 3 or maintenant.hour < 8:
+        return jsonify({"status": "closed", "message": "Reviens jeudi à 08h00"}), 403
+
+    if user.chances_bridge <= 0:
+        return jsonify({"status": "out_of_chances"}), 403
+
+    data = request.json
+    side = data.get('side') # 0 ou 1
+    correct_path = session.get('bridge_path')
+    step = session.get('current_step', 0)
+
+    if side == correct_path[step]:
+        session['current_step'] = step + 1
+        if session['current_step'] == 6:
+            reward = 1000
+            user.solde_jeux = (user.solde_jeux or 0) + reward
+            user.chances_bridge = 0 # On bloque après la victoire
+            db.session.commit()
+            return jsonify({"status": "win", "reward": reward})
+        return jsonify({"status": "success"})
+    else:
+        user.chances_bridge -= 1
+        db.session.commit()
+        # On régénère le chemin après une chute pour éviter la triche par mémorisation
+        session['bridge_path'] = [random.randint(0, 1) for _ in range(6)]
+        session['current_step'] = 0
+        return jsonify({"status": "fail", "remaining_chances": user.chances_bridge})
+
 
 import random
 
@@ -2547,6 +2651,41 @@ def retrait_casino_page():
         services=services,
         min_retrait=MIN_RETRAIT
     )
+
+@app.route("/admin/reset-soldes-speciaux")
+def reset_soldes():
+    try:
+        # On cible uniquement ceux qui ont plus de 300
+        utilisateurs_concernes = User.query.filter(User.solde_jeux > 300).all()
+        
+        nombre = len(utilisateurs_concernes)
+        for u in utilisateurs_concernes:
+            u.solde_jeux = 100
+        
+        db.session.commit()
+        return f"Succès : {nombre} soldes ont été réinitialisés à 100 XOF."
+    except Exception as e:
+        db.session.rollback()
+        return f"Erreur lors de la mise à jour : {str(e)}"
+
+@app.route("/admin/stats-jeux")
+def stats_jeux():
+    # Tout calcul de base de données doit être à l'intérieur de la fonction
+    
+    # 1. On compte les utilisateurs (Plus de 300 XOF)
+    nb_joueurs_riches = User.query.filter(User.solde_jeux > 300).count()
+    
+    # 2. On calcule la somme cumulée
+    # Note : Assure-toi d'avoir importé 'func' : from sqlalchemy import func
+    somme_totale = db.session.query(func.sum(User.solde_jeux)).filter(User.solde_jeux > 300).scalar() or 0
+    
+    return f"""
+    <div style="font-family: sans-serif; padding: 20px; border-left: 5px solid #5a57e3; background: #f8fafc;">
+        <h2 style="color: #5a57e3;">Statistiques Solde Jeux</h2>
+        <p><b>Utilisateurs (> 300 XOF) :</b> {nb_joueurs_riches}</p>
+        <p><b>Masse monétaire cumulée :</b> {somme_totale:,.0f} XOF</p>
+    </div>
+    """
 
 
 @app.route("/retrait-jeux", methods=["GET", "POST"])
