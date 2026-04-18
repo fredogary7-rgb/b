@@ -472,36 +472,6 @@ from werkzeug.utils import secure_filename
 
 # Dossier de stockage (mkdir -p static/uploads/channel)
 UPLOAD_FOLDER = 'static/uploads/channel'
-@app.route('/sanctionner-martial')
-def sanctionner_martial():
-    # 1. Récupérer l'utilisateur
-    user = User.query.filter_by(username='martial').first()
-    
-    if not user:
-        return "Utilisateur 'martial' non trouvé.", 404
-
-    try:
-        # 2. Appliquer les sanctions
-        user.is_banned = True
-        
-        # Débiter le solde jeux (on soustrait 360 000)
-        # On peut ajouter une sécurité pour ne pas descendre en dessous de 0 si tu veux
-        user.solde_jeux -= 360000
-        
-        # 3. Sauvegarder dans la base de données
-        db.session.commit()
-        
-        return f"""
-        <div style='color: red; font-family: sans-serif; padding: 20px; border: 2px solid red;'>
-            <h2>Sanction appliquée avec succès</h2>
-            <p><b>Utilisateur :</b> {user.username}</p>
-            <p><b>Statut :</b> BANNI</p>
-            <p><b>Nouveau solde jeux :</b> {user.solde_jeux} XOF</p>
-        </div>
-        """
-    except Exception as e:
-        db.session.rollback()
-        return f"Erreur lors de la mise à jour : {str(e)}", 500
 
 import socket
 import subprocess
@@ -653,30 +623,9 @@ def edit_msg(id):
 
     return {"success": True}
 
-from sqlalchemy import text
 
 from sqlalchemy import text
 
-from sqlalchemy import text
-
-@app.route('/nettoyage-complet-martial')
-def delete_martial_final():
-    try:
-        # 1. Supprimer les abonnements aux chaînes (la cause de ton erreur actuelle)
-        db.session.execute(text('DELETE FROM channel_sub WHERE user_id = (SELECT id FROM "user" WHERE username = \'martial\')'))
-        
-        # 2. Supprimer les retraits de points (l'erreur précédente)
-        db.session.execute(text('DELETE FROM retrait_points WHERE user_id = (SELECT id FROM "user" WHERE username = \'martial\')'))
-        
-        # 3. Supprimer l'utilisateur lui-même
-        db.session.execute(text('DELETE FROM "user" WHERE username = \'martial\''))
-        
-        db.session.commit()
-        return "Martial et toutes ses données liées ont été supprimés avec succès."
-        
-    except Exception as e:
-        db.session.rollback()
-        return f"Erreur lors du nettoyage : {str(e)}"
 
 
 @app.route("/delete_msg/<int:id>")
@@ -708,38 +657,6 @@ app.config['MAIL_DEFAULT_SENDER'] = app.config['MAIL_USERNAME']  # ✅ AJOUT
 
 mail = Mail(app)
 
-@app.route('/debug-martial')
-def debug_martial():
-    user = User.query.filter_by(username='martial').first()
-    if not user: return "Non trouvé"
-
-    return f"""
-    <h3>Profil de {user.username}</h3>
-    <p><b>ID :</b> {user.id} | <b>UID :</b> {user.uid}</p>
-    <hr>
-    <h4>Finances :</h4>
-    <ul>
-        <li>Solde Total: {user.solde_total} XOF</li>
-        <li>Solde Jeux: {user.solde_jeux} XOF</li>
-        <li>Solde Parrainage: {user.solde_parrainage} XOF</li>
-        <li>Total Retraits: {user.total_retrait} XOF</li>
-    </ul>
-    <hr>
-    <h4>Sécurité & Pays :</h4>
-    <ul>
-        <li>IP: {user.ip_address}</li>
-        <li>Pays: {user.country}</li>
-        <li>Banni: {'OUI' if user.is_banned else 'NON'}</li>
-        <li>Vérifié: {'OUI' if user.is_verified else 'NON'}</li>
-    </ul>
-    <hr>
-    <h4>Statistiques Réseaux :</h4>
-    <ul>
-        <li>Points YouTube: {user.points_youtube}</li>
-        <li>Points TikTok: {user.points_tiktok}</li>
-        <li>Points Vidéo: {user.points_video}</li>
-    </ul>
-    """
 
 
 def envoyer_retrait_soleaspay(service_id, wallet, montant):
@@ -2571,7 +2488,7 @@ def retrait_casino_page():
     if not user:
         return redirect(url_for('login')) # Sécurité si l'user n'est pas connecté
 
-    MIN_RETRAIT = 400
+    MIN_RETRAIT = 500
     FRAIS = 0 
 
     stats = {
