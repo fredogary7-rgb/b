@@ -561,49 +561,45 @@ def stats_depots():
 
     return render_template("admin_stats.html", actifs=total_actifs, passifs=total_passifs)
 
-
 @app.route("/admin/canal/edit", methods=["GET", "POST"])
 def admin_canal_edit():
     if request.method == "POST":
-
         content = request.form.get("content")
-
         media_url = None
         media_type = None
 
+        # Récupération des fichiers
         file = request.files.get("media")
-        audio = request.files.get("audio")
+        audio_file = request.files.get("audio")
 
-        file = file if file and file.filename else audio
+        # Priorité au média (image/vidéo) sinon audio
+        target_file = file if (file and file.filename) else audio_file
 
-        if file and file.filename:
-
-            filename = secure_filename(file.filename)
+        if target_file and target_file.filename:
+            filename = secure_filename(target_file.filename)
             ext = filename.split('.')[-1].lower()
-            timestamp = int(datetime.now().timestamp())
-
-            filename = f"{timestamp}_{filename}"
-
+            
+            # Nom unique avec timestamp pour éviter les bugs de cache
+            unique_name = f"{int(datetime.now().timestamp())}_{filename}"
+            
             upload_folder = os.path.join(app.root_path, "static/uploads")
-
-            # 🔥 IMPORTANT : créer le dossier si inexistant
             os.makedirs(upload_folder, exist_ok=True)
 
-            path = os.path.join(upload_folder, filename)
-            file.save(path)
+            path = os.path.join(upload_folder, unique_name)
+            target_file.save(path)
 
-            media_url = f"/static/uploads/{filename}"
+            # URL accessible par le navigateur
+            media_url = f"/static/uploads/{unique_name}"
 
-            # 🔥 TYPE AUTO
-            if ext in ["jpg","png","jpeg","gif"]:
+            # Détection automatique du type
+            if ext in ["jpg", "png", "jpeg", "gif", "webp"]:
                 media_type = "image"
-            elif ext in ["mp4","mov","avi"]:
+            elif ext in ["mp4", "mov", "avi", "webm"]:
                 media_type = "video"
-            elif ext in ["webm","mp3","wav","ogg"]:
+            elif ext in ["mp3", "wav", "ogg", "m4a"]:
                 media_type = "audio"
 
-        print("FILES:", request.files)
-
+        # Création du message
         msg = ChannelMessage(
             content=content,
             media_url=media_url,
@@ -613,7 +609,6 @@ def admin_canal_edit():
 
         db.session.add(msg)
         db.session.commit()
-
         return redirect(url_for("admin_canal_edit"))
 
     messages = ChannelMessage.query.order_by(ChannelMessage.id.desc()).all()
