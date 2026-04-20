@@ -17,6 +17,7 @@ body{
     flex-direction:column;
 }
 
+/* HEADER */
 .header{
     background:#5a57e3;
     color:white;
@@ -32,6 +33,7 @@ body{
     border-radius:50%;
 }
 
+/* CHAT */
 .chat-box{
     flex:1;
     overflow:auto;
@@ -58,15 +60,10 @@ body{
     font-size:13px;
 }
 
-.actions a,.actions button{
-    background:none;
-    border:none;
-    cursor:pointer;
-}
-
 .delete{color:red;}
-.edit{color:#5a57e3;}
+.edit{color:#5a57e3;cursor:pointer}
 
+/* INPUT */
 .bottom-bar{
     display:flex;
     padding:10px;
@@ -97,10 +94,43 @@ body{
     width:45px;
     height:45px;
     border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
 }
 
 .recording{
     background:red;
+}
+
+/* PREVIEW */
+.preview{
+    padding:5px;
+    font-size:12px;
+    color:#555;
+}
+
+/* LOADER */
+.loader{
+    display:none;
+    position:absolute;
+    right:70px;
+    bottom:20px;
+}
+
+.loader div{
+    width:20px;
+    height:20px;
+    border:3px solid #ccc;
+    border-top:3px solid #5a57e3;
+    border-radius:50%;
+    animation:spin 1s linear infinite;
+}
+
+@keyframes spin{
+    0%{transform:rotate(0deg);}
+    100%{transform:rotate(360deg);}
 }
 </style>
 </head>
@@ -135,7 +165,7 @@ body{
 
 <div class="actions">
     <a href="/delete_msg/{{ msg.id }}" class="delete">Supprimer</a>
-    <button onclick="editMsg({{ msg.id }})" class="edit">Modifier</button>
+    <span onclick="editMsg({{ msg.id }})" class="edit">Modifier</span>
 </div>
 
 </div>
@@ -145,18 +175,26 @@ body{
 <form class="bottom-bar" method="POST" enctype="multipart/form-data" id="msgForm">
 
 <div class="input-group">
-<input type="text" name="content" id="txtInput" placeholder="Message">
-<label for="mediaIn"><i class="fa fa-paperclip"></i></label>
-<input type="file" name="media" id="mediaIn" hidden>
+    <input type="text" name="content" id="txtInput" placeholder="Message">
+
+    <label for="mediaIn" style="cursor:pointer">
+        <i class="fa fa-paperclip"></i>
+    </label>
+
+    <input type="file" name="media" id="mediaIn" hidden>
 </div>
 
+<div class="loader" id="loader"><div></div></div>
+
 <button type="button" id="mainBtn" class="btn-action">
-<i class="fa fa-microphone" id="icon"></i>
+    <i class="fa fa-microphone" id="icon"></i>
 </button>
 
 <input type="file" name="audio" id="audioHidden" hidden>
 
 </form>
+
+<div class="preview" id="preview"></div>
 
 <script>
 let recorder, chunks=[], isRecording=false;
@@ -167,71 +205,66 @@ const form=document.getElementById("msgForm");
 const txtInput=document.getElementById("txtInput");
 const mediaIn=document.getElementById("mediaIn");
 const audioHidden=document.getElementById("audioHidden");
+const preview=document.getElementById("preview");
+const loader=document.getElementById("loader");
+
+// 📎 PREVIEW FICHIER
+mediaIn.onchange=()=>{
+    if(mediaIn.files.length){
+        preview.innerText="Fichier sélectionné : "+mediaIn.files[0].name;
+    }
+};
 
 btn.onclick=async()=>{
 
-// ENVOI
-if(txtInput.value || mediaIn.files.length || audioHidden.files.length){
-    if(isRecording){
-        stopAndSend();
-    }else{
+    // 🔥 ENVOI NORMAL
+    if(txtInput.value.trim() !== "" || mediaIn.files.length > 0 || audioHidden.files.length > 0){
+        loader.style.display="block";
         form.submit();
+        return;
     }
-    return;
-}
 
-// PAS DE MICRO
-if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
-    alert("Micro non supporté → sélection audio");
-    audioHidden.click();
-    return;
-}
+    // ❌ PAS DE MICRO
+    if(!navigator.mediaDevices){
+        alert("Micro non supporté");
+        audioHidden.click();
+        return;
+    }
 
-// START RECORD
-if(!isRecording){
+    // 🎤 START RECORD
+    if(!isRecording){
 
-const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+        const stream=await navigator.mediaDevices.getUserMedia({audio:true});
 
-let mime="audio/webm";
-if(!MediaRecorder.isTypeSupported(mime)){
-    mime="audio/mp4";
-}
+        recorder=new MediaRecorder(stream);
+        chunks=[];
 
-recorder=new MediaRecorder(stream,{mimeType:mime});
-chunks=[];
+        recorder.ondataavailable=e=>chunks.push(e.data);
 
-recorder.ondataavailable=e=>chunks.push(e.data);
+        recorder.onstop=()=>{
+            const blob=new Blob(chunks,{type:"audio/webm"});
+            const file=new File([blob],"vocal.webm");
 
-recorder.onstop=()=>{
-    const blob=new Blob(chunks,{type:mime});
-    const ext=mime.includes("mp4")?"mp4":"webm";
+            const dt=new DataTransfer();
+            dt.items.add(file);
+            audioHidden.files=dt.files;
 
-    const file=new File([blob],`vocal.${ext}`,{type:mime});
+            loader.style.display="block";
+            form.submit();
+        };
 
-    const dt=new DataTransfer();
-    dt.items.add(file);
-    audioHidden.files=dt.files;
+        recorder.start();
+        isRecording=true;
+        btn.classList.add("recording");
+        icon.className="fa fa-stop";
 
-    form.submit();
+    }else{
+        recorder.stop();
+        isRecording=false;
+        btn.classList.remove("recording");
+        icon.className="fa fa-microphone";
+    }
 };
-
-recorder.start();
-isRecording=true;
-btn.classList.add("recording");
-icon.className="fa fa-stop";
-
-}else{
-recorder.stop();
-isRecording=false;
-btn.classList.remove("recording");
-icon.className="fa fa-microphone";
-}
-
-};
-
-function stopAndSend(){
-recorder.stop();
-}
 
 // ✏️ MODIFIER MESSAGE
 function editMsg(id){

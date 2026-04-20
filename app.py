@@ -38,7 +38,7 @@ app.config['UPLOAD_FOLDER_PROFILE'] = UPLOAD_FOLDER_PROFILE
 app.config['UPLOAD_FOLDER_VLOGS'] = UPLOAD_FOLDER_VLOGS
 app.config['UPLOAD_FOLDER_APPS'] = UPLOAD_FOLDER_APPS
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
-
+app.config["UPLOAD_FOLDER"] = "static/uploads"
 def allowed_file(filename):
     """
     Vérifie si le fichier uploadé est autorisé.
@@ -562,18 +562,19 @@ def stats_depots():
     return render_template("admin_stats.html", actifs=total_actifs, passifs=total_passifs)
 
 
-
 @app.route("/admin/canal/edit", methods=["GET", "POST"])
 def admin_canal_edit():
     if request.method == "POST":
 
         content = request.form.get("content")
 
-        # 🔥 récupère media OU audio
-        file = request.files.get("media") or request.files.get("audio")
-
         media_url = None
         media_type = None
+
+        file = request.files.get("media")
+        audio = request.files.get("audio")
+
+        file = file if file and file.filename else audio
 
         if file and file.filename:
 
@@ -582,19 +583,26 @@ def admin_canal_edit():
             timestamp = int(datetime.now().timestamp())
 
             filename = f"{timestamp}_{filename}"
-            path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
 
+            upload_folder = os.path.join(app.root_path, "static/uploads")
+
+            # 🔥 IMPORTANT : créer le dossier si inexistant
+            os.makedirs(upload_folder, exist_ok=True)
+
+            path = os.path.join(upload_folder, filename)
             file.save(path)
 
             media_url = f"/static/uploads/{filename}"
 
             # 🔥 TYPE AUTO
             if ext in ["jpg","png","jpeg","gif"]:
-                media_type="image"
+                media_type = "image"
             elif ext in ["mp4","mov","avi"]:
-                media_type="video"
+                media_type = "video"
             elif ext in ["webm","mp3","wav","ogg"]:
-                media_type="audio"
+                media_type = "audio"
+
+        print("FILES:", request.files)
 
         msg = ChannelMessage(
             content=content,

@@ -17,6 +17,7 @@ body{
     flex-direction:column;
 }
 
+/* HEADER */
 .header{
     background:white;
     padding:10px;
@@ -32,77 +33,118 @@ body{
     border-radius:50%;
 }
 
+.header b{font-size:15px}
+.header small{color:#666}
+
+/* CHAT */
 .content{
     flex:1;
     overflow:auto;
     padding:15px;
+    display:flex;
+    flex-direction:column;
+    gap:15px;
 }
 
+/* LOCKED */
 .locked{
-    filter:blur(6px);
+    filter:blur(5px);
     pointer-events:none;
 }
 
+/* MESSAGE */
 .msg-bubble{
     background:white;
-    padding:10px;
-    border-radius:12px;
-    margin-bottom:15px;
+    padding:12px;
+    border-radius:15px;
     max-width:90%;
+    box-shadow:0 3px 10px rgba(0,0,0,0.05);
+    animation:fadeIn .3s ease;
+}
+
+@keyframes fadeIn{
+    from{opacity:0;transform:translateY(10px)}
+    to{opacity:1;transform:translateY(0)}
 }
 
 .msg-bubble img,
 .msg-bubble video{
     width:100%;
-    border-radius:8px;
+    border-radius:10px;
+    margin-bottom:8px;
 }
 
 .audio-wrapper{
-    margin-top:5px;
+    margin-bottom:8px;
 }
 
+.msg-text{
+    font-size:14px;
+    color:#333;
+    margin-bottom:8px;
+}
+
+/* REACTIONS */
+.reactions{
+    display:flex;
+    gap:8px;
+}
+
+.react-btn{
+    background:#f1f5f9;
+    border:none;
+    padding:5px 10px;
+    border-radius:20px;
+    cursor:pointer;
+    font-size:13px;
+    transition:0.2s;
+}
+
+.react-btn:hover{
+    background:#e2e8f0;
+}
+
+/* TIME */
 .msg-time{
     font-size:10px;
     color:#999;
     text-align:right;
+    margin-top:5px;
 }
 
-.reactions{
-    display:flex;
-    gap:8px;
-    margin-top:8px;
-}
-
-.react-btn{
-    background:#f0f2f5;
-    border:none;
-    padding:4px 8px;
-    border-radius:15px;
-    cursor:pointer;
-}
-
+/* JOIN BAR */
 .join-bar{
     position:fixed;
     bottom:0;
     width:100%;
     background:white;
     padding:15px;
-    text-align:center;
+    border-top:1px solid #ddd;
 }
 
 .btn-join{
     background:#5a57e3;
     color:white;
     border:none;
-    padding:12px;
+    padding:14px;
     border-radius:25px;
     width:100%;
+    font-weight:600;
+    cursor:pointer;
+}
+
+/* EMPTY */
+.empty{
+    text-align:center;
+    color:#777;
+    margin-top:40px;
 }
 </style>
 </head>
 
 <body>
 
+<!-- HEADER -->
 <div class="header">
     <a href="/dashboard"><i class="fa fa-arrow-left"></i></a>
     <img src="/static/images/lu.jpg">
@@ -112,7 +154,12 @@ body{
     </div>
 </div>
 
+<!-- CHAT -->
 <div class="content {% if not is_sub %}locked{% endif %}" id="chatBox">
+
+{% if messages|length == 0 %}
+<div class="empty">Aucun message pour le moment</div>
+{% endif %}
 
 {% for msg in messages %}
 <div class="msg-bubble">
@@ -127,14 +174,14 @@ body{
 
 {% elif msg.media_type == 'audio' %}
 <div class="audio-wrapper">
-    <audio controls>
+    <audio controls style="width:100%">
         <source src="{{ msg.media_url }}">
     </audio>
 </div>
 {% endif %}
 
 {% if msg.content %}
-<p>{{ msg.content }}</p>
+<div class="msg-text">{{ msg.content }}</div>
 {% endif %}
 
 {% set r = msg.reactions if msg.reactions else {"fire":0,"rocket":0,"heart":0} %}
@@ -153,23 +200,30 @@ body{
 </button>
 </div>
 
-<div class="msg-time">{{ msg.timestamp.strftime('%H:%M') }}</div>
+<div class="msg-time">
+{{ msg.timestamp.strftime('%d/%m %H:%M') }}
+</div>
 
 </div>
 {% endfor %}
 </div>
 
+<!-- JOIN -->
 {% if not is_sub %}
 <div class="join-bar">
 <form action="/chaine/rejoindre" method="POST">
-<button class="btn-join">REJOINDRE LA CHAÎNE</button>
+<button class="btn-join">
+<i class="fa fa-lock"></i> Rejoindre la chaîne
+</button>
 </form>
 </div>
 {% endif %}
 
 <script>
+
+// SCROLL AUTO
 const chat=document.getElementById("chatBox");
-setTimeout(()=>{chat.scrollTop=chat.scrollHeight},100);
+setTimeout(()=>{chat.scrollTop=chat.scrollHeight},200);
 
 // 🔥 REACTIONS
 function sendReact(id,type){
@@ -187,6 +241,7 @@ fetch(`/channel/react/${id}/${type}`,{method:"POST"})
     }
 });
 }
+
 </script>
 
 </body>
