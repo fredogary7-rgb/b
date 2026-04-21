@@ -2484,93 +2484,81 @@ def retrait_page():
 
     return render_template("retrait.html", user=user, stats=stats, services=services)
 
-
 @app.route("/retrait-casino", methods=["GET", "POST"])
 def retrait_casino_page():
     user = get_logged_in_user()
     if not user:
-        return redirect(url_for('login')) # Sécurité si l'user n'est pas connecté
+        return redirect(url_for('login'))
 
     MIN_RETRAIT = 500
-    FRAIS = 0 
+    # On s'assure que bonus_total est traité comme un nombre
+    bonus_total = float(user.bonus or 0)
 
-    stats = {
-        "bonus_total": float(user.bonus or 0)
-    }
-
-    # Récupérer les services selon le pays
+    # Récupérer les services de paiement du pays de l'utilisateur
     country_code = COUNTRY_CODE.get(user.country)
     services = SERVICES.get(country_code, [])
 
     if request.method == "POST":
-        try:
-            # RÉCUPÉRATION DES DONNÉES DU FORMULAIRE
-            montant = float(request.form.get("montant", 0))
-            service_id = int(request.form.get("payment_method"))
-            # On récupère le numéro saisi par l'utilisateur
-            wallet = request.form.get("wallet") 
-        except Exception as e:
-            flash("Données invalides.", "danger")
-            return redirect(url_for("retrait_casino_page"))
+        montant = float(request.form.get("montant", 0))
+        service_id = int(request.form.get("payment_method", 0))
+        wallet = request.form.get("wallet", "").strip()
 
-        # Vérification si le numéro est vide
+        # 1. VALIDATIONS DE BASE
         if not wallet or len(wallet) < 8:
-            flash("Veuillez saisir un numéro de téléphone valide.", "danger")
+            flash("Numéro de téléphone invalide.", "danger")
             return redirect(url_for("retrait_casino_page"))
 
-        # Logique de validation du montant
         if montant < MIN_RETRAIT:
-            flash(f"Le montant minimum de retrait casino est de {MIN_RETRAIT} XOF.", "danger")
+            flash(f"Le minimum est de {MIN_RETRAIT} XOF.", "danger")
             return redirect(url_for("retrait_casino_page"))
 
-        montant_total = montant + FRAIS
-
-        if montant_total > stats["bonus_total"]:
-            flash("Solde bonus insuffisant.", "danger")
+        if montant > bonus_total:
+            flash("Solde insuffisant.", "danger")
             return redirect(url_for("retrait_casino_page"))
 
-        # Vérification du service de paiement
-        valid_services = [s["id"] for s in services]
-        if service_id not in valid_services:
-            flash("Service de paiement invalide.", "danger")
-            return redirect(url_for("retrait_casino_page"))
-
-        # --- APPEL API SOLEASPAY ---
-        # On utilise maintenant la variable 'wallet' saisie par l'utilisateur
+        # 2. APPEL API SOLEASPAY
+        # On lance le paiement directement
         response = envoyer_retrait_soleaspay(service_id, wallet, montant)
 
-        if not response or response.get("success") != True:
-            error_msg = response.get('message', 'Paiement refusé') if response else "Erreur API"
+        if response and response.get("success") == True:
+            # 3. ENREGISTREMENT ET DÉDUCTION
+            try:
+                # On déduit le solde
+                user.bonus -= montant
+                
+                # On crée la trace du retrait
+                nouveau_retrait = Retrait(
+                    user_id=user.id,
+                    montant=montant,
+                    frais=0,
+                    payment_method=service_id,
+                    statut="successful",
+                    phone=wallet,
+                    pays=user.country,
+                    date=datetime.now()
+                )
+                
+                db.session.add(nouveau_retrait)
+                db.session.commit()
+
+                flash(f"Retrait de {montant} XOF envoyé avec succès vers {wallet} !", "success")
+                return redirect(url_for("dashboard_page"))
+                
+            except Exception as e:
+                db.session.rollback()
+                flash("Erreur lors de la mise à jour du solde.", "danger")
+        else:
+            error_msg = response.get('message', 'Échec de la transaction API') if response else "Service indisponible"
             flash(f"Erreur : {error_msg}", "danger")
-            return redirect(url_for("retrait_casino_page"))
-
-        # --- ENREGISTREMENT EN BASE DE DONNÉES ---
-        nouveau_retrait = Retrait(
-            user_id=user.id,
-            montant=montant,
-            frais=FRAIS,
-            payment_method=service_id,
-            statut="successful",
-            phone=wallet, # Le numéro saisi est enregistré ici
-            pays=user.country
-        )
-
-        db.session.add(nouveau_retrait)
-
-        # Déduction du solde BONUS
-        user.bonus -= montant_total
-        db.session.commit()
-
-        flash(f"Retrait Casino de {montant} XOF réussi sur le numéro {wallet} !", "success")
-        return redirect(url_for("dashboard_page"))
 
     return render_template(
         "retrait_casino.html",
         user=user,
-        stats=stats,
+        bonus_total=bonus_total,
         services=services,
         min_retrait=MIN_RETRAIT
     )
+
 
 @app.route("/admin/reset-soldes-speciaux")
 def reset_soldes():
