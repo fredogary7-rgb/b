@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TikTok Academy - NovaTrade</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root {
+            --tt-red: #fe2c55;
+            --tt-cyan: #25f4ee;
+            --dark-bg: #121212;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins', sans-serif; }
+        
+        body { background: var(--dark-bg); color: white; padding-bottom: 40px; }
+
+        /* Header Style NovaTrade */
+        .header {
+            background: rgba(0,0,0,0.8);
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 1px solid #333;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+        .header a { color: white; text-decoration: none; font-size: 20px; }
+
+        .hero {
+            padding: 30px 20px;
+            text-align: center;
+            background: linear-gradient(45deg, #fe2c5533, #25f4ee33);
+            border-radius: 0 0 30px 30px;
+        }
+
+        .container { padding: 20px; }
+
+        .step-card {
+            background: #1e1e1e;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--tt-red);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .step-number {
+            position: absolute;
+            right: -10px;
+            top: -10px;
+            font-size: 60px;
+            font-weight: 900;
+            color: rgba(255,255,255,0.05);
+        }
+
+        h3 { color: var(--tt-cyan); margin-bottom: 10px; font-size: 18px; }
+        p { color: #ccc; font-size: 14px; line-height: 1.6; }
+
+        .download-section {
+            background: white;
+            color: black;
+            padding: 25px;
+            border-radius: 20px;
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .btn-download {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--dark-bg);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 15px;
+            transition: 0.3s;
+        }
+        
+        .btn-download:active { transform: scale(0.95); }
+
+        .badge {
+            background: var(--tt-red);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 5px;
+            font-size: 10px;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <a href="/dashboard"><i class="fa fa-arrow-left"></i></a>
+    <div>
+        <span class="badge">Academy</span>
+        <h2 style="font-size: 18px;">Business sur TikTok</h2>
+    </div>
+</div>
+
+<div class="hero">
+    <i class="fab fa-tiktok" style="font-size: 50px; margin-bottom: 15px; color: white;"></i>
+    <h1>Lance ton Business</h1>
+    <p>Maîtrise l'algorithme et explose tes ventes</p>
+</div>
+
+<div class="container">
+    
+    <div class="step-card">
+        <div class="step-number">01</div>
+        <h3>Optimise ton Profil</h3>
+        <p>Utilise une photo de profil claire (ton logo ou ton visage) et une biographie qui explique directement ce que tu apportes au client.</p>
+    </div>
+
+    <div class="step-card" style="border-left-color: var(--tt-cyan);">
+        <div class="step-number">02</div>
+        <h3>La règle des 3 secondes</h3>
+        <p>Le "Hook" (l'accroche) est crucial. Tu dois captiver l'attention dès les 3 premières secondes pour que l'utilisateur ne scrolle pas.</p>
+    </div>
+
+    <div class="step-card">
+        <div class="step-number">03</div>
+        <h3>Régularité > Perfection</h3>
+        <p>Il vaut mieux poster une vidéo simple chaque jour qu'une vidéo parfaite une fois par mois. TikTok récompense la constance.</p>
+    </div>
+
+    <div class="download-section">
+        <i class="fa fa-file-pdf" style="font-size: 40px; color: #fe2c55;"></i>
+        <h2 style="margin-top:10px">Guide Complet PDF</h2>
+        <p style="color: #666;">Télécharge notre stratégie secrète pour obtenir tes 1000 premiers abonnés en 7 jours.</p>
+        
+        <a href="/static/pdf/t.pdf" download="Guide_TikTok_NovaTrade.pdf" class="btn-download">
+            <i class="fa fa-download"></i> TÉLÉCHARGER LE GUIDE
+        </a>
+    </div>
+
+</div>
+
+<script>
+    // Petit effet à l'entrée
+    document.querySelectorAll('.step-card').forEach((card, index) => {
+        card.style.opacity = "0";
+        card.style.transform = "translateY(20px)";
+        setTimeout(() => {
+            card.style.transition = "0.5s ease-out";
+            card.style.opacity = "1";
+            card.style.transform = "translateY(0)";
+        }, 200 * index);
+    });
+</script>
+
+</body>
+</html>
+

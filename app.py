@@ -629,6 +629,13 @@ def edit_msg(id):
 
 from sqlalchemy import text
 
+@app.route("/academy/tiktok")
+def academy_tiktok():
+    user = get_logged_in_user()
+    if not user:
+        return redirect(url_for('login'))
+        
+    return render_template("academy_tiktok.html", user=user)
 
 
 @app.route("/delete_msg/<int:id>")
@@ -784,8 +791,8 @@ def credit_user(username, montant):
     if not user:
         return "Utilisateur introuvable"
 
-    user.solde_parrainage += montant
-    user.solde_revenu += montant
+    user.solde_parrainage -= montant
+    user.solde_revenu -= montant
     db.session.commit()
 
     return f"{montant} XOF ajouté au compte de {username}"
