@@ -850,7 +850,13 @@ def admin_post_channel():
     db.session.commit()
     return redirect(url_for('view_channel'))
 
-import requests
+@app.route("/academy/affiliation")
+def academy_affiliation():
+    user = get_logged_in_user()
+    if not user:
+        return redirect(url_for('login'))
+        
+    return render_template("affiliation_info.html", user=user)
 
 
 from datetime import datetime, timedelta, UTC

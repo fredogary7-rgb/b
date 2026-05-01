@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Affiliation - NovaTrade</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root {
+            --nova-blue: #5a57e3;
+            --nova-bg: #e5ddd5;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', sans-serif; }
+        
+        body { background: var(--nova-bg); color: #333; padding-bottom: 40px; }
+
+        /* Header */
+        .header {
+            background: white;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 1px solid #ddd;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header a { color: var(--nova-blue); text-decoration: none; font-size: 20px; }
+
+        .hero {
+            padding: 30px 20px;
+            text-align: center;
+            background: white;
+            border-radius: 0 0 30px 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        .container { padding: 0 20px; }
+
+        .step-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 5px solid #27ae60; /* Vert pour l'argent/gain */
+            position: relative;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        h3 { color: #27ae60; margin-bottom: 8px; font-size: 17px; }
+        p { color: #444; font-size: 14px; line-height: 1.5; }
+
+        .divider {
+            text-align: center;
+            color: #888;
+            font-size: 13px;
+            margin: 25px 0;
+        }
+
+        .download-section {
+            background: white;
+            color: #333;
+            padding: 25px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .btn-download {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--nova-blue);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+
+        .badge {
+            background: #f0f2f5;
+            color: var(--nova-blue);
+            padding: 4px 10px;
+            border-radius: 5px;
+            font-size: 10px;
+            text-transform: uppercase;
+            font-weight: bold;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <a href="/dashboard"><i class="fa fa-arrow-left"></i></a>
+    <div>
+        <span class="badge">Business Plan</span>
+        <h2 style="font-size: 17px; color: #333;">Affiliation NovaTrade</h2>
+    </div>
+</div>
+
+<div class="hero">
+    <i class="fa fa-users" style="font-size: 45px; margin-bottom: 10px; color: var(--nova-blue);"></i>
+    <h1 style="font-size: 24px; color: #333;">Devenir Partenaire</h1>
+    <p style="color: #666;">Gagnez des commissions sur chaque invité</p>
+</div>
+
+<div class="container">
+    
+    <div class="step-card">
+        <h3>1. Partagez votre lien</h3>
+        <p>Récupérez votre lien unique dans votre tableau de bord et partagez-le sur WhatsApp, TikTok ou Facebook.</p>
+    </div>
+
+    <div class="step-card" style="border-left-color: var(--nova-blue);">
+        <h3>2. Inscription de vos filleuls</h3>
+        <p>Dès qu'une personne s'inscrit et active son compte via votre lien, elle devient officiellement votre filleul.</p>
+    </div>
+
+    <div class="step-card" style="border-left-color: #f1c40f;">
+        <h3>3. Encaissez vos gains</h3>
+        <p>Recevez des commissions instantanées sur les activités de votre réseau. Plus ils progressent, plus vous gagnez.</p>
+    </div>
+
+    <div class="divider">⸻ ✨ Guide Complet ⸻</div>
+
+    <div class="download-section">
+        <p style="font-weight: 500; font-size: 14px; line-height: 1.6;">
+            📥 Le document ci-dessous explique en détail les pourcentages de gains et la stratégie pour bâtir une équipe solide.
+        </p>
+        
+        <a href="{{ url_for('static', filename='pdf/ex.pdf') }}" download="Projet_Affiliation_NovaTrade.pdf" class="btn-download">
+            <i class="fa fa-file-pdf"></i> TÉLÉCHARGER LE PROJET
+        </a>
+    </div>
+
+</div>
+
+</body>
+</html>
+
