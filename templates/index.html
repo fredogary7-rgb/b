@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NovaGroup - Plateforme Internationale Digitale</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root {
+            --nova-blue: #5a57e3;
+            --nina-pink: #fe2c55;
+            --nova-bg: #f4f7fe;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins', sans-serif; }
+        
+        body { background: var(--nova-bg); color: #333; overflow-x: hidden; }
+
+        /* Navbar Style */
+        .navbar {
+            background: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .logo { font-size: 20px; font-weight: 800; color: var(--nova-blue); }
+        .logo span { color: var(--nina-pink); }
+
+        /* Hero Section */
+        .hero {
+            padding: 40px 20px;
+            text-align: center;
+            background: white;
+            border-radius: 0 0 50px 50px;
+            margin-bottom: 30px;
+        }
+        .hero h1 { font-size: 28px; line-height: 1.2; margin-bottom: 15px; }
+        .hero p { color: #666; font-size: 14px; margin-bottom: 25px; }
+
+        /* Cards Container */
+        .container { padding: 20px; }
+
+        .brand-card {
+            background: white;
+            border-radius: 25px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            transition: 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .brand-card.nova { border-top: 5px solid var(--nova-blue); }
+        .brand-card.nina { border-top: 5px solid var(--nina-pink); }
+
+        .brand-card h2 { font-size: 22px; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+        .brand-card p { font-size: 14px; color: #555; line-height: 1.6; margin-bottom: 20px; }
+
+        /* Buttons */
+        .btn {
+            display: inline-block;
+            padding: 12px 25px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 14px;
+            text-align: center;
+            width: 100%;
+        }
+        .btn-nova { background: var(--nova-blue); color: white; }
+        .btn-nina { background: var(--nina-pink); color: white; }
+
+        /* Stats Section */
+        .global-badge {
+            display: inline-block;
+            background: #e8f0fe;
+            color: var(--nova-blue);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            font-size: 12px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+
+<div class="navbar">
+    <div class="logo">Nova<span>Group</span></div>
+    {% if user %}
+        <a href="/dashboard" style="text-decoration:none; color:var(--nova-blue); font-weight:bold; font-size:13px;">Mon Espace <i class="fa fa-arrow-right"></i></a>
+    {% else %}
+        <a href="/login" style="text-decoration:none; color:var(--nova-blue); font-weight:bold; font-size:13px;">Connexion</a>
+    {% endif %}
+</div>
+
+<div class="hero">
+    <span class="global-badge"><i class="fa fa-globe"></i> Plateforme Internationale</span>
+    <h1>L'excellence digitale à votre portée</h1>
+    <p>Finance, Formation & Opportunités : Un écosystème conçu pour la nouvelle génération d'entrepreneurs.</p>
+</div>
+
+<div class="container">
+    
+    <!-- Section NovaTrade -->
+    <div class="brand-card nova">
+        <h2><i class="fa fa-chart-line"></i> NovaTrade</h2>
+        <p>Votre partenaire financier international. Accédez au trading, au casino, au e-commerce et gérez vos finances avec une rapidité déconcertante. Maximisez vos revenus grâce à nos outils de pointe.</p>
+        <a href="/dashboard" class="btn btn-nova">Accéder à NovaTrade</a>
+    </div>
+
+    <!-- Section Nina Academy -->
+    <div class="brand-card nina">
+        <h2><i class="fa fa-graduation-cap"></i> Nina Academy</h2>
+        <p>
+            Nina Academy est une plateforme internationale dédiée à l’apprentissage digital. Elle accompagne les entrepreneurs et créateurs de contenu à travers des formations orientées vers les réalités du marché actuel.
+        </p>
+        <p style="font-size: 13px;">Marketing digital, création de contenu et business en ligne : développez des compétences pratiques utilisables immédiatement.</p>
+        <a href="/academy/tiktok" class="btn btn-nina">Découvrir l'Academy</a>
+    </div>
+
+</div>
+
+<div class="footer">
+    <div style="margin-bottom: 10px;">
+        <i class="fab fa-facebook" style="margin: 0 10px;"></i>
+        <i class="fab fa-tiktok" style="margin: 0 10px;"></i>
+        <i class="fab fa-instagram" style="margin: 0 10px;"></i>
+    </div>
+    &copy; 2026 NovaGroup International. Tous droits réservés.
+</div>
+
+</body>
+</html>
+

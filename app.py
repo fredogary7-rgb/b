@@ -423,6 +423,11 @@ def t(key):
 # enregistrer la fonction dans Jinja2
 app.jinja_env.globals.update(t=t)
 
+@app.route("/")
+def index_page():
+    # On vérifie si l'utilisateur est déjà connecté pour personnaliser l'accueil
+    user = get_logged_in_user()
+    return render_template("index.html", user=user)
 
 # -----------------------
 # Utilisateur connecté
@@ -1442,6 +1447,18 @@ def apple_cashout():
         session.pop('apple_map', None)
         return jsonify({"status": "success", "gain": gain})
     return jsonify({"status": "error"}), 400
+
+@app.route('/admin/reset-monday-games')
+def reset_games():
+    # Récupère tous les utilisateurs qui ont déjà joué
+    users_to_reset = User.query.filter_by(frog_game_done=True).all()
+    
+    for u in users_to_reset:
+        u.frog_game_done = False
+    
+    db.session.commit()
+    
+    return f"Succès ! Les compteurs de {len(users_to_reset)} utilisateurs ont été remis à zéro."
 
 
 import random
