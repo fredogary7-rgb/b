@@ -542,6 +542,27 @@ def sanctionner_utilisateur(username):
         db.session.rollback()
         return f"Erreur lors de la sanction : {str(e)}", 500
 
+@app.route("/admin/filleuls-inactifs")
+def filleuls_inactifs_kedboy():
+    username_cible = "kedboy"
+    
+    # 1. On cherche directement les utilisateurs dont le parrain est 'kedboy'
+    # ET qui n'ont pas encore fait leur premier dépôt (premier_depot=False)
+    filleuls_non_actives = User.query.filter_by(
+        parrain=username_cible, 
+        premier_depot=False
+    ).order_by(User.id.desc()).all() # Range du plus récent (ID le plus grand) au plus ancien
+
+    # On crée un faux objet parrain pour que le template HTML fonctionne sans erreur
+    class CustomParrain:
+        username = username_cible
+    
+    return render_template(
+        "filleuls_inactifs.html", 
+        parrain=CustomParrain(), 
+        filleuls=filleuls_non_actives
+    )
+
 
 from sqlalchemy import func
 

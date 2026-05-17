@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Filleuls Inactifs - {{ parrain.username }}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root {
+            --nova-blue: #5a57e3;
+            --nova-bg: #e5ddd5;
+            --danger-red: #e74c3c;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', sans-serif; }
+        
+        body { background: var(--nova-bg); color: #333; padding-bottom: 30px; }
+
+        /* Header */
+        .header {
+            background: white;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 1px solid #ddd;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header a { color: var(--nova-blue); text-decoration: none; font-size: 20px; }
+
+        .summary-box {
+            background: white;
+            padding: 20px;
+            margin: 15px;
+            border-radius: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+
+        .summary-box h1 { font-size: 20px; color: #222; }
+        .summary-box .count { font-size: 32px; font-weight: bold; color: var(--danger-red); margin-top: 5px; }
+
+        /* Barre de recherche Style NovaTrade */
+        .search-container {
+            padding: 0 15px;
+            margin-bottom: 15px;
+        }
+        .search-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .search-wrapper i {
+            position: absolute;
+            left: 15px;
+            color: #888;
+        }
+        .search-input {
+            width: 100%;
+            padding: 12px 12px 12px 40px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            font-size: 14.5px;
+            outline: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+            transition: 0.3s;
+        }
+        .search-input:focus {
+            border-color: var(--nova-blue);
+            background: white;
+        }
+
+        .container { padding: 0 15px; }
+
+        .title-section {
+            font-size: 13px;
+            text-transform: uppercase;
+            color: #666;
+            margin-bottom: 10px;
+            padding-left: 5px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Liste des Filleuls */
+        .user-card {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+            border-left: 4px solid var(--danger-red);
+        }
+
+        .user-info h3 { font-size: 15px; color: #222; }
+        .user-info p { font-size: 12px; color: #777; margin-top: 2px; }
+
+        .status-badge {
+            background: #fdf2f2;
+            color: var(--danger-red);
+            font-size: 11px;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <a href="/dashboard"><i class="fa fa-arrow-left"></i></a>
+    <div>
+        <h2 style="font-size: 16px; color: #333;">Réseau d'Affiliation</h2>
+    </div>
+</div>
+
+<div class="summary-box">
+    <h1>Filleuls Inactifs de <b>{{ parrain.username }}</b></h1>
+    <div class="count" id="totalCount">{{ filleuls|length }}</div>
+    <p style="font-size: 13px; color: #666; margin-top: 5px;">Comptes en attente d'activation</p>
+</div>
+
+{% if filleuls %}
+<div class="search-container">
+    <div class="search-wrapper">
+        <i class="fa fa-search"></i>
+        <input type="text" id="searchInput" class="search-input" placeholder="Rechercher un utilisateur..." onkeyup="filterUsers()">
+    </div>
+</div>
+{% endif %}
+
+<div class="container">
+    
+    {% if filleuls %}
+    <div class="title-section" id="titleSection">
+        <span>Utilisateur</span>
+        <span>Du plus récent au plus ancien</span>
+    </div>
+
+    <div id="usersList">
+        {% for f in filleuls %}
+        <div class="user-card" data-username="{{ f.username|lower }}">
+            <div class="user-info">
+                <h3>{{ f.username }}</h3>
+                <p><i class="fa fa-calendar-alt"></i> Inscrit le : {{ f.date_inscription.strftime('%d/%m/%Y à %H:%M') if f.date_inscription else 'ID: ' ~ f.id }}</p>
+                <p style="font-size: 11px; color: #aaa;"><i class="fa fa-envelope"></i> {{ f.email }}</p>
+            </div>
+            <div class="status-badge">
+                Pas de dépôt
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div id="noResult" class="empty-state" style="display: none;">
+        <i class="fa fa-user-times" style="font-size: 45px; color: #999; margin-bottom: 10px;"></i>
+        <p>Aucun utilisateur ne correspond à votre recherche.</p>
+    </div>
+
+    {% else %}
+    <div class="empty-state">
+        <i class="fa fa-check-circle" style="font-size: 45px; color: #27ae60; margin-bottom: 10px;"></i>
+        <p>Aucun filleul inactif. Tous les comptes liés à {{ parrain.username }} sont activés !</p>
+    </div>
+    {% endif %}
+
+</div>
+
+<script>
+function filterUsers() {
+    const input = document.getElementById('searchInput');
+    const filter = input.value.toLowerCase();
+    const list = document.getElementById('usersList');
+    const cards = list.getElementsByClassName('user-card');
+    const noResult = document.getElementById('noResult');
+    const titleSection = document.getElementById('titleSection');
+    const totalCount = document.getElementById('totalCount');
+    
+    let visibleCount = 0;
+
+    for (let i = 0; i < cards.length; i++) {
+        // On utilise l'index de l'attribut data-username récupéré au clavier
+        let username = cards[i].getAttribute('data-username');
+        
+        if (username.indexOf(filter) > -1) {
+            cards[i].style.display = "";
+            visibleCount++;
+        } else {
+            cards[i].style.display = "none";
+        }
+    }
+
+    // Gestion de l'affichage s'il n'y a aucun résultat
+    if (visibleCount === 0) {
+        noResult.style.display = "block";
+        titleSection.style.display = "none";
+    } else {
+        noResult.style.display = "none";
+        titleSection.style.display = "flex";
+    }
+
+    // Optionnel : Met à jour le compteur dynamiquement pendant la recherche
+    totalCount.innerText = visibleCount;
+}
+</script>
+
+</body>
+</html>
+
