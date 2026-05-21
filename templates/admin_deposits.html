@@ -11,7 +11,7 @@
     <style>
         /* BASE STYLE ADMIN NOVATRADE */
         * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
-        
+
         body {
             background: #0f172a; /* Bleu nuit très pro */
             background-image: radial-gradient(at 0% 0%, rgba(30, 64, 175, 0.3) 0px, transparent 50%),
@@ -104,11 +104,11 @@
         h3 { font-size: 16px; margin-bottom: 15px; color: #38bdf8; }
 
         table { width: 100%; border-collapse: collapse; min-width: 900px; }
-        table th { 
-            background: rgba(15, 23, 42, 0.5); 
-            color: #94a3b8; 
-            font-size: 12px; 
-            text-transform: uppercase; 
+        table th {
+            background: rgba(15, 23, 42, 0.5);
+            color: #94a3b8;
+            font-size: 12px;
+            text-transform: uppercase;
             letter-spacing: 1px;
             padding: 15px 12px;
             text-align: left;
@@ -141,8 +141,8 @@
 
         /* ===== Pagination ===== */
         .pagination { margin-top: 25px; display: flex; gap: 10px; justify-content: center; }
-        .pagination a { 
-            text-decoration: none; color: #cbd5e1; background: #334155; 
+        .pagination a {
+            text-decoration: none; color: #cbd5e1; background: #334155;
             padding: 8px 16px; border-radius: 10px; font-size: 13px; transition: 0.3s;
         }
         .pagination a:hover { background: #38bdf8; color: #0f172a; }
@@ -193,7 +193,7 @@
     </div>
 
     <div class="search-box">
-        <input type="text" id="userSearch" placeholder="Recherche globale (Nom, email, parrain)...">
+        <input type="text" id="userSearch" placeholder="Recherche rapide (Tapez votre mot clé ici)...">
     </div>
 
     <div id="usersTab" class="tab-content active">
@@ -213,8 +213,8 @@
                 </thead>
                 <tbody>
                     {% for u in users %}
-                    <tr>
-                        <td style="font-weight: 700;">{{ u.username }}</td>
+                    <tr data-index="{{ u.username|lower }} {{ u.email|lower }} {{ u.phone }} {{ (u.parrain or '')|lower }}" data-sort="{{ u.username|lower }}">
+                        <td style="font-weight: 700;" class="sort-key">{{ u.username }}</td>
                         <td>{{ u.email }}<br><small style="color: #64748b;">{{ u.phone }}</small></td>
                         <td>{{ u.parrain or '-' }}</td>
                         <td><span class="badge level1">{{ u.niveau1 }}</span></td>
@@ -260,9 +260,9 @@
                 </thead>
                 <tbody>
                     {% for d in depots %}
-                    <tr>
+                    <tr data-index="{{ d.user_name|lower }} {{ d.phone }} {{ d.operator|lower }} {{ d.country|lower }} #{{ d.id }}" data-sort="{{ d.user_name|lower }}">
                         <td>#{{ d.id }}</td>
-                        <td><strong>{{ d.user_name }}</strong><br>{{ d.phone }}</td>
+                        <td class="sort-key"><strong>{{ d.user_name }}</strong><br>{{ d.phone }}</td>
                         <td>{{ d.operator }}</td>
                         <td>{{ d.country }}</td>
                         <td style="color: #38bdf8; font-weight: 700;">{{ d.montant }}</td>
@@ -301,9 +301,9 @@
                 </thead>
                 <tbody>
                     {% for r in retraits %}
-                    <tr>
+                    <tr data-index="{{ r.username_display|lower }} {{ r.phone }} {{ r.payment_method|lower }} {{ r.pays|lower }} #{{ r.id }}" data-sort="{{ r.username_display|lower }}">
                         <td>#{{ r.id }}</td>
-                        <td>{{ r.username_display }}</td>
+                        <td class="sort-key">{{ r.username_display }}</td>
                         <td style="color: #ef4444; font-weight: 700;">{{ r.montant - r.frais }} XOF</td>
                         <td><strong>{{ r.payment_method }}</strong><br>{{ r.phone }}</td>
                         <td>{{ r.pays }}</td>
@@ -318,7 +318,7 @@
                     {% endfor %}
                 </tbody>
             </table>
-            
+
             <div class="pagination">
                 {% if retraits_paginated.has_prev %}
                     <a href="{{ url_for('admin_deposits', page=retraits_paginated.prev_num) }}">« Precedent</a>
@@ -334,13 +334,18 @@
     <div id="actifsTab" class="tab-content">
         <div class="table-container">
             <h3>👥 Total Actifs: {{ total_actifs }}</h3>
-            <table>
+            <table id="actifsTable">
                 <thead>
                     <tr><th>User</th><th>Email</th><th>Phone</th><th>Date</th></tr>
                 </thead>
                 <tbody>
                     {% for u in actifs %}
-                    <tr><td>{{ u.username }}</td><td>{{ u.email }}</td><td>{{ u.phone }}</td><td>{{ u.date_creation.strftime('%d/%m/%Y') }}</td></tr>
+                    <tr data-index="{{ u.username|lower }} {{ u.email|lower }} {{ u.phone }}" data-sort="{{ u.username|lower }}">
+                        <td class="sort-key">{{ u.username }}</td>
+                        <td>{{ u.email }}</td>
+                        <td>{{ u.phone }}</td>
+                        <td>{{ u.date_creation.strftime('%d/%m/%Y') }}</td>
+                    </tr>
                     {% endfor %}
                 </tbody>
             </table>
@@ -350,13 +355,18 @@
     <div id="inactifsTab" class="tab-content">
         <div class="table-container">
             <h3>🚫 Total Inactifs: {{ total_inactifs }}</h3>
-            <table>
+            <table id="inactifsTable">
                 <thead>
                     <tr><th>User</th><th>Email</th><th>Phone</th><th>Date</th></tr>
                 </thead>
                 <tbody>
                     {% for u in inactifs %}
-                    <tr><td>{{ u.username }}</td><td>{{ u.email }}</td><td>{{ u.phone }}</td><td>{{ u.date_creation.strftime('%d/%m/%Y') }}</td></tr>
+                    <tr data-index="{{ u.username|lower }} {{ u.email|lower }} {{ u.phone }}" data-sort="{{ u.username|lower }}">
+                        <td class="sort-key">{{ u.username }}</td>
+                        <td>{{ u.email }}</td>
+                        <td>{{ u.phone }}</td>
+                        <td>{{ u.date_creation.strftime('%d/%m/%Y') }}</td>
+                    </tr>
                     {% endfor %}
                 </tbody>
             </table>
@@ -365,6 +375,7 @@
 </div>
 
 <script>
+// Gestion Sidebar Menu
 const sidebar = document.getElementById("sidebar");
 const overlay = document.getElementById("overlay");
 const menuToggle = document.getElementById("menuToggle");
@@ -372,29 +383,56 @@ const menuToggle = document.getElementById("menuToggle");
 menuToggle.onclick = () => { sidebar.classList.add("active"); overlay.classList.add("active"); };
 overlay.onclick = () => { sidebar.classList.remove("active"); overlay.classList.remove("active"); };
 
+// FONCTION TRI ALPHABÉTIQUE AUTOMATIQUE DES TABLES (Par index data-sort)
+function sortAllTablesAlphabetically() {
+    document.querySelectorAll("table").forEach(table => {
+        const tbody = table.querySelector("tbody");
+        if (!tbody) return;
+        
+        const rows = Array.from(tbody.querySelectorAll("tr"));
+        
+        rows.sort((rowA, rowB) => {
+            const keyA = rowA.getAttribute("data-sort") || "";
+            const keyB = rowB.getAttribute("data-sort") || "";
+            return keyA.localeCompare(keyB);
+        });
+        
+        // Réinsère les lignes triées dans le DOM
+        rows.forEach(row => tbody.appendChild(row));
+    });
+}
+
+// Lancement du tri alphabétique dès le chargement complet de la page
+window.addEventListener("DOMContentLoaded", sortAllTablesAlphabetically);
+
 // Gestion des Onglets
 function showTab(e, tabId){
     document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
     e.currentTarget.classList.add('active');
-    
-    // Reset la barre de recherche quand on change d'onglet
+
+    // Réinitialise la barre de recherche au changement d'onglet
     document.getElementById("userSearch").value = "";
     document.querySelectorAll(".tab-content tr").forEach(r => r.style.display = "");
 }
 
-// RECHERCHE OPTIMISÉE (Utilise l'onglet actif uniquement)
+// RECHERCHE PAR INDEX ULTRA RAPIDE (Optimisée)
 document.getElementById("userSearch").addEventListener("input", function() {
     const query = this.value.toLowerCase().trim();
     const activeTab = document.querySelector(".tab-content.active");
+    if (!activeTab) return;
+    
     const rows = activeTab.querySelectorAll("tbody tr");
 
+    // requestAnimationFrame évite les lags visuels et accélère l'affichage sur mobile/Termux
     requestAnimationFrame(() => {
         rows.forEach(row => {
-            // On cherche dans le texte de la ligne
-            const text = row.innerText.toLowerCase();
-            row.style.display = text.includes(query) ? "" : "none";
+            const indexValue = row.getAttribute("data-index");
+            if (indexValue) {
+                // Utilisation de l'index textuel pré-généré
+                row.style.display = indexValue.includes(query) ? "" : "none";
+            }
         });
     });
 });
