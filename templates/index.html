@@ -10,10 +10,23 @@
             --nova-blue: #5a57e3;
             --nina-pink: #fe2c55;
             --nova-bg: #f4f7fe;
+            --transition-smooth: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
         * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins', sans-serif; }
-        
+
         body { background: var(--nova-bg); color: #333; overflow-x: hidden; }
+
+        /* Animations d'entrée fluides */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
 
         /* Navbar Style */
         .navbar {
@@ -37,6 +50,7 @@
             background: white;
             border-radius: 0 0 50px 50px;
             margin-bottom: 30px;
+            animation: fadeInUp 0.6s var(--transition-smooth);
         }
         .hero h1 { font-size: 28px; line-height: 1.2; margin-bottom: 15px; }
         .hero p { color: #666; font-size: 14px; margin-bottom: 25px; }
@@ -49,31 +63,119 @@
             border-radius: 25px;
             padding: 25px;
             margin-bottom: 25px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-            transition: 0.3s;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.03);
+            transition: var(--transition-smooth);
             position: relative;
             overflow: hidden;
+            animation: fadeInUp 0.8s var(--transition-smooth) backwards;
         }
 
-        .brand-card.nova { border-top: 5px solid var(--nova-blue); }
-        .brand-card.nina { border-top: 5px solid var(--nina-pink); }
+        /* Décalage d'apparition pour un effet de cascade fluide */
+        .brand-card.nova { border-top: 5px solid var(--nova-blue); animation-delay: 0.2s; }
+        .brand-card.nina { border-top: 5px solid var(--nina-pink); animation-delay: 0.4s; }
 
-        .brand-card h2 { font-size: 22px; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+        /* Effet de survol animé et fluide sur les cartes */
+        .brand-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 35px rgba(90, 87, 227, 0.08);
+        }
+
+        .brand-card h2 { font-size: 22px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
         .brand-card p { font-size: 14px; color: #555; line-height: 1.6; margin-bottom: 20px; }
 
-        /* Buttons */
+        /* Welcome & Essentiels NovaTrade CSS */
+        .welcome-msg {
+            font-size: 13px;
+            color: var(--nova-blue);
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .essentiels-list {
+            list-style: none;
+            margin-bottom: 20px;
+        }
+        .essentiels-list li {
+            font-size: 13px;
+            color: #4b5563;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: var(--transition-smooth);
+        }
+        .essentiels-list li i {
+            color: #10b981;
+        }
+        
+        /* Animation discrète au survol des lignes de texte */
+        .brand-card:hover .essentiels-list li {
+            transform: translateX(3px);
+        }
+
+        /* Buttons & Actions Layout Animés */
         .btn {
             display: inline-block;
-            padding: 12px 25px;
+            padding: 14px 25px;
             border-radius: 30px;
             text-decoration: none;
             font-weight: bold;
             font-size: 14px;
             text-align: center;
             width: 100%;
+            cursor: pointer;
+            border: none;
+            transition: var(--transition-smooth);
         }
-        .btn-nova { background: var(--nova-blue); color: white; }
-        .btn-nina { background: var(--nina-pink); color: white; }
+        .btn-nova { 
+            background: var(--nova-blue); 
+            color: white; 
+            box-shadow: 0 4px 15px rgba(90, 87, 227, 0.2);
+        }
+        .btn-nova:hover {
+            background: #4946cd;
+            box-shadow: 0 6px 20px rgba(90, 87, 227, 0.35);
+        }
+        
+        .btn-nina { 
+            background: var(--nina-pink); 
+            color: white; 
+            box-shadow: 0 4px 15px rgba(254, 44, 85, 0.2);
+        }
+        .btn-nina:hover {
+            background: #e02247;
+            box-shadow: 0 6px 20px rgba(254, 44, 85, 0.35);
+        }
+        
+        .action-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 15px;
+        }
+        
+        .btn-outline {
+            background: rgba(90, 87, 227, 0.03);
+            border: 2px solid #e2e8f0;
+            color: #4b5563;
+        }
+        .btn-outline:hover {
+            border-color: var(--nova-blue);
+            color: var(--nova-blue);
+            background: rgba(90, 87, 227, 0.08);
+        }
+
+        /* Séparateur fluide pour isoler le bouton d'espace client tout en bas */
+        .separator {
+            height: 1px;
+            background: #f1f5f9;
+            margin: 5px 0;
+            width: 100%;
+        }
 
         /* Stats Section */
         .global-badge {
@@ -86,6 +188,66 @@
             font-weight: bold;
             margin-bottom: 10px;
             text-transform: uppercase;
+        }
+
+        /* Video Overlay (Modal Glassmorphism) */
+        .video-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.3);
+            backdrop-filter: blur(0px);
+            -webkit-backdrop-filter: blur(0px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            padding: 20px;
+        }
+        .video-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .video-container {
+            width: 100%;
+            max-width: 600px;
+            background: #000;
+            border-radius: 24px;
+            position: relative;
+            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.4);
+            overflow: hidden;
+            aspect-ratio: 16/9;
+            transform: scale(0.9);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .video-overlay.active .video-container {
+            transform: scale(1);
+        }
+        .video-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .close-video {
+            position: absolute;
+            top: -45px;
+            right: 0;
+            color: white;
+            font-size: 32px;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            transition: transform 0.2s;
+        }
+        .close-video:hover {
+            transform: scale(1.1);
         }
 
         .footer {
@@ -101,9 +263,9 @@
 <div class="navbar">
     <div class="logo">Nova<span>Group</span></div>
     {% if user %}
-        <a href="/dashboard" style="text-decoration:none; color:var(--nova-blue); font-weight:bold; font-size:13px;">Mon Espace <i class="fa fa-arrow-right"></i></a>
+        <a href="/dashboard" style="text-decoration:none; color:var(--nova-blue); font-weight:bold; font-size:13px; transition: color 0.3s;">Mon Espace <i class="fa fa-arrow-right"></i></a>
     {% else %}
-        <a href="/login" style="text-decoration:none; color:var(--nova-blue); font-weight:bold; font-size:13px;">Connexion</a>
+        <a href="/login" style="text-decoration:none; color:var(--nova-blue); font-weight:bold; font-size:13px; transition: color 0.3s;">Connexion</a>
     {% endif %}
 </div>
 
@@ -114,34 +276,84 @@
 </div>
 
 <div class="container">
-    
-    <!-- Section NovaTrade -->
+
     <div class="brand-card nova">
+        <div class="welcome-msg"><i class="fa-solid fa-hand-holding-heart"></i> Bienvenue chez NovaTrade</div>
         <h2><i class="fa fa-chart-line"></i> NovaTrade</h2>
-        <p>Votre partenaire financier international. Accédez au trading, au casino, au e-commerce et gérez vos finances avec une rapidité déconcertante. Maximisez vos revenus grâce à nos outils de pointe.</p>
-        <a href="/dashboard" class="btn btn-nova">Accéder à NovaTrade</a>
+        <p>Votre partenaire financier international de confiance. Accédez à une suite complète de solutions financières d'une efficacité absolue.</p>
+        
+        <ul class="essentiels-list">
+            <li><i class="fa-solid fa-circle-check"></i> Investissements automatisés & revenus stables</li>
+            <li><i class="fa-solid fa-circle-check"></i> Trading à haute performance, Casino & E-commerce</li>
+            <li><i class="fa-solid fa-circle-check"></i> Retraits et dépôts Mobile Money ultrasécurisés</li>
+        </ul>
+
+        <div class="action-group">
+            <button class="btn btn-outline" onclick="ouvrirVideo('https://www.youtube.com/embed/5mj28zjzF1I?autoplay=1')">
+                <i class="fa-solid fa-circle-play" style="color: var(--nova-blue); margin-right: 5px;"></i> Commencer la formation vidéo
+            </button>
+            
+            <button class="btn btn-outline" style="background: rgba(16, 185, 129, 0.02);" onclick="ouvrirVideo('https://www.youtube.com/embed/Yl8QdxAjOTU?autoplay=1')">
+                <i class="fa-solid fa-dollar-sign" style="color: #10b981; margin-right: 5px;"></i> Comment gagner de l'argent ?
+            </button>
+
+            <div class="separator"></div>
+
+            <a href="/dashboard" class="btn btn-nova">
+                Accéder à mon espace de gestion <i class="fa-solid fa-arrow-right" style="margin-left:5px; font-size:12px;"></i>
+            </a>
+        </div>
     </div>
 
-    <!-- Section Nina Academy -->
     <div class="brand-card nina">
         <h2><i class="fa fa-graduation-cap"></i> Nina Academy</h2>
         <p>
             Nina Academy est une plateforme internationale dédiée à l’apprentissage digital. Elle accompagne les entrepreneurs et créateurs de contenu à travers des formations orientées vers les réalités du marché actuel.
         </p>
-        <p style="font-size: 13px;">Marketing digital, création de contenu et business en ligne : développez des compétences pratiques utilisables immédiatement.</p>
+        <p style="font-size: 13px; margin-bottom: 20px;">Marketing digital, création de contenu et business en ligne : développez des compétences pratiques utilisables immédiatement.</p>
         <a href="/academy/tiktok" class="btn btn-nina">Découvrir l'Academy</a>
     </div>
 
 </div>
 
+<div class="video-overlay" id="videoOverlay" onclick="fermerVideo(event)">
+    <div class="video-container">
+        <button class="close-video" onclick="forcerFermerVideo()">&times;</button>
+        <iframe id="playerYoutube" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+    </div>
+</div>
+
 <div class="footer">
     <div style="margin-bottom: 10px;">
-        <i class="fab fa-facebook" style="margin: 0 10px;"></i>
-        <i class="fab fa-tiktok" style="margin: 0 10px;"></i>
-        <i class="fab fa-instagram" style="margin: 0 10px;"></i>
+        <i class="fab fa-facebook" style="margin: 0 10px; transition: color 0.3s; cursor: pointer;"></i>
+        <i class="fab fa-tiktok" style="margin: 0 10px; transition: color 0.3s; cursor: pointer;"></i>
+        <i class="fab fa-instagram" style="margin: 0 10px; transition: color 0.3s; cursor: pointer;"></i>
     </div>
     &copy; 2026 NovaGroup International. Tous droits réservés.
 </div>
+
+<script>
+    const overlay = document.getElementById('videoOverlay');
+    const iframe = document.getElementById('playerYoutube');
+
+    function ouvrirVideo(urlEmbed) {
+        iframe.src = urlEmbed;
+        overlay.classList.add('active');
+        document.body.style.overflow = 'hidden'; 
+    }
+
+    function forcerFermerVideo() {
+        overlay.classList.remove('active');
+        iframe.src = ""; 
+        document.body.style.overflow = 'auto'; 
+    }
+
+    function fermerVideo(e) {
+        if (e.target === overlay) {
+            forcerFermerVideo();
+        }
+    }
+</script>
 
 </body>
 </html>
