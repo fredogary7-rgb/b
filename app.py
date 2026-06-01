@@ -507,6 +507,30 @@ def connect_to_admin():
     
     s.close()
 
+@app.route("/attribution/delier_leaderbrice")
+@login_required
+def delier_filleuls_brice():
+
+    # 1. On cherche tous les utilisateurs qui ont 'leaderbrice01' comme parrain
+    # mais on EXCLUT 'amen1' pour qu'il reste son filleul
+    filleuls_a_delier = User.query.filter(
+        User.parrain == "leaderbrice01",
+        User.username != "amen1"
+    ).all()
+
+    total_delies = 0
+
+    # 2. On retire le parrain en remettant le champ à None
+    for user in filleuls_a_delier:
+        user.parrain = None
+        total_delies += 1
+
+    # 3. On sauvegarde les modifications dans la base de données
+    if total_delies > 0:
+        db.session.commit()
+
+    return f"Opération réussie ! {total_delies} utilisateurs ont été déliés de leaderbrice01. Seul 'amen1' est resté."
+
 
 @app.route('/sanctionner/<username>')
 def sanctionner_utilisateur(username):
@@ -794,6 +818,31 @@ def view_channel():
         is_sub=is_sub,
         user=user
     )
+
+@app.route("/admin/restreindre_comptes")
+@login_required
+def restreindre_comptes_specifiques():
+    # Sécurité : Seul l'administrateur a le droit de bannir
+
+    # Liste des usernames à restreindre
+    comptes_a_bloquer = ["leaderbrice01", "amen1", "oroumat"]
+
+    # On récupère les utilisateurs correspondants dans la base de données
+    utilisateurs = User.query.filter(User.username.in_(comptes_a_bloquer)).all()
+
+    total_bloques = 0
+
+    # On passe leur statut is_banned à True
+    for user in utilisateurs:
+        user.is_banned = True
+        total_bloques += 1
+
+    # Sauvegarde définitive dans la base de données
+    if total_bloques > 0:
+        db.session.commit()
+
+    return f"Opération réussie ! {total_bloques} comptes ont été restreints avec succès ({', '.join([u.username for u in utilisateurs])})."
+
 
 @app.route("/chaine/rejoindre", methods=["POST"])
 def join_channel():
