@@ -2205,14 +2205,18 @@ def dashboard_page():
         is_blocked_500=(is_blocked_500 or no_rounds_left)
     )
 
-
 def user_is_activated(user):
+
+    if not user:
+        return False
+
     if user.premier_depot:
         return True
 
-    return Depot.query.filter_by(
-        user_name=user.username,
-        statut="valide"
+    return Depot.query.filter(
+        (Depot.user_id == user.id) |
+        (Depot.user_name == user.username),
+        Depot.statut == "valide"
     ).first() is not None
 
 # ===== Décorateur admin =====
