@@ -531,6 +531,15 @@ def delier_filleuls_brice():
 
     return f"Opération réussie ! {total_delies} utilisateurs ont été déliés de leaderbrice01. Seul 'amen1' est resté."
 
+@app.route("/academy/design")
+@login_required
+def formation_design_page():
+    # Récupération de l'utilisateur connecté pour la navbar
+    phone = get_logged_in_user_phone()
+    user = User.query.filter_by(phone=phone).first()
+    
+    return render_template("design_graphique.html", user=user)
+
 
 @app.route('/sanctionner/<username>')
 def sanctionner_utilisateur(username):
