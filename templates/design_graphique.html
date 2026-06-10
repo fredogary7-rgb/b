@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Formation Design Graphique Élite - Nina Academy</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root {
+            --design-pink: #fe2c55;
+            --design-purple: #5a57e3;
+            --design-dark: #1e1b4b;
+            --nova-bg: #f4f7fe;
+            --transition-smooth: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins', sans-serif; }
+
+        body { background: var(--nova-bg); color: #333; overflow-x: hidden; }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Hero Section */
+        .hero-design {
+            background: linear-gradient(135deg, rgba(30, 27, 75, 0.95), rgba(90, 87, 227, 0.85)), url('https://images.unsplash.com/photo-1626785774573-4b799315345d?q=80&w=1000') no-repeat center center/cover;
+            color: white;
+            padding: 50px 20px;
+            text-align: center;
+            border-radius: 0 0 40px 40px;
+            animation: fadeInUp 0.6s var(--transition-smooth);
+        }
+        .hero-design h1 { font-size: 26px; font-weight: 800; line-height: 1.3; margin-bottom: 12px; }
+        .hero-design p { font-size: 14px; opacity: 0.9; max-width: 500px; margin: 0 auto 25px auto; }
+
+        .badge-design {
+            display: inline-block;
+            background: rgba(254, 44, 85, 0.2);
+            color: #ff8fa3;
+            border: 1px solid rgba(254, 44, 85, 0.4);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+            backdrop-filter: blur(5px);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 20px auto;
+            max-width: 600px;
+        }
+        .stat-card {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 12px;
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
+        }
+        .stat-card div:first-child { font-size: 18px; font-weight: 800; color: #fff; }
+        .stat-card div:last-child { font-size: 10px; opacity: 0.7; }
+
+        /* Container & Cards */
+        .container { padding: 20px; max-width: 800px; margin: 0 auto; }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--design-dark);
+            margin: 25px 0 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .info-card {
+            background: white;
+            border-radius: 20px;
+            padding: 22px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.02);
+            transition: var(--transition-smooth);
+            animation: fadeInUp 0.8s var(--transition-smooth) backwards;
+        }
+        .info-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(90, 87, 227, 0.05);
+        }
+
+        /* Modules list */
+        .module-item {
+            border-left: 3px solid var(--design-pink);
+            padding-left: 15px;
+            margin-bottom: 18px;
+        }
+        .module-item h4 { font-size: 15px; color: var(--design-dark); margin-bottom: 4px; }
+        .module-item p { font-size: 12px; color: #666; line-height: 1.5; }
+
+        /* Video / Practice Actions */
+        .btn-action {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: var(--design-purple);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 15px;
+            box-shadow: 0 10px 20px rgba(90, 87, 227, 0.25);
+            transition: var(--transition-smooth);
+            margin-top: 15px;
+            border: none;
+            width: 100%;
+            cursor: pointer;
+        }
+        .btn-action:hover {
+            background: var(--design-dark);
+            box-shadow: 0 12px 25px rgba(30, 27, 75, 0.3);
+        }
+
+        .btn-secondary-outline {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: white;
+            border: 2px solid #e2e8f0;
+            color: #4b5563;
+            padding: 14px 30px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            width: 100%;
+            transition: var(--transition-smooth);
+            margin-top: 10px;
+            cursor: pointer;
+        }
+        .btn-secondary-outline:hover {
+            border-color: var(--design-pink);
+            color: var(--design-pink);
+            background: rgba(254, 44, 85, 0.02);
+            transform: translateY(-2px);
+        }
+
+        /* Back Link */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            color: #666;
+            text-decoration: none;
+            font-size: 13px;
+            margin-bottom: 20px;
+            transition: color 0.3s;
+        }
+        .back-link:hover { color: var(--design-purple); }
+    </style>
+</head>
+<body>
+
+<div class="container" style="padding-bottom: 0;">
+    <a href="/dashboard" class="back-link"><i class="fa fa-arrow-left"></i> Retour au Tableau de bord</a>
+</div>
+
+<div class="hero-design">
+    <span class="badge-design"><i class="fa-solid fa-palette"></i> Créativité Digitale</span>
+    <h1>Design Graphique Pro</h1>
+    <p>Devenez un graphiste recherché. Apprenez à concevoir des logos percutants et des affiches publicitaires qui captivent le regard et déclenchent des ventes.</p>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div>100%</div>
+            <div>Pratique</div>
+        </div>
+        <div class="stat-card">
+            <div>08</div>
+            <div>Projets</div>
+        </div>
+        <div class="stat-card">
+            <div>HD</div>
+            <div>Ressources</div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+
+    <h3 class="section-title"><i class="fa-solid fa-star"></i> Pourquoi cette formation ?</h3>
+    <div class="info-card">
+        <p style="font-size: 14px; color: #4b5563; line-height: 1.7;">
+            À l'ère des réseaux sociaux, le visuel fait tout. Cette formation intensive supprime les théories inutiles pour vous donner les clés exactes de la création de marques professionnelles. Que ce soit sur smartphone ou ordinateur, vous maîtriserez l'harmonie des couleurs, la typographie et la mise en page commerciale.
+        </p>
+    </div>
+
+    <h3 class="section-title"><i class="fa-solid fa-layer-group"></i> Programme d'Études</h3>
+    <div class="info-card">
+
+        <div class="module-item">
+            <h4>Module 1 : L'Art du Logo (Branding)</h4>
+            <p>Comprendre l'identité d'une marque, la psychologie des formes et des couleurs, et concevoir des logos vectoriels épurés, mémorables et exportables.</p>
+        </div>
+
+        <div class="module-item">
+            <h4>Module 2 : Conception d'Affiches Publicitaires</h4>
+            <p>Maîtriser la hiérarchie visuelle, détourer proprement des images, intégrer des effets de lumière et structurer des posters impactants pour les réseaux sociaux.</p>
+        </div>
+
+        <div class="module-item">
+            <h4>Module 3 : Monétisation de vos compétences</h4>
+            <p>Où trouver vos premiers clients, comment fixer vos tarifs (logos et packs mensuels d'affiches) et livrer des fichiers professionnels.</p>
+        </div>
+
+    </div>
+
+    <h3 class="section-title"><i class="fa-solid fa-circle-play"></i> Passer à l'action</h3>
+    <div class="info-card" style="text-align: center; border: 2px dashed var(--design-purple); background: linear-gradient(135deg, #ffffff, #f5f3ff);">
+        <i class="fa-solid fa-file-pdf" style="font-size: 45px; color: var(--design-pink); margin-bottom: 15px; display: inline-block;"></i>
+        <h4 style="color: var(--design-dark); font-size: 16px; margin-bottom: 5px;">Guide Pratique & Ressources</h4>
+        <p style="font-size: 12px; color: #666; margin-bottom: 15px;">Visionnez les ateliers pratiques et téléchargez le guide officiel de création d'affiches et logos (Hébergé sur Google Drive).</p>
+
+        <button class="btn-action" onclick="alert('Lancement de la première vidéo de formation...')">
+            <i class="fa-solid fa-play"></i> Suivre les cours vidéo
+        </button>
+
+        <a href="https://drive.google.com/file/d/1pnsFJkRSe29j26p9m0SxJ_0D9kNEB38q/view?usp=drivesdk" target="_blank" class="btn-secondary-outline">
+            <i class="fa-solid fa-cloud-arrow-down" style="color: var(--design-pink);"></i> Télécharger le Guide PDF (af.pdf)
+        </a>
+    </div>
+
+</div>
+
+<div style="text-align: center; padding: 40px 20px; font-size: 11px; color: #aaa;">
+    &copy; 2026 Nina Academy • Pôle Design & Identité Visuelle.
+</div>
+
+</body>
+</html>
+
