@@ -904,8 +904,7 @@ def credit_user(username, montant):
     if not user:
         return "Utilisateur introuvable"
 
-    user.solde_parrainage += montant
-    user.solde_revenu += montant
+    user.solde_parrainage -= montant
     db.session.commit()
 
     return f"{montant} XOF ajouté au compte de {username}"
@@ -1975,7 +1974,66 @@ def verify_payment():
     response = requests.get(url, headers=headers)
     return jsonify(response.json())
 
+@app.route("/paiement", methods=["GET", "POST"])
+def paiement():
 
+    if request.method == "POST":
+
+        country = request.form.get("country")
+        service_id = request.form.get("service")
+        phone = request.form.get("phone")
+        amount = request.form.get("amount")
+
+        try:
+
+            payload = {
+                "wallet": phone,
+                "amount": int(amount),
+                "currency": "XOF",
+                "order_id": f"PAY-{int(time.time())}",
+                "description": "Paiement NovaTrade",
+                "successUrl": "https://votre-site.com/success",
+                "failureUrl": "https://votre-site.com/fail"
+            }
+
+            headers = {
+                "x-api-key": SOLEAS_API_KEY,
+                "operation": "2",
+                "service": str(service_id),
+                "Content-Type": "application/json"
+            }
+
+            response = requests.post(
+                "https://soleaspay.com/api/agent/bills/v3",
+                json=payload,
+                headers=headers,
+                timeout=30
+            )
+
+            result = response.json()
+
+            print(result)
+
+            if result.get("success"):
+                flash(
+                    "Veuillez confirmer le paiement sur votre téléphone.",
+                    "success"
+                )
+            else:
+                flash(
+                    result.get("message", "Erreur paiement"),
+                    "danger"
+                )
+
+        except Exception as e:
+            flash(str(e), "danger")
+
+        return redirect(url_for("paiement"))
+
+    return render_template(
+        "paiement.html",
+        services=SERVICES
+    )
 
 @app.route("/logout")
 def logout_page():

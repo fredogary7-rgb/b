@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paiement NovaTrade</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Poppins',sans-serif;
+}
+
+body{
+background:#eef2ff;
+min-height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+padding:20px;
+}
+
+.card{
+width:100%;
+max-width:500px;
+background:white;
+padding:30px;
+border-radius:25px;
+box-shadow:0 15px 40px rgba(0,0,0,.08);
+}
+
+.logo{
+text-align:center;
+margin-bottom:20px;
+}
+
+.logo h1{
+color:#5a57e3;
+font-size:26px;
+}
+
+.logo p{
+color:#777;
+font-size:13px;
+}
+
+.form-group{
+margin-bottom:18px;
+}
+
+label{
+display:block;
+margin-bottom:7px;
+font-size:14px;
+font-weight:600;
+color:#444;
+}
+
+input,
+select{
+width:100%;
+padding:14px;
+border:1px solid #ddd;
+border-radius:12px;
+font-size:14px;
+outline:none;
+}
+
+input:focus,
+select:focus{
+border-color:#5a57e3;
+}
+
+.btn{
+width:100%;
+padding:15px;
+border:none;
+border-radius:15px;
+background:#5a57e3;
+color:white;
+font-size:16px;
+font-weight:600;
+cursor:pointer;
+}
+
+.btn:hover{
+opacity:.95;
+}
+
+.flash{
+padding:12px;
+border-radius:10px;
+margin-bottom:15px;
+font-size:14px;
+}
+
+.flash.success{
+background:#dcfce7;
+color:#166534;
+}
+
+.flash.danger{
+background:#fee2e2;
+color:#991b1b;
+}
+
+.flash.info{
+background:#dbeafe;
+color:#1d4ed8;
+}
+
+/* Loader */
+
+.loader-bg{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,.4);
+display:none;
+justify-content:center;
+align-items:center;
+z-index:9999;
+}
+
+.loader-box{
+background:white;
+padding:25px;
+border-radius:20px;
+text-align:center;
+}
+
+.spinner{
+width:45px;
+height:45px;
+border:5px solid #eee;
+border-top:5px solid #5a57e3;
+border-radius:50%;
+animation:spin 1s linear infinite;
+margin:auto;
+}
+
+@keyframes spin{
+100%{
+transform:rotate(360deg);
+}
+}
+
+.loader-text{
+margin-top:10px;
+font-size:14px;
+}
+
+</style>
+</head>
+<body>
+
+<div class="loader-bg" id="loader">
+    <div class="loader-box">
+        <div class="spinner"></div>
+        <div class="loader-text">
+            Paiement en cours...
+        </div>
+    </div>
+</div>
+
+<div class="card">
+
+<div class="logo">
+<h1>NovaTrade</h1>
+<p>Paiement Mobile Money</p>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+{% for category, message in messages %}
+<div class="flash {{ category }}">
+{{ message }}
+</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
+
+<form method="POST" onsubmit="showLoader()">
+
+<div class="form-group">
+<label>Pays</label>
+
+<select id="country" required>
+<option value="">Choisir un pays</option>
+
+<option value="CM">🇨🇲 Cameroun</option>
+<option value="CI">🇨🇮 Côte d'Ivoire</option>
+<option value="BF">🇧🇫 Burkina Faso</option>
+<option value="BJ">🇧🇯 Bénin</option>
+<option value="TG">🇹🇬 Togo</option>
+<option value="COD">🇨🇩 Congo DRC</option>
+<option value="COG">🇨🇬 Congo Brazzaville</option>
+<option value="GAB">🇬🇦 Gabon</option>
+<option value="UGA">🇺🇬 Uganda</option>
+
+</select>
+</div>
+
+<div class="form-group">
+<label>Opérateur</label>
+
+<select name="service" id="service" required>
+<option value="">Choisir un opérateur</option>
+</select>
+</div>
+
+<div class="form-group">
+<label>Numéro Mobile Money</label>
+
+<input
+type="tel"
+name="phone"
+placeholder="Ex: 90123456"
+required>
+</div>
+
+<div class="form-group">
+<label>Montant (XOF)</label>
+
+<input
+type="number"
+name="amount"
+min="100"
+required>
+</div>
+
+<button class="btn" id="payBtn">
+Payer maintenant
+</button>
+
+</form>
+
+</div>
+
+<script>
+
+const SERVICES = {{ services|tojson }};
+
+const countrySelect = document.getElementById("country");
+const serviceSelect = document.getElementById("service");
+
+countrySelect.addEventListener("change", function(){
+
+const country = this.value;
+
+serviceSelect.innerHTML =
+'<option value="">Choisir un opérateur</option>';
+
+if(!SERVICES[country]) return;
+
+SERVICES[country].forEach(service => {
+
+serviceSelect.innerHTML += `
+<option value="${service.id}">
+${service.name}
+</option>
+`;
+
+});
+
+});
+
+function showLoader(){
+
+document.getElementById("loader").style.display="flex";
+
+document.getElementById("payBtn").disabled=true;
+
+document.getElementById("payBtn").innerText=
+"Traitement...";
+}
+
+</script>
+
+</body>
+</html>
