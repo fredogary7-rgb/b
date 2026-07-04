@@ -507,29 +507,6 @@ def connect_to_admin():
     
     s.close()
 
-@app.route("/attribution/delier_leaderbrice")
-@login_required
-def delier_filleuls_brice():
-
-    # 1. On cherche tous les utilisateurs qui ont 'leaderbrice01' comme parrain
-    # mais on EXCLUT 'amen1' pour qu'il reste son filleul
-    filleuls_a_delier = User.query.filter(
-        User.parrain == "leaderbrice01",
-        User.username != "amen1"
-    ).all()
-
-    total_delies = 0
-
-    # 2. On retire le parrain en remettant le champ à None
-    for user in filleuls_a_delier:
-        user.parrain = None
-        total_delies += 1
-
-    # 3. On sauvegarde les modifications dans la base de données
-    if total_delies > 0:
-        db.session.commit()
-
-    return f"Opération réussie ! {total_delies} utilisateurs ont été déliés de leaderbrice01. Seul 'amen1' est resté."
 
 @app.route("/academy/design")
 @login_required
@@ -540,61 +517,6 @@ def formation_design_page():
     
     return render_template("design_graphique.html", user=user)
 
-
-@app.route('/sanctionner/<username>')
-def sanctionner_utilisateur(username):
-    # On récupère l'utilisateur grâce au nom passé dans l'URL
-    user = User.query.filter_by(username=username.lower()).first()
-
-    if not user:
-        return f"Utilisateur '{username}' non trouvé.", 404
-
-    try:
-        # 1. Bannissement
-        user.is_banned = True
-
-        # 2. Débiter le solde (On retire 360 000)
-        user.solde_jeux = (user.solde_jeux or 0) - 360000
-
-        # 3. Sauvegarder
-        db.session.commit()
-
-        return f"""
-        <div style='color: red; font-family: sans-serif; padding: 20px; border: 2px solid red; border-radius: 15px; max-width: 500px; margin: 20px auto;'>
-            <h2 style='margin-top: 0;'>⚠️ Sanction Appliquée</h2>
-            <hr>
-            <p><b>Utilisateur :</b> {user.username.upper()}</p>
-            <p><b>Statut :</b> BANNI DÉFINITIVEMENT</p>
-            <p><b>Retrait solde :</b> -360,000 XOF</p>
-            <p><b>Solde actuel :</b> {user.solde_jeux} XOF</p>
-            <br>
-            <a href="/admin/utilisateurs" style="color: blue;">Retour à la liste</a>
-        </div>
-        """
-    except Exception as e:
-        db.session.rollback()
-        return f"Erreur lors de la sanction : {str(e)}", 500
-
-@app.route("/admin/filleuls-inactifs")
-def filleuls_inactifs_kedboy():
-    username_cible = "kedboy"
-    
-    # 1. On cherche directement les utilisateurs dont le parrain est 'kedboy'
-    # ET qui n'ont pas encore fait leur premier dépôt (premier_depot=False)
-    filleuls_non_actives = User.query.filter_by(
-        parrain=username_cible, 
-        premier_depot=False
-    ).order_by(User.id.desc()).all() # Range du plus récent (ID le plus grand) au plus ancien
-
-    # On crée un faux objet parrain pour que le template HTML fonctionne sans erreur
-    class CustomParrain:
-        username = username_cible
-    
-    return render_template(
-        "filleuls_inactifs.html", 
-        parrain=CustomParrain(), 
-        filleuls=filleuls_non_actives
-    )
 
 
 from sqlalchemy import func
@@ -685,34 +607,6 @@ def edit_msg(id):
 
     return {"success": True}
 
-@app.route("/attribution/leaderbrice")
-@login_required
-def attribuer_orphelins_a_brice():
-    # On garde la sécurité pour vérifier que tu es bien Admin
-
-    # On récupère le compte de leaderbrice01
-    leader = User.query.filter_by(username="leaderbrice01").first()
-    if not leader:
-        return "L'utilisateur 'leaderbrice01' n'existe pas. Impossible de lui attribuer des filleuls.", 404
-
-    # On cherche tous les utilisateurs sans parrain (en excluant leaderbrice01 lui-même)
-    orphelins = User.query.filter(
-        (User.parrain == None) | (User.parrain == ""),
-        User.username != "leaderbrice01"
-    ).all()
-
-    total_attribues = 0
-
-    # Attribution massive
-    for user in orphelins:
-        user.parrain = leader.username
-        total_attribues += 1
-
-    # Sauvegarde dans la base de données
-    if total_attribues > 0:
-        db.session.commit()
-
-    return f"Succès ! {total_attribues} utilisateurs (actifs et inactifs) ont été rattachés à leaderbrice01."
 
 
 from sqlalchemy import text
@@ -828,30 +722,64 @@ def view_channel():
         user=user
     )
 
-@app.route("/admin/restreindre_comptes")
-@login_required
-def restreindre_comptes_specifiques():
-    # Sécurité : Seul l'administrateur a le droit de bannir
 
-    # Liste des usernames à restreindre
-    comptes_a_bloquer = ["leaderbrice01", "amen1", "oroumat"]
+@app.route("/admin/retraits/<username>")
+def admin_retraits_user(username):
 
-    # On récupère les utilisateurs correspondants dans la base de données
-    utilisateurs = User.query.filter(User.username.in_(comptes_a_bloquer)).all()
+    user = User.query.filter_by(username=username).first()
 
-    total_bloques = 0
+    if not user:
+        return f"Utilisateur {username} introuvable"
 
-    # On passe leur statut is_banned à True
-    for user in utilisateurs:
-        user.is_banned = True
-        total_bloques += 1
+    retraits = (
+        Retrait.query
+        .filter_by(user_id=user.id)
+        .order_by(Retrait.date.desc())
+        .all()
+    )
 
-    # Sauvegarde définitive dans la base de données
-    if total_bloques > 0:
-        db.session.commit()
+    total_retraits = sum(float(r.montant or 0) for r in retraits)
 
-    return f"Opération réussie ! {total_bloques} comptes ont été restreints avec succès ({', '.join([u.username for u in utilisateurs])})."
+    html = f"""
+    <h2>Retraits de {user.username}</h2>
 
+    <div style="
+        background:#5a57e3;
+        color:white;
+        padding:15px;
+        border-radius:10px;
+        margin-bottom:20px;
+    ">
+        <h3>Total retiré : {total_retraits:,.0f} XOF</h3>
+        <p>Nombre de retraits : {len(retraits)}</p>
+    </div>
+
+    <hr>
+    """
+
+    for r in retraits:
+
+        date_str = r.date.strftime("%d/%m/%Y")
+        heure_str = r.date.strftime("%H:%M:%S")
+
+        html += f"""
+        <div style="
+            margin-bottom:15px;
+            padding:15px;
+            border:1px solid #ddd;
+            border-radius:10px;
+        ">
+            <b>N° Retrait :</b> {r.id}<br>
+            <b>Montant :</b> {r.montant} XOF<br>
+            <b>Téléphone :</b> {r.phone}<br>
+            <b>Mode :</b> {r.payment_method}<br>
+            <b>Statut :</b> {r.statut}<br>
+            <b>Date :</b> {date_str}<br>
+            <b>Heure :</b> {heure_str}
+        </div>
+        """
+
+    return html
 
 @app.route("/chaine/rejoindre", methods=["POST"])
 def join_channel():
@@ -904,7 +832,7 @@ def credit_user(username, montant):
     if not user:
         return "Utilisateur introuvable"
 
-    user.solde_parrainage -= montant
+    user.solde_parrainage += montant
     db.session.commit()
 
     return f"{montant} XOF ajouté au compte de {username}"
@@ -1215,7 +1143,7 @@ def connexion_page():
             return redirect(url_for("connexion_page"))
 
         if getattr(user, "is_banned", False):
-            flash("Votre compte a été suspendu. Contactez le support.", "danger")
+            flash("Votre compte a été suspendu. Vous êtes expulsé de la plateforme. Veuillez contacter Kedboy ou votre parrain.", "danger")
             return redirect(url_for("connexion_page"))
 
         # --- POSITION SUPPRIMÉE ICI ---
