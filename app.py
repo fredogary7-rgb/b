@@ -638,7 +638,6 @@ def delete_msg(id):
     return redirect(url_for('admin_canal_edit'))
 
 from flask_mail import Mail, Message
-API_KEY = "re_QnDyJnmp_AjZaCUqiWGfrv5t3HxDfczLh"
 
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
@@ -832,7 +831,7 @@ def credit_user(username, montant):
     if not user:
         return "Utilisateur introuvable"
 
-    user.solde_parrainage += montant
+    user.solde_revenu += montant
     db.session.commit()
 
     return f"{montant} XOF ajouté au compte de {username}"
@@ -2490,48 +2489,6 @@ def whatsapp_number():
         print("Erreur VCF :", e)
 
     return redirect("/dashboard")
-
-@app.route("/netflix-view")
-def netflix_view_page():
-    return render_template("netflix.html")
-
-
-@app.route("/apk")
-def apk_page():
-    """
-    Retourne la liste des APK disponibles via liens Google Drive.
-    """
-    apk_files = [
-        {
-            "name": "Netflix",
-            "filename": "Netflix.apk",
-            "link": "https://drive.google.com/file/d/1afSa24_oVoTWRCgpO07Lbu4qjKMUhwLC/view?usp=drivesdk"
-        },
-        {
-            "name": "Chat",
-            "filename": "chat.apk",
-            "link": "https://drive.google.com/file/d/1-4idwrgNxjNilpLzR8zHkdMroVo41g9b/view?usp=drivesdk"
-        },
-        {
-            "name": "CapCut",
-            "filename": "capcut.apk",
-            "link": "https://drive.google.com/file/d/1hwEzqwQWV2FKnTg1u0QAWrPjjOEyZCyj/view?usp=drivesdk"
-        }
-    ]
-
-    return render_template("apk.html", apk_files=apk_files)
-
-@app.route("/apk-canal")
-def apk_canal_page():
-    # Lien de ton application
-    canal_apk = {
-        "name": "Canal+ Premium",
-        "filename": "canal_plus_vavoo.apk",
-        "link": "https://drive.google.com/uc?id=15G5lmyNMw2xYTm_XvvhIX77uBqT99lLq", # Lien direct vers le téléchargement
-        "reference": "Vavoo.to"
-    }
-    return render_template("apk_canal.html", app=canal_apk)
-
 
 @app.route("/ecom")
 def ecom():
