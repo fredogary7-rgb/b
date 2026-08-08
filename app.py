@@ -1310,8 +1310,8 @@ def verification_lancement():
     return None
 
 
-PUBLIC_API_KEY = "SP_y7QKkaamPsVTlw8GDDGyzlJ7bmPUvdLorOQqWUXfRLI_AP"
-PRIVATE_SECRET_KEY = "SP_-YQFuI5M9B1H2bNSNycwI_YQBc_kXkGACp-mLoBdWqI"
+PUBLIC_API_KEY = os.getenv("SOLEAS_PUBLIC_API_KEY", "")
+PRIVATE_SECRET_KEY = os.getenv("SOLEAS_PRIVATE_SECRET_KEY", "")
 
 def obtenir_token():
     url = "https://soleaspay.com/api/action/auth"
@@ -1672,8 +1672,8 @@ def reset_password(username):
 
     return f"Mot de passe réinitialisé pour {username} : {nouveau_mdp}"
 
-SOLEAS_API_KEY = "SP_y7QKkaamPsVTlw8GDDGyzlJ7bmPUvdLorOQqWUXfRLI_AP"
-SOLEAS_WEBHOOK_SECRET = "b42ed39b9e0db71db4556a2dfe1b1ad00dcce656fd4dba033f1947f913f1908bc817588c2edb32d92533a1d162e57ad4b1f7299f39695c5671c3ef07baa6f22a"
+SOLEAS_API_KEY = os.getenv("SOLEAS_API_KEY", "")
+SOLEAS_WEBHOOK_SECRET = os.getenv("SOLEAS_WEBHOOK_SECRET", "")
 
 SERVICES = {
 
@@ -2515,8 +2515,8 @@ from datetime import datetime
 
 
 
-PUBLIC_API_KEY = "SP_y7QKkaamPsVTlw8GDDGyzlJ7bmPUvdLorOQqWUXfRLI_AP"
-PRIVATE_SECRET_KEY = "SP_bS4Kwii-Txs1aMunv8D9wpEbdpEVgfpvDvKn-OrWt6Y"
+PUBLIC_API_KEY = os.getenv("SOLEAS_PUBLIC_API_KEY", "")
+PRIVATE_SECRET_KEY = os.getenv("SOLEAS_PRIVATE_SECRET_KEY2", "")
 
 from datetime import datetime
 
