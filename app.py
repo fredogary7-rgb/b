@@ -21,6 +21,9 @@ from flask_migrate import Migrate
 app = Flask(__name__, template_folder="templates", static_folder="static")
 app.secret_key = "ma_cle_ultra_secrete"
 
+# Charger les variables d'environnement depuis .env
+load_dotenv()
+
 # ─── UPLOAD CONFIG ───────────────────────────────────────
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
