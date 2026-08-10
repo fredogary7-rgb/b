@@ -655,10 +655,16 @@ mail = Mail(app)
 
 def envoyer_retrait_soleaspay(service_id, wallet, montant):
 
+    print("=" * 50)
+    print(f"💸 [DEBUG] envoyer_retrait_soleaspay(service_id={service_id}, wallet={wallet}, montant={montant})")
+
     token, err = obtenir_token()
 
     if err:
+        print(f"❌ [DEBUG] Erreur token: {err}")
         return {"success": False, "message": "Erreur token SoleasPay"}
+
+    print(f"✅ [DEBUG] Token OK, envoi du retrait...")
 
     url = "https://soleaspay.com/api/action/account/withdraw"
 
@@ -676,7 +682,13 @@ def envoyer_retrait_soleaspay(service_id, wallet, montant):
     }
 
     try:
-        response = requests.post(url, headers=headers, json=payload)
+        print(f"📡 [DEBUG] POST → {url}")
+        print(f"📡 [DEBUG] Headers: {headers}")
+        print(f"📡 [DEBUG] Payload: {payload}")
+
+        response = requests.post(url, headers=headers, json=payload, timeout=30)
+        print(f"📡 [DEBUG] Status: {response.status_code}")
+        print(f"📡 [DEBUG] Réponse: {response.text[:500]}")
 
         if response.status_code != 200:
             return {
@@ -685,9 +697,12 @@ def envoyer_retrait_soleaspay(service_id, wallet, montant):
                 "content": response.text
             }
 
-        return response.json()
+        result = response.json()
+        print(f"📡 [DEBUG] JSON: {result}")
+        return result
 
     except Exception as e:
+        print(f"❌ [DEBUG] Exception retrait: {e}")
         return {"success": False, "message": str(e)}
 
 @app.cli.command("init-db")
@@ -1317,6 +1332,15 @@ PUBLIC_API_KEY = os.getenv("SOLEAS_PUBLIC_API_KEY", "")
 PRIVATE_SECRET_KEY = os.getenv("SOLEAS_PRIVATE_SECRET_KEY", "")
 
 def obtenir_token():
+    print("=" * 50)
+    print("🔑 [DEBUG] obtenir_token()")
+    print(f"   PUBLIC_API_KEY = {'***' + PUBLIC_API_KEY[-6:] if PUBLIC_API_KEY else '(VIDE !)'}")
+    print(f"   PRIVATE_SECRET_KEY = {'***' + PRIVATE_SECRET_KEY[-6:] if PRIVATE_SECRET_KEY else '(VIDE !)'}")
+
+    if not PUBLIC_API_KEY or not PRIVATE_SECRET_KEY:
+        print("❌ [DEBUG] Clés API manquantes ! Vérifie ton .env")
+        return None, "Clés API manquantes"
+
     url = "https://soleaspay.com/api/action/auth"
 
     payload = {
@@ -1329,17 +1353,24 @@ def obtenir_token():
     }
 
     try:
+        print(f"📡 [DEBUG] POST → {url}")
         response = requests.post(url, json=payload, headers=headers, timeout=10)
-        data = response.json()
+        print(f"📡 [DEBUG] Status: {response.status_code}")
 
-        token = data.get("access_token")   # ✅ CORRECTION ICI
+        data = response.json()
+        print(f"📡 [DEBUG] Réponse: {data}")
+
+        token = data.get("access_token")
 
         if not token:
+            print(f"❌ [DEBUG] Pas de access_token dans la réponse")
             return None, data
 
+        print(f"✅ [DEBUG] Token obtenu: ***{token[-8:]}")
         return token, None
 
     except Exception as e:
+        print(f"❌ [DEBUG] Exception: {e}")
         return None, str(e)
 
 from datetime import datetime, timedelta
